@@ -20,3 +20,6 @@ Each application is meant to be standalone and will have a README explaining how
 
 Currently, go into each benchmark and follow the instructions to run it until you have run them all.
 
+## Notes
+
+2022-07-26: 11 apps present, none working.
