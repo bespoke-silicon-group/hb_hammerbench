@@ -39,6 +39,7 @@ get-rows		= $(firstword $(subst _, ,$(filter %_rows,$(subst __, ,$1))))
 get-opt			= $(firstword $(subst _, ,$(filter %_opt,$(subst __, ,$1))))
 get-parallel		= $(firstword $(subst _, ,$(filter %_parallel,$(subst __, ,$1))))
 
+# CHANGE ME: TESTS
 # optimized
 TESTS += $(call test-name,08blocks,0,300,yes,yes)
 TESTS += $(call test-name,wiki-vote,0,8297,yes,yes)

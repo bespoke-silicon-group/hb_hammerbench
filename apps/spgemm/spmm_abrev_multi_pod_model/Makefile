@@ -50,14 +50,15 @@ include $(APPLICATION_PATH)/utils.mk
 # the output is divided into when solving
 # set to 1 for the entire ouput matrix to be solved at once
 # set to 8 to split into 8x8=64 submatrices
+# CHANGE ME: PARTITIONING
 PFACTOR=1
 PARTITIONS=$(call cartesian,$(call range,0,$(PFACTOR)),$(call range,0,$(PFACTOR)),x)
 
+# CHANGE ME: INPUTS
 $(foreach part,$(PARTITIONS),\
 $(eval TESTS += $(call test-name,offshore,$(PFACTOR),$(part),yes,yes))\
 $(eval TESTS += $(call test-name,wiki-vote,$(PFACTOR),$(part),yes,yes))\
 $(eval TESTS += $(call test-name,road-central,$(PFACTOR),$(part),yes,yes))\
-$(eval TESTS += $(call test-name,offshore,16,$(part),yes,yes))\
 $(eval TESTS += $(call test-name,roadNet-CA,$(PFACTOR),$(part),yes,yes)))
 
 define get-test-parameters
