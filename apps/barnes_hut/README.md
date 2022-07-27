@@ -45,3 +45,7 @@ You will need a relatively modern version of GCC that supports the C++14 standar
 This will run the simulation with the default parameters -- 8192
 bodies for the Build Tree kernels (step 1, above). You can change
 which step is the default in the Makefile.
+
+# Sweeping
+
+You can a sweep of program pameters with `make go`

@@ -1,29 +1,34 @@
-# Copyright (c) 2021, University of Washington All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-# Redistributions of source code must retain the above copyright notice, this list
-# of conditions and the following disclaimer.
-#
-# Redistributions in binary form must reproduce the above copyright notice, this
-# list of conditions and the following disclaimer in the documentation and/or
-# other materials provided with the distribution.
-#
-# Neither the name of the copyright holder nor the names of its contributors may
-# be used to endorse or promote products derived from this software without
-# specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##################################################################################
+# BSD 3-Clause License								 #
+# 										 #
+# Copyright (c) 2022, Bespoke Silicon Group					 #
+# All rights reserved.								 #
+# 										 #
+# Redistribution and use in source and binary forms, with or without		 #
+# modification, are permitted provided that the following conditions are met:	 #
+# 										 #
+# 1. Redistributions of source code must retain the above copyright notice, this #
+#    list of conditions and the following disclaimer.				 #
+# 										 #
+# 2. Redistributions in binary form must reproduce the above copyright notice,	 #
+#    this list of conditions and the following disclaimer in the documentation	 #
+#    and/or other materials provided with the distribution.			 #
+# 										 #
+# 3. Neither the name of the copyright holder nor the names of its		 #
+#    contributors may be used to endorse or promote products derived from	 #
+#    this software without specific prior written permission.			 #
+# 										 #
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	 #
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE	 #
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE #
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE	 #
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL	 #
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR	 #
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER	 #
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,	 #
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE	 #
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.		 #
+##################################################################################
 
 # This Makefile compiles, links, and executes examples Run `make help`
 # to see the available targets for the selected platform.
@@ -38,18 +43,17 @@
 # BASEJUMP_STL_DIR: Path to a clone of BaseJump STL
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
+HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
-REPLICANT_PATH:=$(shell git rev-parse --show-toplevel)
-
-include $(REPLICANT_PATH)/environment.mk
-
+BARNES_HUT_PATH := $(HB_HAMMERBENCH_PATH)/apps/barnes_hut
 # TEST_NAME is the basename of the executable
 TEST_NAME = main
 # KERNEL_NAME is the name of the CUDA-Lite Kernel
 KERNEL_NAME = nbody
 
 Galois:
-	git submodule init --update Galois
+	git submodule update --init Galois
 
 Galois/install:
 	mkdir $@
@@ -71,7 +75,7 @@ setup: Galois/install/lib64/libgalois_shmem.so
 ###############################################################################
 # TEST_SOURCES is a list of source files that need to be compiled
 
-vpath %.cpp $(REPLICANT_PATH)/examples/apps/nbody/Galois/lonestar/liblonestar/src/
+vpath %.cpp $(BARNES_HUT_PATH)/Galois/lonestar/liblonestar/src/
 TEST_SOURCES  = Barneshut.cpp  
 TEST_SOURCES  += BoilerPlate.cpp
 
@@ -86,14 +90,14 @@ DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 CDEFINES += 
 CXXDEFINES += 
 
-INCLUDES  = -I$(REPLICANT_PATH)/examples/apps/nbody/Galois/install/include -I$(REPLICANT_PATH)/examples/apps/nbody/Galois/lonestar/liblonestar/include/
-INCLUDES += -I$(shell llvm-config-11-64  --includedir) -I$(REPLICANT_PATH)/examples/apps/nbody/
+INCLUDES  = -I$(BARNES_HUT_PATH)/Galois/install/include -I$(BARNES_HUT_PATH)/Galois/lonestar/liblonestar/include/
+INCLUDES += -I$(shell llvm-config-11-64  --includedir) -I$(BARNES_HUT_PATH)/.
 FLAGS     = -O3 -g -Wall -Wno-unused-function -Wno-unused-variable -Wno-strict-aliasing -Wno-deprecated-declarations
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++17 $(FLAGS) 
-LDFLAGS  = -lpthread -Wl,-rpath=$(REPLICANT_PATH)/examples/apps/nbody/Galois/install/lib64 -L$(REPLICANT_PATH)/examples/apps/nbody/Galois/install/lib64 -lgalois_shmem -lnuma $(shell llvm-config-11-64 --ldflags --libs)
+LDFLAGS  = -lpthread -Wl,-rpath=$(BARNES_HUT_PATH)/Galois/install/lib64 -L$(BARNES_HUT_PATH)/Galois/install/lib64 -lgalois_shmem -lnuma $(shell llvm-config-11-64 --ldflags --libs)
 
-main.so: $(REPLICANT_PATH)/examples/apps/nbody/Galois/install/lib64/libgalois_shmem.so
+main.so: $(BARNES_HUT_PATH)/Galois/install/lib64/libgalois_shmem.so
 
 # compilation.mk defines rules for compilation of C/C++
 include $(EXAMPLES_PATH)/compilation.mk
@@ -124,7 +128,7 @@ kernel.riscv: forces.rvo
 kernel.riscv: summarize.rvo
 kernel.riscv: build.rvo
 
-RISCV_INCLUDES  += -I$(REPLICANT_PATH)/examples/apps/nbody/
+RISCV_INCLUDES  += -I$(BARNES_HUT_PATH)
 RISCV_CCPPFLAGS += -D__KERNEL__ -O3
 
 RISCV_DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X)

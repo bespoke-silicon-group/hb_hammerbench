@@ -8,3 +8,5 @@
 *.ld
 *.so
 ucli.key
+*.S
+*.ll
