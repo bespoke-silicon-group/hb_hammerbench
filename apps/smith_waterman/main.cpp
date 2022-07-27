@@ -70,7 +70,7 @@ class Sequence {
     ifstream fin;
     fin.open(file_name, ios::in);
     if(fin.fail()){
-            bsg_pr_info("Hey! File does not exist!\n");
+            bsg_pr_info("Hey! File '%s' does not exist!\n", file_name.c_str());
             exit(1);
     }
     for (int i = 0; i < N; i++) {
