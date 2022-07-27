@@ -15,6 +15,7 @@ For initial setup do the following:
 ### Running Individual Benchmarks
 
 Each application is meant to be standalone and will have a README explaining how to run it.
+All applications live in the apps/ directory.
 
 ### Running All Benchmarks
 

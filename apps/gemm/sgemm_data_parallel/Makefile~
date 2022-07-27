@@ -38,8 +38,8 @@
 # BASEJUMP_STL_DIR: Path to a clone of BaseJump STL
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
-
-REPLICANT_PATH:=$(shell git rev-parse --show-toplevel)
+HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+REPLICANT_PATH:=$(shell cd $(HB_HAMMERBENCH_PATH)/../ && git rev-parse --show-toplevel)
 
 include $(REPLICANT_PATH)/environment.mk
 SPMD_SRC_PATH = $(BSG_MANYCORE_DIR)/software/spmd
