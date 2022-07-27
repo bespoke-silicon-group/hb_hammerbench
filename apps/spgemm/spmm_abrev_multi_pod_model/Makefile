@@ -42,7 +42,7 @@ get-partition		= $(firstword $(subst _, ,$(filter %_partition,$(subst __, ,$1)))
 
 
 # This function needs to be defined
-APPLICATION_PATH=$(HB_HAMMERBENCH_PATH)/apps/spgemm/spmm
+APPLICATION_PATH=$(HB_HAMMERBENCH_PATH)/apps/spgemm
 
 # full thing
 include $(APPLICATION_PATH)/utils.mk

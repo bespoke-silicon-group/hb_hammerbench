@@ -85,7 +85,7 @@ $(eval SIMULATION_DIR=$(APPLICATION_PATH)/spmm_abrev/$1)
 endef
 
 # This function needs to be defined
-APPLICATION_PATH=$(HB_HAMMERBENCH_PATH)/apps/spgemm/spmm
+APPLICATION_PATH=$(HB_HAMMERBENCH_PATH)/apps/spgemm
 
 include $(HB_HAMMERBENCH_PATH)/apps/spgemm/parameterized-tb.mk
 
