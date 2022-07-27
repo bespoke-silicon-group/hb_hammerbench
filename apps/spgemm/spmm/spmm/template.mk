@@ -1,29 +1,34 @@
-# Copyright (c) 2021, University of Washington All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-# Redistributions of source code must retain the above copyright notice, this list
-# of conditions and the following disclaimer.
-#
-# Redistributions in binary form must reproduce the above copyright notice, this
-# list of conditions and the following disclaimer in the documentation and/or
-# other materials provided with the distribution.
-#
-# Neither the name of the copyright holder nor the names of its contributors may
-# be used to endorse or promote products derived from this software without
-# specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##################################################################################
+# BSD 3-Clause License								 #
+# 										 #
+# Copyright (c) 2022, Bespoke Silicon Group					 #
+# All rights reserved.								 #
+# 										 #
+# Redistribution and use in source and binary forms, with or without		 #
+# modification, are permitted provided that the following conditions are met:	 #
+# 										 #
+# 1. Redistributions of source code must retain the above copyright notice, this #
+#    list of conditions and the following disclaimer.				 #
+# 										 #
+# 2. Redistributions in binary form must reproduce the above copyright notice,	 #
+#    this list of conditions and the following disclaimer in the documentation	 #
+#    and/or other materials provided with the distribution.			 #
+# 										 #
+# 3. Neither the name of the copyright holder nor the names of its		 #
+#    contributors may be used to endorse or promote products derived from	 #
+#    this software without specific prior written permission.			 #
+# 										 #
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	 #
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE	 #
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE #
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE	 #
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL	 #
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR	 #
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER	 #
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,	 #
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE	 #
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.		 #
+##################################################################################
 
 # This Makefile compiles, links, and executes examples Run `make help`
 # to see the available targets for the selected platform.
@@ -39,21 +44,20 @@
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
 
-REPLICANT_PATH:=$(shell git rev-parse --show-toplevel)
-
-include $(REPLICANT_PATH)/environment.mk
+HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 include $(BSG_MACHINE_PATH)/Makefile.machine.include
 
 # hammerblade helpers
-hammerblade-helpers-dir = $(EXAMPLES_PATH)/cuda/dwarfs/imports/hammerblade-helpers
+hammerblade-helpers-dir = $(HB_HAMMERBENCH_PATH)/apps/spgemm/imports/hammerblade-helpers
 include $(hammerblade-helpers-dir)/libhammerblade-helpers-host.mk
 
 # graph tools
-graphtools-dir = $(EXAMPLES_PATH)/cuda/dwarfs/imports/graph-tools
+graphtools-dir = $(HB_HAMMERBENCH_PATH)/apps/spgemm/imports/graph-tools
 include $(graphtools-dir)/libgraphtools.mk
 
 # eigen
-eigen-dir = $(EXAMPLES_PATH)/cuda/dwarfs/imports/eigen
+eigen-dir = $(HB_HAMMERBENCH_PATH)/apps/spgemm/imports/eigen
 
 include parameters.mk
 include $(APPLICATION_PATH)/inputs.mk
@@ -62,7 +66,7 @@ vpath %.cpp $(APPLICATION_PATH)
 vpath %.cpp $(APPLICATION_PATH)/src/device
 vpath %.cpp $(APPLICATION_PATH)/src/host
 vpath %.cpp $(APPLICATION_PATH)/src/common
-vpath %.cpp $(EXAMPLES_PATH)/cuda/dwarfs/src
+vpath %.cpp $(HB_HAMMERBENCH_PATH)/apps/spgemm/src
 vpath %.c   $(APPLICATION_PATH)
 vpath %.c   $(APPLICATION_PATH)/src/device
 vpath %.c   $(APPLICATION_PATH)/src/host
@@ -85,10 +89,10 @@ TEST_HEADERS =  $(shell find $(APPLICATION_PATH)/include/host/ -name *.h)
 TEST_HEADERS += $(shell find $(APPLICATION_PATH)/include/host/ -name *.hpp)
 TEST_HEADERS += $(shell find $(APPLICATION_PATH)/include/common/ -name *.h)
 TEST_HEADERS += $(shell find $(APPLICATION_PATH)/include/common/ -name *.hpp)
-TEST_HEADERS =  $(shell find $(EXAMPLES_PATH)/cuda/dwarfs/include/host/ -name *.h)
-TEST_HEADERS += $(shell find $(EXAMPLES_PATH)/cuda/dwarfs/include/host/ -name *.hpp)
-TEST_HEADERS += $(shell find $(EXAMPLES_PATH)/cuda/dwarfs/include/common/ -name *.h)
-TEST_HEADERS += $(shell find $(EXAMPLES_PATH)/cuda/dwarfs/include/common/ -name *.hpp)
+TEST_HEADERS =  $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/host/ -name *.h)
+TEST_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/host/ -name *.hpp)
+TEST_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/common/ -name *.h)
+TEST_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/common/ -name *.hpp)
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 CDEFINES += 
@@ -97,8 +101,8 @@ CXXDEFINES +=
 FLAGS     = -O3 -g -Wall -Wno-unused-function -Wno-unused-variable
 FLAGS    += -I$(APPLICATION_PATH)/include/host
 FLAGS    += -I$(APPLICATION_PATH)/include/common
-FLAGS    += -I$(EXAMPLES_PATH)/cuda/dwarfs/include/host
-FLAGS    += -I$(EXAMPLES_PATH)/cuda/dwarfs/include/common
+FLAGS    += -I$(HB_HAMMERBENCH_PATH)/apps/spgemm/include/host/
+FLAGS    += -I$(HB_HAMMERBENCH_PATH)/apps/spgemm/include/host/
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++11 $(FLAGS)
 CXXFLAGS += -I$(eigen-dir)
@@ -138,10 +142,10 @@ RISCV_HEADERS += $(shell find $(APPLICATION_PATH)/include/device/ -name *.h)
 RISCV_HEADERS += $(shell find $(APPLICATION_PATH)/include/device/ -name *.hpp)
 RISCV_HEADERS += $(shell find $(APPLICATION_PATH)/include/common/ -name *.h)
 RISCV_HEADERS += $(shell find $(APPLICATION_PATH)/include/common/ -name *.hpp)
-RISCV_HEADERS += $(shell find $(EXAMPLES_PATH)/cuda/dwarfs/include/device/ -name *.h)
-RISCV_HEADERS += $(shell find $(EXAMPLES_PATH)/cuda/dwarfs/include/device/ -name *.hpp)
-RISCV_HEADERS += $(shell find $(EXAMPLES_PATH)/cuda/dwarfs/include/common/ -name *.h)
-RISCV_HEADERS += $(shell find $(EXAMPLES_PATH)/cuda/dwarfs/include/common/ -name *.hpp)
+RISCV_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/device/ -name *.h)
+RISCV_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/device/ -name *.hpp)
+RISCV_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/device/ -name *.h)
+RISCV_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/device/ -name *.hpp)
 RISCV_HEADERS += $(EXAMPLES_PATH
 
 RISCV_TARGET_OBJECTS += spmm.riscv.rvo
