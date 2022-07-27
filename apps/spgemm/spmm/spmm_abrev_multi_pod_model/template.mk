@@ -62,12 +62,10 @@ vpath %.cpp $(APPLICATION_PATH)
 vpath %.cpp $(APPLICATION_PATH)/src/device
 vpath %.cpp $(APPLICATION_PATH)/src/host
 vpath %.cpp $(APPLICATION_PATH)/src/common
-vpath %.cpp $(HB_HAMMERBENCH_PATH)/apps/spgemm/src
 vpath %.c   $(APPLICATION_PATH)
 vpath %.c   $(APPLICATION_PATH)/src/device
 vpath %.c   $(APPLICATION_PATH)/src/host
 vpath %.c   $(APPLICATION_PATH)/src/common
-vpath %.c   $(HB_HAMMERBENCH_PATH)/apps/spgemm/src
 
 # TEST_NAME is the basename of the exec<utable
 TEST_NAME = main
@@ -85,10 +83,6 @@ TEST_HEADERS =  $(shell find $(APPLICATION_PATH)/include/host/ -name *.h)
 TEST_HEADERS += $(shell find $(APPLICATION_PATH)/include/host/ -name *.hpp)
 TEST_HEADERS += $(shell find $(APPLICATION_PATH)/include/common/ -name *.h)
 TEST_HEADERS += $(shell find $(APPLICATION_PATH)/include/common/ -name *.hpp)
-TEST_HEADERS =  $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/host/ -name *.h)
-TEST_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/host/ -name *.hpp)
-TEST_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/common/ -name *.h)
-TEST_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/common/ -name *.hpp)
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 CDEFINES += 
@@ -97,8 +91,6 @@ CXXDEFINES +=
 FLAGS     = -O3 -g -Wall -Wno-unused-function -Wno-unused-variable
 FLAGS    += -I$(APPLICATION_PATH)/include/host
 FLAGS    += -I$(APPLICATION_PATH)/include/common
-FLAGS    += -I$(HB_HAMMERBENCH_PATH)/apps/spgemm/include/host
-FLAGS    += -I$(HB_HAMMERBENCH_PATH)/apps/spgemm/include/common
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++11 $(FLAGS)
 CXXFLAGS += -I$(eigen-dir)
@@ -138,11 +130,6 @@ RISCV_HEADERS += $(shell find $(APPLICATION_PATH)/include/device/ -name *.h)
 RISCV_HEADERS += $(shell find $(APPLICATION_PATH)/include/device/ -name *.hpp)
 RISCV_HEADERS += $(shell find $(APPLICATION_PATH)/include/common/ -name *.h)
 RISCV_HEADERS += $(shell find $(APPLICATION_PATH)/include/common/ -name *.hpp)
-RISCV_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/device/ -name *.h)
-RISCV_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/device/ -name *.hpp)
-RISCV_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/common/ -name *.h)
-RISCV_HEADERS += $(shell find $(HB_HAMMERBENCH_PATH)/apps/spgemm/include/common/ -name *.hpp)
-RISCV_HEADERS += $(EXAMPLES_PATH
 
 include $(APPLICATION_PATH)/spmm_abrev/opts.mk
 
@@ -157,8 +144,6 @@ endif
 
 RISCV_INCLUDES  += -I$(APPLICATION_PATH)/include/device
 RISCV_INCLUDES  += -I$(APPLICATION_PATH)/include/common
-RISCV_INCLUDES  += -I$(HB_HAMMERBENCH_PATH)/apps/spgemm/include/device
-RISCV_INCLUDES  += -I$(HB_HAMMERBENCH_PATH)/apps/spgemm/include/common
 RISCV_CCPPFLAGS += -D__KERNEL__ -ffreestanding $(EXTRA_RISCV_CCPPFLAGS)
 RISCV_CCPPFLAGS += -DLOG2_THREADS=$(shell echo 'l($(TX)*$(TY))/l(2)' | bc -l | xargs printf '%.f\n')
 RISCV_OPT_LEVEL  = -O3
