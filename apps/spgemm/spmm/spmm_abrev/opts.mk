@@ -1,6 +1,5 @@
-REPLICANT_PATH:=$(shell git rev-parse --show-toplevel)
-
-include $(REPLICANT_PATH)/environment.mk
+HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 include $(BSG_MACHINE_PATH)/Makefile.machine.include
 
 ifeq ($(OPT),yes)
