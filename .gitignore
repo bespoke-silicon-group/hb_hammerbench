@@ -6,3 +6,5 @@
 *.json
 *.a
 *.ld
+*.so
+ucli.key
