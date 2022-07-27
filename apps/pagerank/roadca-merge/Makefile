@@ -1,29 +1,34 @@
-# Copyright (c) 2021, University of Washington All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-# Redistributions of source code must retain the above copyright notice, this list
-# of conditions and the following disclaimer.
-#
-# Redistributions in binary form must reproduce the above copyright notice, this
-# list of conditions and the following disclaimer in the documentation and/or
-# other materials provided with the distribution.
-#
-# Neither the name of the copyright holder nor the names of its contributors may
-# be used to endorse or promote products derived from this software without
-# specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##################################################################################
+# BSD 3-Clause License								 #
+# 										 #
+# Copyright (c) 2022, Bespoke Silicon Group					 #
+# All rights reserved.								 #
+# 										 #
+# Redistribution and use in source and binary forms, with or without		 #
+# modification, are permitted provided that the following conditions are met:	 #
+# 										 #
+# 1. Redistributions of source code must retain the above copyright notice, this #
+#    list of conditions and the following disclaimer.				 #
+# 										 #
+# 2. Redistributions in binary form must reproduce the above copyright notice,	 #
+#    this list of conditions and the following disclaimer in the documentation	 #
+#    and/or other materials provided with the distribution.			 #
+# 										 #
+# 3. Neither the name of the copyright holder nor the names of its		 #
+#    contributors may be used to endorse or promote products derived from	 #
+#    this software without specific prior written permission.			 #
+# 										 #
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	 #
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE	 #
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE #
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE	 #
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL	 #
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR	 #
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER	 #
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,	 #
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE	 #
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.		 #
+##################################################################################
 
 # This Makefile compiles, links, and executes examples Run `make help`
 # to see the available targets for the selected platform.
@@ -38,16 +43,8 @@
 # BASEJUMP_STL_DIR: Path to a clone of BaseJump STL
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
-
-REPLICANT_PATH:=$(shell git rev-parse --show-toplevel)
-include $(REPLICANT_PATH)/environment.mk
-GRAPHIT_PATH:=$(EXAMPLES_PATH)/cuda/pagerank/graphit
-
-# Run `make checkout_graphit`
-.PHONY: checkout_graphit
-checkout_graphit:
-	cd ..
-	git clone -b pagerank git@github.com:bespoke-silicon-group/graphit
+HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+include $(HB_HAMMERBENCH_PATH)/apps/pagerank/common.mk
 
 ###############################################################################
 # Host code compilation flags and flow
@@ -86,7 +83,7 @@ include $(EXAMPLES_PATH)/link.mk
 # be built before executing.
 BSG_MANYCORE_KERNELS = kernel.riscv
 
-vpath %.cpp $(EXAMPLES_PATH)/cuda/pagerank/kernel/pr_merge
+vpath %.cpp $(HB_HAMMERBENCH_PATH)/apps/pagerank/kernel/pr_merge
 
 kernel.rvo:RISCV_CXX=$(RISCV_CLANGXX)
 kernel.riscv: kernel.rvo
@@ -100,7 +97,7 @@ RISCV_DEFINES += -DSIM_KERNEL_CURRENT_POD=1
 RISCV_DEFINES += -DSIM_KERNEL_CURRENT_BLOCK=1
 RISCV_CCPPFLAGS += -O2
 RISCV_CCPPFLAGS += -I$(GRAPHIT_PATH)/src/runtime_lib/infra_hb/device
-RISCV_CXXFLAGS += -I$(EXAMPLES_PATH)/cuda/pagerank/kernel/include
+RISCV_CXXFLAGS += -I$(HB_HAMMERBENCH_PATH)/apps/pagerank/kernel/include
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 
