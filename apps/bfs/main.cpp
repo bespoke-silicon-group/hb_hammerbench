@@ -80,7 +80,7 @@ int Main(int argc, char *argv[])
     bfs.run(iter+1);
     
     float frontier_size = bfs.frontier_in().size();
-    //std::cout<<"==================frontier_in size is "<<frontier_size<<"========================"<<std::endl;
+    std::cout<<"==================frontier_in size is "<<frontier_size<<"========================"<<std::endl;
     int num_nodes = g.num_nodes();
     float frontier_density = frontier_size/(float)num_nodes;
     int direction;//edge traversal direction, 0 for pull and 1 for push

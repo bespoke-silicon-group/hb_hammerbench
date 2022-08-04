@@ -47,6 +47,7 @@
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 include parameters.mk
+include $(HB_HAMMERBENCH_PATH)/apps/bfs/inputs.mk
 
 # TEST_NAME is the basename of the executable
 TEST_NAME = main

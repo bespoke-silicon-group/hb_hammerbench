@@ -6,17 +6,17 @@ INPUTS_DIR = $(APPLICATION_PATH)/inputs
 ###################
 # Wiki-Vote graph #
 ###################
-INPUTS                 += wiki-vote
-wiki-vote		= $(INPUTS_DIR)/wiki-Vote/wiki-Vote.mtx
-wiki-vote__directed	= yes
-wiki-vote__weighted	= no
-wiki-vote__zero-indexed = no
-wiki-vote__rows         = 8297
-wiki-vote__cols         = 8297
-wiki-vote__nnz          = 103689
-wiki-vote__solnnz       = 1831112
-$(wiki-vote):  url=https://suitesparse-collection-website.herokuapp.com/MM/SNAP/wiki-Vote.tar.gz
-$(wiki-vote):  tar=wiki-Vote.tar.gz
+INPUTS                 += wiki-Vote
+wiki-Vote		= $(INPUTS_DIR)/wiki-Vote/wiki-Vote.mtx
+wiki-Vote__directed	= yes
+wiki-Vote__weighted	= no
+wiki-Vote__zero-indexed = no
+wiki-Vote__rows         = 8297
+wiki-Vote__cols         = 8297
+wiki-Vote__nnz          = 103689
+wiki-Vote__solnnz       = 1831112
+$(wiki-Vote):  url=https://suitesparse-collection-website.herokuapp.com/MM/SNAP/wiki-Vote.tar.gz
+$(wiki-Vote):  tar=wiki-Vote.tar.gz
 
 ##############
 # poisson-3D #
@@ -221,18 +221,6 @@ $(foreach i,$(INPUTS),$($i)):
 	@mkdir -p $(INPUTS_DIR)
 	@cd $(INPUTS_DIR) && wget $(url)
 	@cd $(INPUTS_DIR) && tar zxf $(tar)
-	@mkdir -p $(GPATH)/CSR
-	@python3 $(APPLICATION_PATH)/py/mat_to_CSR.py \
-	--path $(GPATH) --name $(GNAME)
-	@mv $(basename $@)_A_idx.dat $(GPATH)/CSR
-	@mv $(basename $@)_A_ptr.dat $(GPATH)/CSR
-	@mv spm_tb_info.dat $(GPATH)/CSR
-	@mkdir -p $(GPATH)/CSC
-	@python3 $(APPLICATION_PATH)/py/mat_to_CSC.py \
-	--path $(GPATH) --name $(GNAME)
-	@mv $(basename $@)_A_idx.dat $(GPATH)/CSC
-	@mv $(basename $@)_A_ptr.dat $(GPATH)/CSC
-	@mv spm_tb_info.dat $(GPATH)/CSC
 	@touch $@ # updates the timecode of the untared file
 
 inputs: $(foreach i,$(INPUTS),$($i))
