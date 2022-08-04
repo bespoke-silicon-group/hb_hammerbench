@@ -7,7 +7,14 @@
 
 #include "bsg_cuda_lite_barrier.h"
 
-
+inline int bsg_amoor (bsg_attr_remote int* p, int val)
+{
+  int result;
+  asm volatile ("amoor.w %[result], %[val], 0(%[p])" \
+                : [result] "=r" (result) \
+                : [p] "r" (p), [val] "r" (val));
+  return result;
+}
 
 #define GRANULARITY_PULL 20
 #define GRANULARITY_PUSH 5

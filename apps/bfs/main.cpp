@@ -59,14 +59,18 @@ int Main(int argc, char *argv[])
     //std::cout<<"===================================enter host=============================="<<std::endl;
     CL cl;
     cl.parse(argc, argv);
-    HB = HammerBlade::Get();
-    HB->load_application(cl.binary_path());
     int iter = cl.bfs_iteration();
     std::string input_graph_path = cl.input_graph_path();
     std::string input_graph_name = cl.graph_type();
     int pod_ite = cl.pod_id();
     int num_pods = 64;
-    WGraph g = WGraph::FromCSR(input_graph_name,input_graph_path+"CSR/");
+    // read graph500 data
+    std::pair<Graph500Data, float*> data;
+    data = Graph500Data::FromMatrixMarketFile(input_graph_path + "/" + input_graph_name + ".mtx");    
+    Graph500Data gdata = data.first;
+    float *weights = data.second;
+    
+    WGraph g = WGraph::FromGraph500Data(gdata, weights);
     
     // load application
     std::shared_ptr<WGraph> wgptr = std::shared_ptr<WGraph>(new WGraph(g));
@@ -89,10 +93,12 @@ int Main(int argc, char *argv[])
 
     const std::set<int>& frontier_out_host = bfs.frontier_out();
     std::cout<<"=========================host out frontier size "<<frontier_out_host.size()<<"======================="<<std::endl;
+    HB = HammerBlade::Get();
+    HB->load_application(cl.binary_path());
     
     
-    WGraph g_csr = WGraph::FromCSR(input_graph_name,input_graph_path+"CSC/",pod_ite,num_pods);
-    WGraph g_csc = WGraph::FromCSC(input_graph_name,input_graph_path+"CSR/",pod_ite,num_pods);
+    WGraph g_csr = g;
+    WGraph g_csc = g.transpose();
     
     //decide the edge traversal direction
     

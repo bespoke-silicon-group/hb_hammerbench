@@ -28,8 +28,8 @@ def main(args):
     file_name       = file_path + str(args.name) + ".mtx"
     file_name_base  = args.name
     
-    file_name_idx_A = file_name_base + "_A_idx.dat"
-    file_name_ptr_A = file_name_base + "_A_ptr.dat"
+    file_name_idx_A = file_path + file_name_base + "_A_idx.dat"
+    file_name_ptr_A = file_path + file_name_base + "_A_ptr.dat"
     
     
     #read the row index, column index and value of the sparse matrix from the .mat file 
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate random SpMV test cases.')
     parser.add_argument("--name", type=str, default="dump-c", 
                         help="size of matrices")
-    parser.add_argument("--path", type=str, default="/work/shared/users/phd/zy383/SuiteSparse/", 
+    parser.add_argument("--path", type=str,
                         help="path of the source file")
     parser.add_argument("--info", type=bool, default=True, 
                         help="Create graph info file.")  

@@ -1,7 +1,12 @@
-TEST_GRAPH_TYPE = hollywood
-TEST_VERTICES = 1139905
-TEST_EDGES    = 115031232
-TEST_ROOT_NODE    = 570170
+HB_HAMMERBENCH_PATH ?= $(shell git rev-parse --show-toplevel)
+include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
+include $(HB_HAMMERBENCH_PATH)/apps/bfs/inputs.mk
+
+TEST_GRAPH_TYPE = offshore
+TEST_VERTICES = $($(TEST_GRAPH_TYPE)__rows)
+TEST_EDGES    = $($(TEST_GRAPH_TYPE)__nnz)
+#TEST_ROOT_NODE    = 570170
+TEST_ROOT_NODE    = 0
 ITE_START     = 0
 ITE_END = 0
 MAX_POD = 63 

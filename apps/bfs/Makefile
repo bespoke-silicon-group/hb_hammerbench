@@ -1,32 +1,36 @@
-# Copyright (c) 2021, University of Washington All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-# Redistributions of source code must retain the above copyright notice, this list
-# of conditions and the following disclaimer.
-#
-# Redistributions in binary form must reproduce the above copyright notice, this
-# list of conditions and the following disclaimer in the documentation and/or
-# other materials provided with the distribution.
-#
-# Neither the name of the copyright holder nor the names of its contributors may
-# be used to endorse or promote products derived from this software without
-# specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-REPLICANT_PATH:=$(shell git rev-parse --show-toplevel)
+##################################################################################
+# BSD 3-Clause License								 #
+# 										 #
+# Copyright (c) 2022, Bespoke Silicon Group					 #
+# All rights reserved.								 #
+# 										 #
+# Redistribution and use in source and binary forms, with or without		 #
+# modification, are permitted provided that the following conditions are met:	 #
+# 										 #
+# 1. Redistributions of source code must retain the above copyright notice, this #
+#    list of conditions and the following disclaimer.				 #
+# 										 #
+# 2. Redistributions in binary form must reproduce the above copyright notice,	 #
+#    this list of conditions and the following disclaimer in the documentation	 #
+#    and/or other materials provided with the distribution.			 #
+# 										 #
+# 3. Neither the name of the copyright holder nor the names of its		 #
+#    contributors may be used to endorse or promote products derived from	 #
+#    this software without specific prior written permission.			 #
+# 										 #
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	 #
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE	 #
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE #
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE	 #
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL	 #
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR	 #
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER	 #
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,	 #
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE	 #
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.		 #
+##################################################################################
+HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 repos := hammerblade-helpers graph-tools
 
@@ -43,9 +47,7 @@ $(repos): %:
 
 checkout_repos: $(repos)
 
-include $(REPLICANT_PATH)/environment.mk
-
-include $(EXAMPLES_PATH)/cuda/bfs/config.mk
+include $(HB_HAMMERBENCH_PATH)/apps/bfs/config.mk
 
 # $1 = graph_type
 # $2 = vertices
@@ -133,7 +135,7 @@ $(TESTS_PARAMETERS_MK): %/parameters.mk:
 	$(call get-test-parameters,$*)
 	@echo "Creating $@"
 	@mkdir -p $*
-	@echo RISCV_PATH = $(EXAMPLES_PATH)/cuda/bfs/$*/main.riscv > $@
+	@echo RISCV_PATH = $(HB_HAMMERBENCH_PATH)/apps/bfs/$*/main.riscv > $@
 	@echo GRAPH_TYPE = $(GRAPH_TYPE) >> $@
 	@echo GRAPH_VERTICES = $(VERTICES) >> $@
 	@echo GRAPH_EDGES = $(EDGES) >> $@
@@ -143,7 +145,7 @@ $(TESTS_PARAMETERS_MK): %/parameters.mk:
 	@echo TILE_GROUP_DIM_X = $(TGX) >> $@
 	@echo TILE_GROUP_DIM_Y = $(TGY) >> $@
 	@echo POD = $(POD) >> $@
-	@echo INPUT_GRAPH_PATH = $(EXAMPLES_PATH)/cuda/bfs/inputs/$(GRAPH_TYPE) >> $@
+	@echo INPUT_GRAPH_PATH = $(HB_HAMMERBENCH_PATH)/apps/bfs/inputs/$(GRAPH_TYPE) >> $@
 
 # copy the template to the the target directory
 $(TESTS_MAKEFILE): %/Makefile: template.mk
@@ -186,8 +188,8 @@ $(TESTS_BLOOD): %.blood: %
 blood: $(TESTS_BLOOD)
 
 # some support executables
-graphtools-dir = $(EXAMPLES_PATH)/cuda/bfs/graph-tools
-include $(graphtools-dir)/libgraphtools.mk
+graphtools-dir = $(HB_HAMMERBENCH_PATH)/apps/bfs/graph-tools
+-include $(graphtools-dir)/libgraphtools.mk
 
 SUPPORT_TOOLS = input-gen input-analyze input-degree-list
 $(SUPPORT_TOOLS): $(libgraphtools-interface-headers)
@@ -202,11 +204,11 @@ support-tools: $(SUPPORT_TOOLS)
 
 dramsim3.summary.csv: $(addsuffix /dramsim3.tag.json,$(TESTS))
 	@echo Creating $@
-	@PYTHONPATH=$(EXAMPLES_PATH)/cuda/bfs/hammerblade-helpers/py python3 $(EXAMPLES_PATH)/cuda/bfs/py/dramsim3.py $^
+	@PYTHONPATH=$(HB_HAMMERBENCH_PATH)/apps/bfs/hammerblade-helpers/py python3 $(HB_HAMMERBENCH_PATH)/apps/bfs/py/dramsim3.py $^
 
 vcache.summary.csv: $(addsuffix /vcache_stats.csv,$(TESTS))
 	@echo Creating $@
-	@PYTHONPATH=$(EXAMPLES_PATH)/cuda/bfs/hammerblade-helpers/py python3 $(EXAMPLES_PATH)/cuda/bfs/py/vcache.py $^
+	@PYTHONPATH=$(HB_HAMMERBENCH_PATH)/apps/bfs/hammerblade-helpers/py python3 $(HB_HAMMERBENCH_PATH)/apps/bfs/py/vcache.py $^
 
 purge:
 	rm -rf $(TESTS)
