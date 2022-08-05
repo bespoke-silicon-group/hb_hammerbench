@@ -10,3 +10,4 @@
 ucli.key
 *.S
 *.ll
+*pod/
