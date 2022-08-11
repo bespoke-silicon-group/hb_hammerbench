@@ -130,3 +130,7 @@ regression: exec.log
 clean:
 	rm -rf *.ld
 
+include $(HB_HAMMERBENCH_PATH)/apps/common_simple.mk
+
+setup:
+	@echo nothing to be done
