@@ -55,10 +55,10 @@ KERNEL_NAME = nbody
 Galois:
 	git submodule update --init Galois
 
-Galois/install:
+Galois/install: Galois
 	mkdir $@
 
-Galois/build:
+Galois/build: Galois
 	mkdir $@
 
 Galois/build/CMakeCache.txt: | Galois/build
@@ -240,3 +240,5 @@ go: $(FORCES_TEST_8192) $(FORCES_TEST_16384) $(FORCES_TEST_32768)
 
 cleansweep:
 	rm -rf *.deploy
+
+include $(HB_HAMMERBENCH_PATH)/apps/common_simple.mk
