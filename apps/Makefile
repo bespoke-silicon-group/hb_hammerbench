@@ -23,7 +23,7 @@ APPS += fft
 APPS += gemm
 APPS += jacobi
 # APPS += pagerank
-# APPS += smith_waterman
+APPS += smith_waterman
 # APPS += spgemm
 
 ###########################
