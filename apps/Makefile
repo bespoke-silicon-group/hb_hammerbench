@@ -16,10 +16,10 @@ include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 # Add to or remove from apps #
 ##############################
 APPS := aes
-# APPS += barnes_hut
+APPS += barnes_hut
 # APPS += bfs
 APPS += blackscholes
-# APPS += fft
+APPS += fft
 # APPS += gemm
 APPS += jacobi
 # APPS += pagerank
