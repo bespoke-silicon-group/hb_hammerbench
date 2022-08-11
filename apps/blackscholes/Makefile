@@ -23,4 +23,4 @@ IMPLS := opt-pod
 
 EXECUTION_DIRS := $(foreach impl,$(IMPLS),$(BLACKSCHOLES_DIR)/$(impl))
 
-include $(HB_HAMMERBENCH_PATH)/apps/common.mk
+include $(HB_HAMMERBENCH_PATH)/apps/common_complex.mk

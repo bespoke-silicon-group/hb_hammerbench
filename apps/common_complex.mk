@@ -1,3 +1,6 @@
+ifndef (HB_HAMMERBENCH_APPS_COMMON_COMPLEX_MK)
+HB_HAMMERBENCH_APPS_COMMON_COMPLEX_MK=1
+
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
@@ -102,3 +105,5 @@ $(POSTPROCESSING_RULES):
 	$(eval exec-dir=$(call rule-to-exec-dir,$@))
 	$(eval rule-type=$(call rule-to-rule-type,$@))
 	$(MAKE) -C $(exec-dir) $(rule-type)
+
+endif
