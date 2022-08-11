@@ -92,13 +92,14 @@ FLAGS     = -O3 -g -Wall -Wno-unused-function -Wno-unused-variable
 FLAGS    += -I$(APPLICATION_PATH)/include/host
 FLAGS    += -I$(APPLICATION_PATH)/include/common
 CFLAGS   += -std=c99 $(FLAGS)
-CXXFLAGS += -std=c++11 $(FLAGS)
+CXXFLAGS := -std=c++14 $(FLAGS)
 CXXFLAGS += -I$(eigen-dir)
 CXXFLAGS += $(libhammerblade-helpers-host-interface-cxxflags)
 CXXFLAGS += $(libgraphtools-interface-cxxflags)
 
 # compilation.mk defines rules for compilation of C/C++
 include $(EXAMPLES_PATH)/compilation.mk
+CXXFLAGS := $(filter-out -std=c++11,$(CXXFLAGS))
 
 ###############################################################################
 # Host code link flags and flow

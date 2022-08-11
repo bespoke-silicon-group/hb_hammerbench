@@ -24,7 +24,7 @@ APPS += gemm
 APPS += jacobi
 # APPS += pagerank
 APPS += smith_waterman
-# APPS += spgemm
+APPS += spgemm
 
 ###########################
 # directories of each app #
