@@ -18,7 +18,7 @@ include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 APPS := aes
 # APPS += barnes_hut
 # APPS += bfs
-# APPS += blackscholes
+APPS += blackscholes
 # APPS += fft
 # APPS += gemm
 # APPS += jaccobi
