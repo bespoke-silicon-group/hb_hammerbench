@@ -25,6 +25,7 @@ APPS += jacobi
 # APPS += pagerank
 APPS += smith_waterman
 APPS += spgemm
+APPS += memcpy
 
 ###########################
 # directories of each app #
