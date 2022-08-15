@@ -217,3 +217,12 @@ purge:
 	rm -rf inputs
 
 
+####################
+# Regression rules #
+####################
+setup: checkout_repos tests_dir
+	$(MAKE) -f $(HB_HAMMERBENCH_PATH)/apps/bfs/inputs.mk inputs
+
+EXECUTION_DIRS := $(foreach test,$(TESTS),$(HB_HAMMERBENCH_PATH)/apps/bfs/$(test))
+
+include $(HB_HAMMERBENCH_PATH)/apps/common_complex.mk
