@@ -97,6 +97,7 @@ kernel.riscv: kernel.rvo compute.rvo
 
 RISCV_DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_DEFINES += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+RISCV_DEFINES += -DLOCAL_SIZE=256
 RISCV_CCXXFLAGS += -O3
 #compute.rvo: RISCV_CFLAGS += -flto
 RISCV_LDFLAGS += -flto
