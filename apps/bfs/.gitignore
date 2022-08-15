@@ -5,3 +5,5 @@ inputs/
 *tgy/
 stack.info.*
 *.dat
+graph-tools
+hammerblade-helpers
