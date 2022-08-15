@@ -57,8 +57,8 @@ int Main(int argc, char *argv[])
     CL cl;
     cl.parse(argc, argv);
 
-    WGraph g_csr = WGraph::FromCSR("soc-Pokec","/work/global/zy383/Bladerunner6.4.0/bsg_replicant/examples/cuda/bfs/inputs/CSRfile/pokec/");
-    WGraph g_csc = WGraph::FromCSR("soc-Pokec","/work/global/zy383/Bladerunner6.4.0/bsg_replicant/examples/cuda/bfs/inputs/CSCfile/pokec/");
+    WGraph g_csr = WGraph::FromCSR("wiki-Vote","/mnt/users/ssd3/homes/mrutt/work/gather-paper-benchmarks/bsg_bladerunner/bsg_replicant/examples/hb_hammerbench/apps/bfs/inputs/CSR/wiki-Vote/");
+    WGraph g_csc = WGraph::FromCSR("wiki-Vote","/mnt/users/ssd3/homes/mrutt/work/gather-paper-benchmarks/bsg_bladerunner/bsg_replicant/examples/hb_hammerbench/apps/bfs/inputs/CSC/wiki-Vote/");
     //WGraph g_csr = WGraph::FromCSR("lgc_csr_float32","/work/global/zy383/Bladerunner6.4.0/bsg_replicant/examples/cuda/bfs/inputs/CSRfile/lgc_ista/");
     //WGraph g_csc = WGraph::FromCSR("lgc_csr_float32","/work/global/zy383/Bladerunner6.4.0/bsg_replicant/examples/cuda/bfs/inputs/CSCfile/lgc_ista/");
     //WGraph g_csr = WGraph::FromGraph500Data(Graph500Data::FromFile(cl.input_graph_path()));
@@ -82,7 +82,7 @@ int Main(int argc, char *argv[])
     float frontier_size = stats[iter].frontier_in().size();
     float num_nodes = bfsg_csr.graph().num_nodes();
     float frontier_density = frontier_size/num_nodes;
-    std::cout<<"density: "<<frontier_density<<"frontier size: "<<frontier_size<<"num_nodes:"<<num_nodes<<std::endl;
+    std::cout<<"density: "<<frontier_density<<" frontier size: "<<frontier_size<<" num_nodes:"<<num_nodes<<std::endl;
     //bsg_pr_info("Frontier density is %s, frontier size is %s, num of node is %s \n",std::to_string(frontier_density),std::to_string(frontier_size), std::to_string(num_nodes));
     BFSSparseSet frontier_in_sparse(stats[iter].frontier_in(), bfsg_csr.graph().num_nodes());
     BFSDenseSet  frontier_in_dense(stats[iter].frontier_in(), bfsg_csr.graph().num_nodes());

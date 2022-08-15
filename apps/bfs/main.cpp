@@ -64,16 +64,13 @@ int Main(int argc, char *argv[])
     std::string input_graph_name = cl.graph_type();
     int pod_ite = cl.pod_id();
     int num_pods = 64;
-    // read graph500 data
-    std::pair<Graph500Data, float*> data;
-    data = Graph500Data::FromMatrixMarketFile(input_graph_path + "/" + input_graph_name + ".mtx");    
-    Graph500Data gdata = data.first;
-    float *weights = data.second;
+
+    WGraph g_csr = WGraph::FromCSR("wiki-Vote","/mnt/users/ssd3/homes/mrutt/work/gather-paper-benchmarks/bsg_bladerunner/bsg_replicant/examples/hb_hammerbench/apps/bfs/inputs/CSR/wiki-Vote/");
+    WGraph g_csc = WGraph::FromCSR("wiki-Vote","/mnt/users/ssd3/homes/mrutt/work/gather-paper-benchmarks/bsg_bladerunner/bsg_replicant/examples/hb_hammerbench/apps/bfs/inputs/CSC/wiki-Vote/");    
     
-    WGraph g = WGraph::FromGraph500Data(gdata, weights);
     
     // load application
-    std::shared_ptr<WGraph> wgptr = std::shared_ptr<WGraph>(new WGraph(g));
+    std::shared_ptr<WGraph> wgptr = std::shared_ptr<WGraph>(new WGraph(g_csr));
     std::set<int> frontier = {cl.bfs_root()};
     std::set<int> visited = {cl.bfs_root()};
     SparsePushBFS bfs = SparsePushBFS(wgptr, frontier, visited); 
@@ -81,7 +78,7 @@ int Main(int argc, char *argv[])
     
     float frontier_size = bfs.frontier_in().size();
     std::cout<<"==================frontier_in size is "<<frontier_size<<"========================"<<std::endl;
-    int num_nodes = g.num_nodes();
+    int num_nodes = g_csr.num_nodes();
     float frontier_density = frontier_size/(float)num_nodes;
     int direction;//edge traversal direction, 0 for pull and 1 for push
     direction = (frontier_density>0.1) ? 0:1;
@@ -95,13 +92,8 @@ int Main(int argc, char *argv[])
     std::cout<<"=========================host out frontier size "<<frontier_out_host.size()<<"======================="<<std::endl;
     HB = HammerBlade::Get();
     HB->load_application(cl.binary_path());
-    
-    
-    WGraph g_csr = g;
-    WGraph g_csc = g.transpose();
-    
-    //decide the edge traversal direction
-    
+
+    //decide the edge traversal direction    
     BFSGraph bfsg_csc(g_csc);
     BFSGraph bfsg_csr(g_csr);
     //std::cout<<"=================================== graph fromated! =============================="<<std::endl;
@@ -167,7 +159,8 @@ int Main(int argc, char *argv[])
     //std::cout<<"===================================prepare complete!=============================="<<std::endl;
     // sync writes
     HB->sync_write();
-    bsg_pr_info("BFS iteration %d on %s graph with %d nodes and %d edges starting from root %d\n",
+    bsg_pr_info("BFS on pod %d: iteration %d on %s graph with %d nodes and %d edges starting from root %d\n",
+                pod_ite,
                 cl.bfs_iteration(),
                 cl.graph_type().c_str(),
                 bfsg_csr.num_nodes(),
