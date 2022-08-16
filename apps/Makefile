@@ -26,6 +26,7 @@ APPS += jacobi
 APPS += smith_waterman
 APPS += spgemm
 APPS += memcpy
+APPS += gups_rmw
 
 ###########################
 # directories of each app #
