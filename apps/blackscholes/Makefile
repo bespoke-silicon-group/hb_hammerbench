@@ -12,6 +12,7 @@ setup:
 	tar -xf parsec-3.0-input-sim.tar.gz
 	tar -xf parsec-3.0-input-native.tar.gz
 	cp parsec-3.0/pkgs/apps/blackscholes/inputs/* $(BLACKSCHOLES_DIR)/data
+	(cd data/; tar -xf input_native.tar)
 
 ##############################
 # CHANGE ME: IMPLEMENTATIONS #
