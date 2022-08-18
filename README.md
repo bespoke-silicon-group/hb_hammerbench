@@ -21,6 +21,21 @@ All applications live in the apps/ directory.
 
 Currently, go into each benchmark and follow the instructions to run it until you have run them all.
 
+### Creating a Benchmark with Parameter Sweeps
+
+If you want an easy way to setup a parameterizable testbench, a helper script exists in `mk/make_testbench.mk`.
+
+Here's how to use it:
+1. `cd apps/`
+2. `make -f ../mk/make_testbench.mk TESTBENCH="benchmark-name" PARAMETERS="first-parameter [second-parameter etc...]"`
+
+This will generate a template testbench from which multiple program executions can be run.
+You will need to do the following:
+
+1. `cd apps/[benchmark-name]`
+2. Edit `template.mk` to use the test parameters (these are included in the generated  `parameters.mk`)
+3. Edit main.c and kernel.cpp to implement your benchmark.
+
 ## Notes
 
 2022-07-26: 11 apps present, none working.
