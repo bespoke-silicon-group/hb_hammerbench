@@ -1,11 +1,31 @@
 #include <bsg_manycore.h>
 #include <bsg_cuda_lite_barrier.h>
 
+#ifdef WARM_CACHE
+#ifndef CACHE_LINE_WORDS
+#error "CACHE_LINE_WORDS not defined"
+#endif
+__attribute__((noinline))
+static int warmup(int *A, int *B, int N)
+{
+  for (int i = __bsg_id*CACHE_LINE_WORDS; i < N; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_WORDS) {
+      asm volatile ("lw x0, %[p]" :: [p] "m" (A[i]));
+      asm volatile ("lw x0, %[p]" :: [p] "m" (B[i]));
+  }
+  bsg_fence();
+  bsg_barrier_hw_tile_group_sync();
+  return 0;
+}
+#endif
+
 extern "C" __attribute__ ((noinline))
 int
 kernel_memcpy(int * A, int * B, int N) {
 
   bsg_barrier_hw_tile_group_init();
+#ifdef WARM_CACHE
+  warmup(A, B, N);
+#endif
   bsg_cuda_print_stat_kernel_start();
 
   bsg_fence();
