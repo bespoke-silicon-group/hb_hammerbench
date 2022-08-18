@@ -81,7 +81,7 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 #
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
-C_ARGS ?= $(BSG_MANYCORE_KERNELS)
+C_ARGS ?= $(BSG_MANYCORE_KERNELS) memcpy
 
 SIM_ARGS ?=
 
