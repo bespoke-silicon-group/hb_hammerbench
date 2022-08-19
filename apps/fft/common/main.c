@@ -132,9 +132,9 @@ int kernel_fft (int argc, char **argv) {
                 uint32_t N = NUM_POINTS;
 
                 eva_t A_device, B_device, TW_device;
-                BSG_CUDA_CALL(hb_mc_device_malloc(&device, N * sizeof(float complex), &A_device)); /* allocate A[N] on the device */
-                BSG_CUDA_CALL(hb_mc_device_malloc(&device, N * sizeof(float complex), &B_device)); /* allocate B[N] on the device */
-                BSG_CUDA_CALL(hb_mc_device_malloc(&device, N * sizeof(float complex), &TW_device)); /* allocate B[N] on the device */
+                BSG_CUDA_CALL(hb_mc_device_malloc(&device, N * sizeof(float complex) * NUM_ITER, &A_device)); /* allocate A[N] on the device */
+                BSG_CUDA_CALL(hb_mc_device_malloc(&device, N * sizeof(float complex) * NUM_ITER, &B_device)); /* allocate B[N] on the device */
+                BSG_CUDA_CALL(hb_mc_device_malloc(&device, N * sizeof(float complex), &TW_device)); /* allocate TW[N] on the device */
 
                 /*****************************************************************************************************************
                  * Allocate memory on the host for A and initialize with cosine values
@@ -161,33 +161,29 @@ int kernel_fft (int argc, char **argv) {
                     }
                 }
 
-                /*****************************************************************************************************************
-                 * Copy A from host onto device DRAM.
-                 ******************************************************************************************************************/
-
-                /* void *dst = (void *) ((intptr_t) A_device); */
-                /* void *src = (void *) &A_host[0]; */
-
-                hb_mc_dma_htod_t htod_A_job [] = {
+                // DMA Transfer A
+                for (int i = 0; i < NUM_ITER; i++) {
+                  hb_mc_dma_htod_t htod_A_job [] = {
                     {
-                        .d_addr = A_device,
-                        .h_addr = (void *) &A_host[0],
-                        .size   = N * sizeof(float complex)
-                    },
-                    {
-                        .d_addr = TW_device,
-                        .h_addr = (void *) &TW_host[0],
-                        .size   = N * sizeof(float complex)
+                      .d_addr = A_device + (sizeof(float complex)*N*i),
+                      .h_addr = (void *) &A_host[0],
+                      .size   = N * sizeof(float complex)
                     }
+                  };
+                  BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_A_job, 1));
+                }
+    
+                // DMA Transfer TW
+                hb_mc_dma_htod_t htod_TW_job [] = {
+                  {
+                    .d_addr = TW_device,
+                    .h_addr = (void *) &TW_host[0],
+                    .size   = N * sizeof(float complex)
+                  }
                 };
+                BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_TW_job, 1));
+          
 
-                BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_A_job, 2));
-                /* BSG_CUDA_CALL(hb_mc_device_memcpy (&device, dst, src, N * sizeof(float complex), HB_MC_MEMCPY_TO_DEVICE)); /1* Copy A to the device  *1/ */
-
-                BSG_CUDA_CALL(hb_mc_device_memcpy (&device, TW_device, &TW_host[0], N * sizeof(float complex), HB_MC_MEMCPY_TO_DEVICE));
-                
-                BSG_CUDA_CALL(hb_mc_device_memcpy (&device, A_device, &A_host[0], N * sizeof(float complex), HB_MC_MEMCPY_TO_DEVICE));
-                BSG_CUDA_CALL(hb_mc_device_memcpy (&device, B_device, &B_host[0], N * sizeof(float complex), HB_MC_MEMCPY_TO_DEVICE));
 
                 /*****************************************************************************************************************
                  * Define block_size_x/y: amount of work for each tile group
@@ -203,57 +199,55 @@ int kernel_fft (int argc, char **argv) {
                  * Prepare list of input arguments for kernel.
                  ******************************************************************************************************************/
 
-                uint32_t cuda_argv[4] = {A_device, B_device, TW_device, N};
+                #define CUDA_ARGC 5
+                uint32_t cuda_argv[CUDA_ARGC] = {A_device, B_device, TW_device, N, NUM_ITER};
 
                 /*****************************************************************************************************************
                  * Enquque grid of tile groups, pass in grid and tile group dimensions, kernel name, number and list of input arguments
                  ******************************************************************************************************************/
 
-                BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_fft", 4, cuda_argv));
+                BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_fft", CUDA_ARGC, cuda_argv));
 
                 /*****************************************************************************************************************
                  * Launch and execute all tile groups on device and wait for all to finish.
                  ******************************************************************************************************************/
                 hb_mc_manycore_trace_enable((&device)->mc);
-
                 BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(&device));
                 hb_mc_manycore_trace_disable((&device)->mc);
 
-                /*****************************************************************************************************************
-                 * Copy result matrix back from device DRAM into host memory.
-                 ******************************************************************************************************************/
 
-                /* src = (void *) ((intptr_t) B_device); */
-                /* dst = (void *) &B_host[0]; */
-                /* BSG_CUDA_CALL(hb_mc_device_memcpy (&device, (void *) dst, src, N * sizeof(float complex), HB_MC_MEMCPY_TO_HOST)); /1* copy B to the host *1/ */
+                // Verify FFT results.
+                for (int i = 0; i < NUM_ITER; i++) {
+                  // clear B host
+                  for (int j = 0; j < N; j++) {
+                    B_host[j] = 0.0f;
+                  }
+    
+                  hb_mc_dma_dtoh_t dtoh_B_job [] = {
+                    {
+                      .d_addr = B_device + (sizeof(float complex)*N*i),
+                      .h_addr = (void *) &B_host[0],
+                      .size   = N * sizeof(float complex)
+                    }
+                  };
 
-                hb_mc_dma_dtoh_t dtoh_A_job = {
-                        .d_addr = B_device,
-                        .h_addr = (void *) &B_host[0],
-                        .size   = N * sizeof(float complex)
-                };
+                  BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, &dtoh_B_job, 1));
 
-                BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, &dtoh_A_job, 1));
+                  int mismatch = verify_fft(B_host, N);
 
-                /*****************************************************************************************************************
-                 * Freeze the tiles and memory manager cleanup.
-                 ******************************************************************************************************************/
+                  if (mismatch) {
+                    BSG_CUDA_CALL(hb_mc_device_finish(&device));
+                    return HB_MC_FAIL;
+                  }
+                }
 
+                // Finish program.
                 BSG_CUDA_CALL(hb_mc_device_program_finish(&device));
 
-                /*****************************************************************************************************************
-                 * Verify the FFT results
-                 ******************************************************************************************************************/
-
-                int mismatch = verify_fft(B_host, N);
-
-                if (mismatch) {
-                        BSG_CUDA_CALL(hb_mc_device_finish(&device));
-                        return HB_MC_FAIL;
-                }
         }
-        BSG_CUDA_CALL(hb_mc_device_finish(&device));
 
+        // Finish device.
+        BSG_CUDA_CALL(hb_mc_device_finish(&device));
         return HB_MC_SUCCESS;
 }
 
