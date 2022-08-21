@@ -27,5 +27,5 @@ $(addsuffix /parameters.mk,$(TESTS_DIRS)): %/parameters.mk:
 
 include $(HB_HAMMERBENCH_PATH)/mk/testbench_common.mk
 
-EXECUTION_DIRS := (addprefix $(APP_PATH)/,$(TESTS_DIRS))
+EXECUTION_DIRS := $(addprefix $(APP_PATH)/,$(TESTS_DIRS))
 include $(HB_HAMMERBENCH_PATH)/apps/common_complex.mk

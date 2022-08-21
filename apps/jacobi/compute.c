@@ -1,20 +1,30 @@
 #include <bsg_manycore.h>
 #include "bsg_cuda_lite_barrier.h"
 #include <stdbool.h>
-//#define Index3D(nx,ny,nz,x,y,z) ((((y*nx)+x)*nz)+z)
-#define Index3D(nx,ny,nz,x,y,z) (((((y)*nx)+(x))*nz)+(z))
 
 __attribute__ ((always_inline)) 
-void copySelf(float bsg_attr_remote * bsg_attr_noalias src, float bsg_attr_remote * bsg_attr_noalias dst, int start_idx) {
+void copySelf(
+  float bsg_attr_remote * bsg_attr_noalias src,
+  float bsg_attr_remote * bsg_attr_noalias dst,
+  int start_idx,
+  int nz
+)
+{
   // set first
-  dst[0] = src[start_idx-1];
+  if (start_idx == 0) {
+    dst[0] = 0.0f;
+  } else {
+    dst[0] = src[start_idx-1];
+  }
 
   // set middle
-  float bsg_attr_remote * bsg_attr_noalias temp_dst = &dst[1];
-  float bsg_attr_remote * bsg_attr_noalias temp_src = &src[start_idx];
+  int line_id = __bsg_id / 16;
 
   bsg_unroll(1)
   for (int i = 0; i < (LOCAL_SIZE/16); i++) {
+    float bsg_attr_remote * bsg_attr_noalias temp_dst = &dst[1+(16*line_id)];
+    float bsg_attr_remote * bsg_attr_noalias temp_src = &src[start_idx+(16*line_id)];
+
     register float tmp00 =  temp_src[0];
     register float tmp01 =  temp_src[1];
     register float tmp02 =  temp_src[2];
@@ -48,31 +58,35 @@ void copySelf(float bsg_attr_remote * bsg_attr_noalias src, float bsg_attr_remot
     temp_dst[13] = tmp13;
     temp_dst[14] = tmp14;
     temp_dst[15] = tmp15;
-    temp_dst += 16;
-    temp_src += 16;
+    line_id = (line_id+1)%(LOCAL_SIZE/16);
   }
 
   // set last
-  temp_dst[0] = temp_src[0];
+  if (start_idx + LOCAL_SIZE == nz) {
+    dst[LOCAL_SIZE+1] = 0.0f;
+  } else {
+    dst[LOCAL_SIZE+1] = src[start_idx+LOCAL_SIZE];
+  }
+  
 }
 
 void compute (
   int c0, int c1,
-  float bsg_attr_remote * bsg_attr_noalias A0,
-  float bsg_attr_remote * bsg_attr_noalias Anext,
+  float bsg_attr_remote * bsg_attr_noalias dram_self,
+  float bsg_attr_remote * bsg_attr_noalias dram_next,
   float bsg_attr_remote * bsg_attr_noalias a_left,
   float bsg_attr_remote * bsg_attr_noalias a_right,
   float bsg_attr_remote * bsg_attr_noalias a_up,
   float bsg_attr_remote * bsg_attr_noalias a_down,
   float bsg_attr_remote * bsg_attr_noalias a_self,
-  const int nx, const int ny, const int nz
+  const int nz
 ) {
 
   float c0f = (float) c0;
   float c1f = (float) c1;
-  for (int ii = 0; ii < nz-2; ii += LOCAL_SIZE) {
+  for (int ii = 0; ii < nz; ii += LOCAL_SIZE) {
 
-    copySelf(&A0[Index3D(nx,ny,nz,__bsg_x,__bsg_y,0)], a_self, ii+1);
+    copySelf(dram_self, a_self, ii, nz);
     bsg_barrier_hw_tile_group_sync();
 
     // compute 4 at a time
@@ -133,10 +147,10 @@ void compute (
         : [rs1] "f" (next3), [rs2] "f" (c1f), [rs3] "f" (self3) \
       );
 
-      Anext[Index3D(nx,ny,nz,__bsg_x,__bsg_y,1+ii+i)] = next0; 
-      Anext[Index3D(nx,ny,nz,__bsg_x,__bsg_y,1+ii+i+1)] = next1; 
-      Anext[Index3D(nx,ny,nz,__bsg_x,__bsg_y,1+ii+i+2)] = next2; 
-      Anext[Index3D(nx,ny,nz,__bsg_x,__bsg_y,1+ii+i+3)] = next3; 
+      dram_next[ii+i] = next0; 
+      dram_next[ii+i+1] = next1; 
+      dram_next[ii+i+2] = next2; 
+      dram_next[ii+i+3] = next3; 
     }
 
     bsg_barrier_hw_tile_group_sync();
