@@ -23,7 +23,7 @@ void host_jacobi(int c0, int c1, float *A0, float * Anext,
   float c1f = (float) c1;
 	for(int x=0; x<nx; x++) {
 		for(int y=0; y<ny; y++) {
-			for(int z=1; z<nz-1; z++) {
+			for(int z=0; z<nz; z++) {
 
         float self = A0[Index3D(nx,ny,nz,x,y,z)];
         float xp1, xm1, yp1, ym1, zp1, zm1;
@@ -31,8 +31,8 @@ void host_jacobi(int c0, int c1, float *A0, float * Anext,
         if (x < (nx-1)) { xp1= A0[Index3D(nx,ny,nz,x+1,y,z)]; } else {xp1= 0.0f;}
         if (y > 0)    { ym1= A0[Index3D(nx,ny,nz,x,y-1,z)]; } else {ym1= 0.0f;}
         if (y < (ny-1)) { yp1= A0[Index3D(nx,ny,nz,x,y+1,z)]; } else {yp1= 0.0f;}
-        zm1= A0[Index3D(nx,ny,nz,x,y,z-1)];
-        zp1= A0[Index3D(nx,ny,nz,x,y,z+1)];
+        if (z > 0)    { zm1= A0[Index3D(nx,ny,nz,x,y,z-1)]; } else {zm1= 0.0f;}
+        if (z < (nz-1)) { zp1= A0[Index3D(nx,ny,nz,x,y,z+1)]; } else {zp1= 0.0f;}
 
         float neighbor = xm1+xp1+ym1+yp1+zm1+zp1;
         float jacobi =  (c1f*neighbor) - (c0f*self);
@@ -56,7 +56,7 @@ int kernel_jacobi (int argc, char **argv) {
   bin_path = args.path;
   test_name = args.name;
 
-  bsg_pr_test_info("Running the CUDA Jacobi Kernel on %dx%d tile groups.\n\n", TILE_GROUP_DIM_Y, TILE_GROUP_DIM_X);
+  bsg_pr_test_info("Running the CUDA Jacobi Kernel on %dx%d tile groups.\n\n", bsg_tiles_X, bsg_tiles_Y);
 
   srand(time);
 
@@ -72,12 +72,11 @@ int kernel_jacobi (int argc, char **argv) {
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
     // JACOBI:
-    // input 16 x 8 x 512 x Nw
-    int32_t Nx = 16;
-    int32_t Ny = 8;
-    int32_t Nz = 512+2; // adding pad of 2 to intentionally disalign the cache lines.
-    int32_t Nw = 1;
-    int32_t N  = Nx * Ny * Nz * Nw;
+    // input 16 x 8 x 512
+    int32_t Nx = NX;
+    int32_t Ny = NY;
+    int32_t Nz = NZ;
+    int32_t N  = Nx * Ny * Nz;
 
     eva_t A0_device, Anext_device;
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, N * sizeof(float), &A0_device));
@@ -98,10 +97,8 @@ int kernel_jacobi (int argc, char **argv) {
     for (int i = 0; i < N; i++) { // fill with 0
       Anext_expected[i] = 0.0f;
     }
-    for (int w = 0; w < Nw; w++) {
-      int start_idx = Nx*Ny*Nz*w;
-      host_jacobi(c0, c1, &A0_host[start_idx], &Anext_expected[start_idx], Nx, Ny, Nz);
-    }
+
+    host_jacobi(c0, c1, A0_host, Anext_expected, Nx, Ny, Nz);
 
     /*****************************************************************************************************************
     * Copy A0 from host onto device DRAM.
@@ -120,8 +117,6 @@ int kernel_jacobi (int argc, char **argv) {
     };
 
     BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_A_job, 2));
-    //BSG_CUDA_CALL(hb_mc_device_memcpy (&device, (void *) ((intptr_t) A0_device), (void *) &A0_host[0], N * sizeof(float), HB_MC_MEMCPY_TO_DEVICE));
-    //BSG_CUDA_CALL(hb_mc_device_memcpy (&device, (void *) ((intptr_t) Anext_device), (void *) &Anext_host[0], N * sizeof(float), HB_MC_MEMCPY_TO_DEVICE));
 
     /*****************************************************************************************************************
     * Define block_size_x/y: amount of work for each tile group
@@ -134,8 +129,8 @@ int kernel_jacobi (int argc, char **argv) {
     /*****************************************************************************************************************
     * Prepare list of input arguments for kernel.
     ******************************************************************************************************************/
-    #define CUDA_ARGC 8
-    int cuda_argv[CUDA_ARGC] = {c0, c1, A0_device, Anext_device, Nx, Ny, Nz, Nw};
+    #define CUDA_ARGC 7
+    int cuda_argv[CUDA_ARGC] = {c0, c1, A0_device, Anext_device, Nx, Ny, Nz};
 
     // Enqueue kernel.
     BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_jacobi", CUDA_ARGC, cuda_argv));
