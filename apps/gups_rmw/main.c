@@ -15,7 +15,6 @@
 
 #define ALLOC_NAME "default_allocator"
 
-#define SIZE (1024*1024*64) // in 64M word
 #define NUM_UPDATE 512
 #define MAX_NUM_TILE 128
 
@@ -36,13 +35,13 @@ int kernel_gups_rmw(int argc, char **argv) {
   BSG_CUDA_CALL(hb_mc_device_init(&device, test_name, 0));
 
   // Allocate a block of memory in host.
-  int * A_host = (int *) malloc(SIZE*sizeof(int));
+  int * A_host = (int *) malloc(A_SIZE*sizeof(int));
   int * X_host = (int *) malloc(NUM_UPDATE*MAX_NUM_TILE*sizeof(int));
-  for (int i = 0; i < SIZE; i++) {
+  for (int i = 0; i < A_SIZE; i++) {
     A_host[i] = i; 
   }
   for (int i = 0; i < NUM_UPDATE*MAX_NUM_TILE; i++) {
-    X_host[i] = rand() % SIZE;
+    X_host[i] = rand() % A_SIZE;
   }
 
 
@@ -56,7 +55,7 @@ int kernel_gups_rmw(int argc, char **argv) {
 
     // Allocate a block of memory in device.
     eva_t A_device, X_device;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, SIZE * sizeof(int), &A_device));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, A_SIZE * sizeof(int), &A_device));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, NUM_UPDATE * MAX_NUM_TILE * sizeof(int), &X_device));
   
  
@@ -65,7 +64,7 @@ int kernel_gups_rmw(int argc, char **argv) {
       {
         .d_addr = A_device,
         .h_addr = (void *) &A_host[0],
-        .size = SIZE * sizeof(int)
+        .size = A_SIZE * sizeof(int)
       },
       {
         .d_addr = X_device,
