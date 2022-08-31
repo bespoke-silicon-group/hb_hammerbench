@@ -4,6 +4,22 @@
 #define MAX_UPDATES 512
 #define CONCURRENCY 4
 
+#ifdef WARM_CACHE
+#define CACHE_LINE_WORDS 16
+__attribute__((noinline))
+static int warmup(int *A, int N)
+{
+  for (int i = __bsg_id*CACHE_LINE_WORDS; i < N; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_WORDS) {
+    asm volatile ("lw x0, %[p]" :: [p] "m" (A[i]));
+  }
+  bsg_fence();
+  bsg_barrier_hw_tile_group_sync();
+  return 0;
+
+}
+#endif
+
+
 int LOCAL_X[MAX_UPDATES];
 
 extern "C" __attribute__ ((noinline))
@@ -20,6 +36,9 @@ kernel_gups_rmw(int * dram_A, int * dram_X, int num_update) {
 
   bsg_barrier_hw_tile_group_sync();
 
+#ifdef WARM_CACHE
+  warmup(dram_A, A_SIZE);
+#endif
 
   // Run gups
   bsg_cuda_print_stat_kernel_start();
