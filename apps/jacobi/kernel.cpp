@@ -22,7 +22,7 @@
 __attribute__ ((noinline))
 static int warmup(float *A0, float *Anext, int nx, int ny, int nz)
 {
-  for (int i = __bsg_id*CACHE_LINE_WORDS; i < nz*ny*nz; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_WORDS) {
+  for (int i = __bsg_id*CACHE_LINE_WORDS; i < nx*ny*nz; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_WORDS) {
       asm volatile ("lw x0, %[p]" :: [p] "m" (A0[i]));
       asm volatile ("lw x0, %[p]" :: [p] "m" (Anext[i]));
   }
