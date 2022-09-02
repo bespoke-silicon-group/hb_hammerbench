@@ -116,24 +116,11 @@ int kernel_matrix_mul (int argc, char **argv) {
         //************************************************************
         hb_mc_host_tensor_t<float> Hmat1, Hmat2, Hout, Hresult;
 
-        // 256 x 256 x 256
-        uint32_t M = BLOCK_DIM * dev_dim.y;
-        uint32_t N = BLOCK_DIM * 16;
-        uint32_t P = BLOCK_DIM * dev_dim.x;
+        // default: M = 128, N = 256, P = 256
+        uint32_t M = SIZE_M;
+        uint32_t N = SIZE_N;
+        uint32_t P = SIZE_P;
 
-        /*
-        // 768 x 768 x 768
-        uint32_t M = BLOCK_DIM * dev_dim.y * 6;
-        uint32_t N = BLOCK_DIM * 48;
-        uint32_t P = BLOCK_DIM * dev_dim.x * 3;
-        */
-
-        /*
-        // 64 x 32 x 512
-        uint32_t M = BLOCK_DIM * dev_dim.y;
-        uint32_t N = BLOCK_DIM * 4;
-        uint32_t P = BLOCK_DIM * dev_dim.x * 4;
-        */
 
         bsg_pr_info("Matrix Dimensions: %d x %d x %d \n", M, N, P);
 
@@ -254,6 +241,9 @@ int kernel_matrix_mul (int argc, char **argv) {
         //************************************************************
         // Copy mat1 and mat2, from host onto device
         //************************************************************
+                
+
+
         void *dst, *src;
         hb_mc_dma_htod_t htod;
         hb_mc_dma_dtoh_t dtoh;
@@ -284,21 +274,6 @@ int kernel_matrix_mul (int argc, char **argv) {
                 return rc;
         }
 
-        dst = (void *) ((intptr_t) mat1.data);
-        src = (void *) Hmat1.data;
-
-        /*
-        rc = hb_mc_device_memcpy (&device, dst, src, Hmat1.N * sizeof(*Hmat1.data), HB_MC_MEMCPY_TO_DEVICE);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("Failed to copy mat1.data to device.\n");
-                return rc;
-        }*/
-
-        htod.d_addr = mat1.data;
-        htod.h_addr = src;
-        htod.size   = Hmat1.N * sizeof(*Hmat1.data);
-
-        BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, &htod, 1));
 
         // Copy mat2
         bsg_pr_info("Copying mat2\n");
@@ -326,20 +301,6 @@ int kernel_matrix_mul (int argc, char **argv) {
                 return rc;
         }
 
-        dst = (void *) ((intptr_t) mat2.data);
-        src = (void *) Hmat2.data;
-        /*
-        rc = hb_mc_device_memcpy (&device, dst, src, Hmat2.N * sizeof(*Hmat2.data), HB_MC_MEMCPY_TO_DEVICE);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("Failed to copy mat2.data to device.\n");
-                return rc;
-        }*/
-
-        htod.d_addr = mat2.data;
-        htod.h_addr = src;
-        htod.size   = Hmat2.N * sizeof(*Hmat2.data);
-
-        BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, &htod, 1));
 
 
         // Copy out
@@ -368,28 +329,53 @@ int kernel_matrix_mul (int argc, char **argv) {
                 return rc;
         }
 
-        // Copying data is not necessary
-        /*
-          dst = (void *) ((intptr_t) out.data);
-          src = (void *) Hout.data;
-          rc = hb_mc_device_memcpy (&device, dst, src, Hout.N * sizeof(*Hout.data), HB_MC_MEMCPY_TO_DEVICE);
-          if (rc != HB_MC_SUCCESS) {
+
+#ifdef WARM_CACHE
+        dst = (void *) ((intptr_t) mat1.data);
+        src = (void *) Hmat1.data;
+        rc = hb_mc_device_memcpy (&device, dst, src, Hmat1.N * sizeof(*Hmat1.data), HB_MC_MEMCPY_TO_DEVICE);
+        if (rc != HB_MC_SUCCESS) {
+          bsg_pr_err("Failed to copy mat1.data to device.\n");
+          return rc;
+        }
+        dst = (void *) ((intptr_t) mat2.data);
+        src = (void *) Hmat2.data;
+        rc = hb_mc_device_memcpy (&device, dst, src, Hmat2.N * sizeof(*Hmat2.data), HB_MC_MEMCPY_TO_DEVICE);
+        if (rc != HB_MC_SUCCESS) {
+          bsg_pr_err("Failed to copy mat2.data to device.\n");
+          return rc;
+        }
+        dst = (void *) ((intptr_t) out.data);
+        src = (void *) Hout.data;
+        rc = hb_mc_device_memcpy (&device, dst, src, Hout.N * sizeof(*Hout.data), HB_MC_MEMCPY_TO_DEVICE);
+        if (rc != HB_MC_SUCCESS) {
           bsg_pr_err("Failed to copy out.data to device.\n");
           return rc;
-          }
-        */
+        }
+#else
+        htod.d_addr = mat1.data;
+        htod.h_addr = (void *) Hmat1.data;
+        htod.size   = Hmat1.N * sizeof(*Hmat1.data);
+        BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, &htod, 1));
+        htod.d_addr = mat2.data;
+        htod.h_addr = (void *) Hmat2.data;
+        htod.size   = Hmat2.N * sizeof(*Hmat2.data);
+        BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, &htod, 1));
+#endif
+
 
         //************************************************************
         // Prepare list of mat1 arguments for kernel.
         //************************************************************
-        uint32_t cuda_argv[3] = {_out, _mat1, _mat2};
+        #define CUDA_ARGC 3
+        uint32_t cuda_argv[CUDA_ARGC] = {_out, _mat1, _mat2};
 
         //************************************************************
         // Enquque grid of tile groups, pass in grid and tile group
         // dimensions, kernel name, number and list of mat1 arguments
         //************************************************************
         bsg_pr_info("Enqueue Kernel\n");
-        rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_mm_opt", sizeof(cuda_argv)/sizeof(cuda_argv[0]), cuda_argv);
+        rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_mm_opt", CUDA_ARGC, cuda_argv);
         if (rc != HB_MC_SUCCESS) { 
                 bsg_pr_err("failed to initialize grid.\n");
                 return rc;
@@ -482,15 +468,5 @@ int kernel_matrix_mul (int argc, char **argv) {
         return HB_MC_SUCCESS;
 }
 
-#ifdef VCS
-int vcs_main(int argc, char ** argv) {
-#else
-        int main(int argc, char ** argv) {
-#endif
-                bsg_pr_test_info("test_matrix_mul Regression Test\n");
-                int rc = kernel_matrix_mul(argc, argv);
-                bsg_pr_test_pass_fail(rc == HB_MC_SUCCESS);
-                return rc;
-        }
 
-
+declare_program_main("sgemm",kernel_matrix_mul)
