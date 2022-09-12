@@ -1,35 +1,3 @@
-##################################################################################
-# BSD 3-Clause License								 #
-# 										 #
-# Copyright (c) 2022, Bespoke Silicon Group					 #
-# All rights reserved.								 #
-# 										 #
-# Redistribution and use in source and binary forms, with or without		 #
-# modification, are permitted provided that the following conditions are met:	 #
-# 										 #
-# 1. Redistributions of source code must retain the above copyright notice, this #
-#    list of conditions and the following disclaimer.				 #
-# 										 #
-# 2. Redistributions in binary form must reproduce the above copyright notice,	 #
-#    this list of conditions and the following disclaimer in the documentation	 #
-#    and/or other materials provided with the distribution.			 #
-# 										 #
-# 3. Neither the name of the copyright holder nor the names of its		 #
-#    contributors may be used to endorse or promote products derived from	 #
-#    this software without specific prior written permission.			 #
-# 										 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	 #
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE	 #
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE #
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE	 #
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL	 #
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR	 #
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER	 #
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,	 #
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE	 #
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.		 #
-##################################################################################
-
 # This Makefile compiles, links, and executes examples Run `make help`
 # to see the available targets for the selected platform.
 
@@ -46,27 +14,34 @@
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
-SPMD_SRC_PATH = $(BSG_MANYCORE_DIR)/software/spmd
-
-
-# KERNEL_NAME is the name of the CUDA-Lite Kernel
-KERNEL_NAME = matmul_blocked
-
 ###############################################################################
 # Host code compilation flags and flow
 ###############################################################################
+# import parameters and APP_PATH
+include parameters.mk
+include app_path.mk
 
-# TEST_SOURCES is a list of source files that need to be compiled
-TEST_SOURCES = main.cpp
-BLOCK_DIM = 16
 # Tile Group Dimensions
 TILE_GROUP_DIM_X = 16
 TILE_GROUP_DIM_Y = 8
+BLOCK_DIM = 16
+
+vpath %.c   $(APP_PATH)
+vpath %.cpp $(APP_PATH)
+
+TEST_SOURCES = main.cpp
+
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE -DBLOCK_DIM=$(BLOCK_DIM)
 DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 DEFINES += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+DEFINES += -DSIZE_M=$(size-m)
+DEFINES += -DSIZE_N=$(size-n)
+DEFINES += -DSIZE_P=$(size-p)
 CDEFINES += 
 CXXDEFINES += 
+ifeq ($(warm-cache),yes)
+DEFINES += -DWARM_CACHE
+endif
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
 CFLAGS   += -std=gnu99 $(FLAGS)
@@ -92,7 +67,7 @@ include $(EXAMPLES_PATH)/link.mk
 # be built before executing.
 BSG_MANYCORE_KERNELS = kernel.riscv
 
-RISCV_INCLUDES += -I.
+RISCV_INCLUDES += -I..
 # To switch between g++ and clang, uncomment the line below. g++ is
 # the default. To view the disassembly, type `make kernel.dis`
 
@@ -104,6 +79,13 @@ RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_DEFINES += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_DEFINES += -DBLOCK_DIM=$(BLOCK_DIM)
+ifeq ($(warm-cache),yes)
+RISCV_CCPPFLAGS += -DWARM_CACHE
+endif
+ifeq ($(prefetch),yes)
+RISCV_CCPPFLAGS += -DPREFETCH
+endif
+RISCV_LDFLAGS += -flto
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 
@@ -115,7 +97,7 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 #
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
-C_ARGS ?= $(BSG_MANYCORE_KERNELS) $(KERNEL_NAME)
+C_ARGS ?= $(BSG_MANYCORE_KERNELS) matmul_blocked
 
 SIM_ARGS ?=
 
