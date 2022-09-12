@@ -5,13 +5,14 @@ all: generate
 
 
 # call to generate a test name
-test-name = size-m_$(1)__size-n_$(2)__size-p_$(3)__warm-cache_$(4)
+test-name = size-m_$(1)__size-n_$(2)__size-p_$(3)__warm-cache_$(4)__prefetch_$(5)
 
 # call to get parameter from test name
 get-size-m= $(lastword $(subst _, ,$(filter size-m_%,$(subst __, ,$(1)))))
 get-size-n= $(lastword $(subst _, ,$(filter size-n_%,$(subst __, ,$(1)))))
 get-size-p= $(lastword $(subst _, ,$(filter size-p_%,$(subst __, ,$(1)))))
 get-warm-cache= $(lastword $(subst _, ,$(filter warm-cache_%,$(subst __, ,$(1)))))
+get-prefetch= $(lastword $(subst _, ,$(filter prefetch_%,$(subst __, ,$(1)))))
 
 # defines tests
 TESTS =
@@ -28,6 +29,7 @@ $(addsuffix /parameters.mk,$(TESTS_DIRS)): %/parameters.mk:
 	@echo size-n  = $(call get-size-n,$*) >> $@
 	@echo size-p  = $(call get-size-p,$*) >> $@
 	@echo warm-cache = $(call get-warm-cache,$*) >> $@
+	@echo prefetch = $(call get-prefetch,$*) >> $@
 
 include $(HB_HAMMERBENCH_PATH)/mk/testbench_common.mk
 

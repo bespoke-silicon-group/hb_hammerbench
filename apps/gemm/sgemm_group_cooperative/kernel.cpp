@@ -645,7 +645,10 @@ __attribute__((no_builtin("memcpy", "memset")))
                         // cost? Putting it in the inner-loop (above)
                         // adds an if-check and (likely) a branch
                         // miss.
+                        // bsg-tommy: prefetch not required, for cache-resident runs, and for write-validate vcache.
+                        #ifdef PREFETCH
                         prefetch<BY, BX>(result, result_strides, by_i * BSG_TILE_GROUP_Y_DIM + __bsg_y, bx_i * BSG_TILE_GROUP_X_DIM + __bsg_x);
+                        #endif
                         store_block_and_reset<BY, BX>(block_out, result, result_strides, by_i * BSG_TILE_GROUP_Y_DIM + __bsg_y, bx_i * BSG_TILE_GROUP_X_DIM + __bsg_x);
                 }
         }

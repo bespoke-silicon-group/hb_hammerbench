@@ -283,7 +283,7 @@ __attribute__((no_builtin("memcpy", "memset")))
         // Start profiling
         bsg_barrier_hw_tile_group_sync();
         bsg_cuda_print_stat_kernel_start();
-        bsg_cuda_print_stat_start(1);
+        //bsg_cuda_print_stat_start(1);
 
         // Iterate through available output blocks in row-major order
  block_y_loop:
@@ -302,12 +302,15 @@ __attribute__((no_builtin("memcpy", "memset")))
                         // Store the result, AND zero the block_out array
                         // to leverage parallel remote and local
                         // stores.
+                        // bsg-tommy: prefetch not required, for cache-resident runs, and for write-validate vcache.
+                        #ifdef PREFETCH
                         prefetch<BY, BX>(result, result_strides, by_i, bx_i);
+                        #endif
                         store_block_and_reset<BY, BX>(block_out, result, result_strides, by_i, bx_i);
                 }
         }
 
-        bsg_cuda_print_stat_end(1);
+        //bsg_cuda_print_stat_end(1);
         // End profiling
         bsg_barrier_hw_tile_group_sync();
         bsg_cuda_print_stat_kernel_end();

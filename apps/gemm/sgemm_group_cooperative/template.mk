@@ -86,6 +86,9 @@ RISCV_DEFINES += -DBLOCK_DIM=$(BLOCK_DIM)
 ifeq ($(warm-cache),yes)
 RISCV_CCPPFLAGS += -DWARM_CACHE
 endif
+ifeq ($(prefetch),yes)
+RISCV_CCPPFLAGS += -DPREFETCH
+endif
 RISCV_LDFLAGS += -flto
 #RISCV_TARGET_OBJECTS = kernel.rvo
 
