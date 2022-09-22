@@ -18,7 +18,7 @@ void copySelf(
   }
 
   // set middle
-  int line_id = __bsg_id / 16;
+  int line_id = __bsg_id % (LOCAL_SIZE/16);
 
   bsg_unroll(1)
   for (int i = 0; i < (LOCAL_SIZE/16); i++) {
@@ -93,25 +93,58 @@ void compute (
     bsg_unroll(1)
     for (int i = 0; i < LOCAL_SIZE; i += 4) {
       int self_idx = i+1;
-      register float left0 = a_left[i];
-      register float right0 = a_right[i];
-      register float up0 = a_up[i];
-      register float down0 = a_down[i];
+      register float left0, left1, left2, left3;
+      register float right0, right1, right2, right3;
+      register float up0, up1, up2, up3;
+      register float down0, down1, down2, down3;
 
-      register float left1 = a_left[i+1];
-      register float right1 = a_right[i+1];
-      register float up1 = a_up[i+1];
-      register float down1 = a_down[i+1];
+      if (a_left == 0) {
+        left0 = 0.0f;
+        left1 = 0.0f;
+        left2 = 0.0f;
+        left3 = 0.0f;
+      } else {
+        left0 = a_left[i];
+        left1 = a_left[i+1];
+        left2 = a_left[i+2];
+        left3 = a_left[i+3];
+      }
 
-      register float left2 = a_left[i+2];
-      register float right2 = a_right[i+2];
-      register float up2 = a_up[i+2];
-      register float down2 = a_down[i+2];
+      if (a_right == 0) {
+        right0 = 0.0f;
+        right1 = 0.0f;
+        right2 = 0.0f;
+        right3 = 0.0f;
+      } else {
+        right0 = a_right[i];
+        right1 = a_right[i+1];
+        right2 = a_right[i+2];
+        right3 = a_right[i+3];
+      }
 
-      register float left3 = a_left[i+3];
-      register float right3 = a_right[i+3];
-      register float up3 = a_up[i+3];
-      register float down3 = a_down[i+3];
+      if (a_up == 0) {
+        up0 = 0.0f;
+        up1 = 0.0f;
+        up2 = 0.0f;
+        up3 = 0.0f;
+      } else {
+        up0 = a_up[i];
+        up1 = a_up[i+1];
+        up2 = a_up[i+2];
+        up3 = a_up[i+3];
+      }
+
+      if (a_down == 0) {
+        down0 = 0.0f;
+        down1 = 0.0f;
+        down2 = 0.0f;
+        down3 = 0.0f;
+      } else {
+        down0 = a_down[i];
+        down1 = a_down[i+1];
+        down2 = a_down[i+2];
+        down3 = a_down[i+3];
+      }
 
       register float bot = a_self[self_idx-1];
       register float self0 = a_self[self_idx];

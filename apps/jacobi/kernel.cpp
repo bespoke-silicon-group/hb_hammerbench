@@ -35,7 +35,6 @@ static int warmup(float *A0, float *Anext, int nx, int ny, int nz)
 
 
 float a_self[LOCAL_SIZE+2]    = {0.0f};
-float zero_buffer[LOCAL_SIZE] = {0.0f};
 
 
 extern "C" void compute(
@@ -90,7 +89,7 @@ int kernel_jacobi(
       // Figure out the remote pointers
       if (x_l_bound) {
         if (bx == 0) {
-          a_left = zero_buffer;
+          a_left = 0;
         } else {
           a_left = &A0[Index3D(nx,ny,nz, bx-1, by+__bsg_y, 0)];
         }
@@ -100,7 +99,7 @@ int kernel_jacobi(
 
       if (x_h_bound) {
         if (bx == nx-bsg_tiles_X) {
-          a_right = zero_buffer;
+          a_right = 0;
         } else {
           a_right = &A0[Index3D(nx,ny,nz, bx+bsg_tiles_X, by+__bsg_y, 0)];
         }
@@ -110,7 +109,7 @@ int kernel_jacobi(
 
       if (y_l_bound) {
         if (by == 0) {
-          a_down = zero_buffer;
+          a_down = 0;
         } else {
           a_down = &A0[Index3D(nx,ny,nz, bx+__bsg_x, by-1, 0)];
         }
@@ -120,7 +119,7 @@ int kernel_jacobi(
 
       if (y_h_bound) {
         if (by == ny-bsg_tiles_Y) {
-          a_up   = zero_buffer;
+          a_up   = 0;
         } else {
           a_up   = &A0[Index3D(nx,ny,nz, bx+__bsg_x, by+bsg_tiles_Y, 0)];
         }
@@ -130,7 +129,6 @@ int kernel_jacobi(
 
       dram_self = &A0[Index3D(nx,ny,nz, bx+__bsg_x, by+__bsg_y, 0)];
       dram_next = &Anext[Index3D(nx,ny,nz, bx+__bsg_x, by+__bsg_y, 0)];
-
 
       compute(c0, c1,
         dram_self, dram_next,
