@@ -18,7 +18,7 @@ void copySelf(
   }
 
   // set middle
-  int line_id = __bsg_id / 16;
+  int line_id = __bsg_id % (LOCAL_SIZE/16);
 
   bsg_unroll(1)
   for (int i = 0; i < (LOCAL_SIZE/16); i++) {
