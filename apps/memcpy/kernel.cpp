@@ -30,7 +30,17 @@ kernel_memcpy(int * A, int * B, int N) {
 
   bsg_fence();
 
-  for (int i = __bsg_id*16; i < N; i += bsg_tiles_X*bsg_tiles_Y*16) {
+  #define DEVICE_X 16
+  #define DEVICE_Y 8
+  int start_id = __bsg_x;
+  if (__bsg_y < 4) {
+    start_id += (__bsg_y*2)*DEVICE_X;
+  } else {
+    start_id += (((__bsg_y-4)*2)+1)*DEVICE_X;
+  }
+  
+
+  for (int i = start_id*16; i < N; i += bsg_tiles_X*bsg_tiles_Y*16) {
     register int tmp00 = A[i+0];
     register int tmp01 = A[i+1];
     register int tmp02 = A[i+2];

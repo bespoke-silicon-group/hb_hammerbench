@@ -53,10 +53,20 @@ int kernel_memcpy(int argc, char **argv) {
       A_host[i] = i;
     }
 
+    // make it pod-cache aligned
+    eva_t temp_device1, temp_device2;
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(int), &temp_device1));
+    printf("temp Addr: %x\n", temp_device1);
+    int align_size = (32)-1-((temp_device1>>2)%(CACHE_LINE_WORDS*32)/CACHE_LINE_WORDS);
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, align_size*sizeof(int)*CACHE_LINE_WORDS, &temp_device2));
+    
     // Allocate a block of memory in device.
     eva_t A_device, B_device;
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, SIZE * sizeof(int), &A_device));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, SIZE * sizeof(int), &B_device));
+
+    printf("A Addr: %x\n", A_device);
+    printf("B Addr: %x\n", B_device);
   
  
     // DMA Transfer to device.
