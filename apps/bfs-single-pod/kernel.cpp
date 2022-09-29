@@ -86,17 +86,38 @@ int g_mf = 0;
 #define pr_dbg(fmt, ...)
 #endif
 
+#define pfor_break                              \
+    do {return 1;} while (0)
+
+template <typename BodyT>
+static inline void parallel_foreach_static(int START, int STOP, int STEP, BodyT body)
+{
+    for (int i = START+__bsg_id*STEP; i < STOP; i += STEP*bsg_tiles_X*bsg_tiles_Y) {
+        if (body(i)) break;
+    }
+}
+
+template <typename BodyT>
+static inline void parallel_foreach_dynamic(int &START, int STOP, int STEP, BodyT body) {
+    for (int i = bsg_amoadd(&START, STEP);
+         i < STOP;
+         i = bsg_amoadd(&START, STEP)) {
+        if (body(i)) break;
+    }
+}
+
 static inline void zero_dense_set(int *set)
 {
     bsg_barrier_hw_tile_group_sync();
     static constexpr int STRIDE = 32*BLOCK_WORDS;
-    for (int v_start = __bsg_id*STRIDE; v_start < V; v_start += STRIDE*bsg_tiles_X*bsg_tiles_Y) {
-        int v_stop = v_start + STRIDE;
-        for (int v = v_start; v < v_stop; v += 32) {
-            int idx = v/32;
-            set[idx] = 0;
-        }
-    }
+    parallel_foreach_static(0, V, STRIDE, [=](int v_start){
+            int v_stop = v_start+STRIDE;
+            for (int v = v_start; v < v_stop; v += 32) {
+                int idx = v/32;
+                set[idx] = 0;
+            }
+            return 0;
+        });
     bsg_barrier_hw_tile_group_sync();
 }
 
@@ -126,29 +147,29 @@ static inline int *to_sparse(int *set, int set_size, int set_is_dense)
         });
     if (set_is_dense) {
         static constexpr int STRIDE = BLOCK_WORDS*32;
-        int members[STRIDE];
-        int members_size = 0;
-        for (int v_start = __bsg_id*STRIDE; v_start < V; v_start += bsg_tiles_X*bsg_tiles_Y) {
-            int v_stop = v_start + STRIDE;
-            for (int v = v_start; v < v_stop; v += 32) {
-                int idx = v/32;
-                int w = set[idx];
-                for (int m = 0; m < 32; m++) {
-                    if (w & (1<<m)) {
-                        members[members_size++] = v+m;
+        parallel_foreach_static(0, V, STRIDE, [=](int v_start){
+                int members[STRIDE];
+                int members_size = 0;                
+                int v_stop = v_start + STRIDE;
+                for (int v = v_start; v < v_stop; v += 32) {
+                    int idx = v/32;
+                    int w = set[idx];
+                    for (int m = 0; m < 32; m++) {
+                        if (w & (1<<m)) {
+                            members[members_size++] = v+m;
+                        }
                     }
                 }
-            }
-            int start = bsg_amoadd(&new_set_size, members_size);
-            if (start >= set_size){
-                break;
-            } else if (members_size > 0) {
-                for (int m = 0; m < members_size; m++) {
-                    g_dense_to_sparse_set[start+m] = members[m];
+                int start = bsg_amoadd(&new_set_size, members_size);
+                if (start >= set_size){
+                    pfor_break;
+                } else if (members_size > 0) {
+                    for (int m = 0; m < members_size; m++) {
+                        g_dense_to_sparse_set[start+m] = members[m];
+                    }
                 }
-                members_size = 0;
-            }
-        }
+                return 0;
+            });
         serial (
             {
                 pr_int_dbg(3000000+set_size);
@@ -174,9 +195,10 @@ static inline int *to_dense(int *set, int set_size, int set_is_dense)
         return set;
     } else {
         zero_dense_set(g_sparse_to_dense_set);
-        for (int m = __bsg_id; m < set_size; m += bsg_tiles_X*bsg_tiles_Y) {
-            insert_into_dense(set[m], g_sparse_to_dense_set, &new_set_size);
-        }
+        parallel_foreach_static(0, set_size, 1, [=](int m){
+                insert_into_dense(set[m], g_sparse_to_dense_set, &new_set_size);
+                return 0;
+            });
         bsg_barrier_hw_tile_group_sync();
         return g_sparse_to_dense_set;
     }
@@ -234,27 +256,29 @@ int kernel()
             }); 
         // 1. find sum (degree in frontier)
         int mf_local = 0;
-        for (int m = __bsg_id; m < g_curr_frontier_size; m += bsg_tiles_X*bsg_tiles_Y) {
-            // pr_dbg("m = %d, sparse_frontier[%d]=%d\n", m, m, sparse_frontier[m]);
-            // pr_dbg("fwd_offsets[%d+1]=%d, fwd_offsets[%d]=%d\n",
-            //        sparse_frontier[m],
-            //        fwd_offsets[sparse_frontier[m]+1],
-            //        sparse_frontier[m],
-            //        fwd_offsets[sparse_frontier[m]]
-            //     );
-            mf_local += fwd_offsets[sparse_frontier[m]+1]-fwd_offsets[sparse_frontier[m]];
-        }
+        parallel_foreach_static(0, g_curr_frontier_size, 1, [=](int m) mutable {
+                // pr_dbg("m = %d, sparse_frontier[%d]=%d\n", m, m, sparse_frontier[m]);
+                // pr_dbg("fwd_offsets[%d+1]=%d, fwd_offsets[%d]=%d\n",
+                //        sparse_frontier[m],
+                //        fwd_offsets[sparse_frontier[m]+1],
+                //        sparse_frontier[m],
+                //        fwd_offsets[sparse_frontier[m]]
+                //     );
+                mf_local += fwd_offsets[sparse_frontier[m]+1]-fwd_offsets[sparse_frontier[m]];
+                return 0;
+            });
         bsg_amoadd(&g_mf, mf_local);
         // 2. find sum (degree unvisited)
         int mu_local;
-        for (int v = __bsg_id; v < V; v += bsg_tiles_X*bsg_tiles_Y) {
-            // pr_dbg("v = %d, distance[%d]=%d\n", v, v, distance[v]);
-            if (distance[v] == -1) {
-                // pr_dbg("fwd_offsets[%d+1]=%d, fwd_offsets[%d]=%d\n",
-                //        v, fwd_offsets[v+1], v, fwd_offsets[v]);
-                mu_local += fwd_offsets[v+1]-fwd_offsets[v];
-            }
-        }
+        parallel_foreach_static(0, V, 1, [=](int v) mutable {
+                // pr_dbg("v = %d, distance[%d]=%d\n", v, v, distance[v]);
+                if (distance[v] == -1) {
+                    // pr_dbg("fwd_offsets[%d+1]=%d, fwd_offsets[%d]=%d\n",
+                    //        v, fwd_offsets[v+1], v, fwd_offsets[v]);
+                    mu_local += fwd_offsets[v+1]-fwd_offsets[v];
+                }
+                return 0;
+            });
         bsg_amoadd(&g_mu, mu_local);
         // 3. compare
         serial(
@@ -275,46 +299,46 @@ int kernel()
             int *dense_frontier = to_dense(g_curr_frontier,
                                            g_curr_frontier_size,
                                            g_curr_frontier_dense);
-            for (int dst_start = bsg_amoadd(&g_dst, BLOCK_WORDS);
-                 dst_start < V;
-                 dst_start = bsg_amoadd(&g_dst, BLOCK_WORDS)) {
-                int dst_stop = dst_start + BLOCK_WORDS;
-                dst_stop = std::min(dst_stop, V);
-                for (int dst = dst_start; dst < dst_stop; dst++) {
-                    // skip if visited already
-                    if (distance[dst] == -1) {
-                        int nz_start = rev_offsets[dst];
-                        int nz_stop  = rev_offsets[dst+1];
-                        for (int nz = nz_start; nz < nz_stop; nz++) {
-                            int src = rev_nonzeros[nz];
-                            pr_int_dbg(2000000+src);                            
-                            if (in_dense(src, dense_frontier)) {
-                                distance[dst] = d;
-                                pr_dbg("discoverd %d, d=%d\n", dst, d);
-                                pr_int_dbg(1000000+dst);
-                                insert_into_dense(dst, g_next_frontier, &g_next_frontier_size);
-                                break;
+            parallel_foreach_dynamic(g_dst, V, BLOCK_WORDS, [=](int dst_start){
+                    int dst_stop = dst_start + BLOCK_WORDS;
+                    dst_stop = std::min(dst_stop, V);
+                    for (int dst = dst_start; dst < dst_stop; dst++) {
+                        // skip if visited already
+                        if (distance[dst] == -1) {
+                            int nz_start = rev_offsets[dst];
+                            int nz_stop  = rev_offsets[dst+1];
+                            for (int nz = nz_start; nz < nz_stop; nz++) {
+                                int src = rev_nonzeros[nz];
+                                pr_int_dbg(2000000+src);                            
+                                if (in_dense(src, dense_frontier)) {
+                                    distance[dst] = d;
+                                    pr_dbg("discoverd %d, d=%d\n", dst, d);
+                                    pr_int_dbg(1000000+dst);
+                                    insert_into_dense(dst, g_next_frontier, &g_next_frontier_size);
+                                    break;
+                                }
                             }
                         }
                     }
-                }
-            }
+                    return 0;
+                });
         } else {
-            for (int v = bsg_amoadd(&g_src, 1); v < g_curr_frontier_size; v = bsg_amoadd(&g_src, 1)) {
-                int src = sparse_frontier[v];
-                pr_int_dbg(2000000+src);
-                int nz_start = fwd_offsets[src];
-                int nz_stop  = fwd_offsets[src+1];
-                for (int nz = nz_start; nz < nz_stop; nz++) {
-                    int dst = fwd_nonzeros[nz];
-                    if (distance[dst] == -1) {
-                        distance[dst] = d;
-                        pr_dbg("discoverd %d, d=%d\n", dst, d);
-                        pr_int_dbg(1000000+dst);                        
-                        insert_into_dense(dst, g_next_frontier, &g_next_frontier_size);
+            parallel_foreach_dynamic(g_src, g_curr_frontier_size, 1, [=](int v){
+                    int src = sparse_frontier[v];
+                    pr_int_dbg(2000000+src);
+                    int nz_start = fwd_offsets[src];
+                    int nz_stop  = fwd_offsets[src+1];
+                    for (int nz = nz_start; nz < nz_stop; nz++) {
+                        int dst = fwd_nonzeros[nz];
+                        if (distance[dst] == -1) {
+                            distance[dst] = d;
+                            pr_dbg("discoverd %d, d=%d\n", dst, d);
+                            pr_int_dbg(1000000+dst);                        
+                            insert_into_dense(dst, g_next_frontier, &g_next_frontier_size);
+                        }
                     }
-                }
-            }
+                    return  0;
+                });
         }
         ////////////////////
         // swap frontiers //
