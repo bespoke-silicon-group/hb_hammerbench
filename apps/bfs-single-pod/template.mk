@@ -87,6 +87,16 @@ SIM_ARGS ?=
 # Include platform-specific execution rules
 include $(EXAMPLES_PATH)/execution.mk
 
+RUN_RULES += saifgen.log
+RUN_RULES += repl.log
+RUN_RULES += pc-histogram.log
+RUN_RULES += debug.log
+RUN_RULES += profile.log
+RUN_RULES += exec.log
+$(RUN_RULES): $(APP_PATH)/inputs/$(input).mtx
+$(APP_PATH)/inputs/$(input).mtx:
+	$(MAKE) -C $(APP_PATH)/inputs/ $(input).mtx
+
 ###############################################################################
 # Regression Flow
 ###############################################################################
