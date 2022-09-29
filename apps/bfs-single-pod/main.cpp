@@ -119,29 +119,29 @@ int bfs_single_pod(int argc, char **argv) {
     // IO to device.
     // set globals
     // 1. set V
-    BSG_CUDA_CALL(set_symbol(&device, "V", V));
+    BSG_CUDA_CALL(set_symbol(&device, "g_V", V));
     // 2. set E
-    BSG_CUDA_CALL(set_symbol(&device, "E", E));
+    BSG_CUDA_CALL(set_symbol(&device, "g_E", E));
     // 3. set fwd_offsets
-    BSG_CUDA_CALL(set_symbol(&device, "fwd_offsets", d_fwd_offsets));
+    BSG_CUDA_CALL(set_symbol(&device, "g_fwd_offsets", d_fwd_offsets));
     // 4. set fwd_nonzeros
-    BSG_CUDA_CALL(set_symbol(&device, "fwd_nonzeros", d_fwd_nonzeros));
+    BSG_CUDA_CALL(set_symbol(&device, "g_fwd_nonzeros", d_fwd_nonzeros));
     // 5. set rev_offsets
-    BSG_CUDA_CALL(set_symbol(&device, "rev_offsets", d_rev_offsets));
+    BSG_CUDA_CALL(set_symbol(&device, "g_rev_offsets", d_rev_offsets));
     // 6. set rev_nonzeros
-    BSG_CUDA_CALL(set_symbol(&device, "rev_nonzeros", d_rev_nonzeros));
+    BSG_CUDA_CALL(set_symbol(&device, "g_rev_nonzeros", d_rev_nonzeros));
     // 7. set distance
-    BSG_CUDA_CALL(set_symbol(&device, "distance", d_distance));
+    BSG_CUDA_CALL(set_symbol(&device, "g_distance", d_distance));
     // 8. set curr_frontier
-    BSG_CUDA_CALL(set_symbol(&device, "curr_frontier", d_curr_frontier));
+    BSG_CUDA_CALL(set_symbol(&device, "g_curr_frontier", d_curr_frontier));
     // 9. set next_frontier
-    BSG_CUDA_CALL(set_symbol(&device, "next_frontier", d_next_frontier));
+    BSG_CUDA_CALL(set_symbol(&device, "g_next_frontier", d_next_frontier));
     // 10. set dense_to_sparse_set
-    BSG_CUDA_CALL(set_symbol(&device, "dense_to_sparse_set", d_dense_to_sparse_set));
+    BSG_CUDA_CALL(set_symbol(&device, "g_dense_to_sparse_set", d_dense_to_sparse_set));
     // 11. set sparse_to_dense_set
-    BSG_CUDA_CALL(set_symbol(&device, "sparse_to_dense_set", d_sparse_to_dense_set));
+    BSG_CUDA_CALL(set_symbol(&device, "g_sparse_to_dense_set", d_sparse_to_dense_set));
     // 12. set root
-    BSG_CUDA_CALL(set_symbol(&device, "root", root));
+    BSG_CUDA_CALL(set_symbol(&device, "g_root", root));
     
     // dma transfers
     std::vector<hb_mc_dma_htod_t> htod_job;
