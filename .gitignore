@@ -10,7 +10,6 @@
 ucli.key
 *.S
 *.ll
-*pod/
 dramsim3.txt
 *.pdf
 *.swp
