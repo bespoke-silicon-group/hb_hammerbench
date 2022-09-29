@@ -62,7 +62,15 @@ int mf = 0;
     } while (0)
 
 //#define DEBUG
-#ifdef  DEBUG
+#ifdef DEBUG
+#define pr_int_dbg(i)                           \
+    bsg_print_int(i)
+#else
+#define pr_int_dbg(i)
+#endif
+#endif
+//#define VDEBUG
+#ifdef  VDEBUG
 #define pr_dbg(fmt, ...)                        \
     bsg_printf(fmt, ##__VA_ARGS__)
 #else
@@ -134,8 +142,8 @@ static inline int *to_sparse(int *set, int set_size, int set_is_dense)
         }
         serial (
             {
-                bsg_print_int(3000000+set_size);
-                bsg_print_int(4000000+new_set_size);
+                pr_int_dbg(3000000+set_size);
+                pr_int_dbg(4000000+new_set_size);
             }
             );
         bsg_barrier_hw_tile_group_sync();
@@ -185,37 +193,29 @@ int kernel()
             // setup next_frontier
             next_frontier_dense = 1;
             next_frontier_size = 0;
-            bsg_fence();
-        });
-    serial({
             pr_dbg("root = %d, distance[%d]=%d, curr_fontier[0]=%d, curr_frontier_size=%d\n"
                    ,root
                    ,root
                    ,distance[root]
                    ,curr_frontier[0]
                    ,curr_frontier_size);
+            bsg_fence();
         });
     int d = 0;
     while (curr_frontier_size != 0) {
-        serial (
-            {
-                bsg_print_int(curr_frontier_size);
-                pr_dbg("curr_frontier_size = %d\n", curr_frontier_size);
-            }
-            );
         d++;
         /////////////////////////
         // determine direction //
         /////////////////////////
-        bsg_barrier_hw_tile_group_sync();
         int *sparse_frontier = to_sparse(curr_frontier, curr_frontier_size, curr_frontier_dense);
         serial({
+                pr_int_dbg(curr_frontier_size);
+                pr_dbg("curr_frontier_size = %d\n", curr_frontier_size);
                 mf = 0;
                 mu = 0;
                 bsg_fence();
             }); 
         // 1. find sum (degree in frontier)
-        serial ( bsg_print_hexadecimal(0xaaaaaaaa) );
         int mf_local = 0;
         for (int m = __bsg_id; m < curr_frontier_size; m += bsg_tiles_X*bsg_tiles_Y) {
             // pr_dbg("m = %d, sparse_frontier[%d]=%d\n", m, m, sparse_frontier[m]);
@@ -240,7 +240,6 @@ int kernel()
         }
         bsg_amoadd(&mu, mu_local);
         // 3. compare
-        serial(bsg_print_hexadecimal(0xbbbbbbbb));
         serial(
             {                
                 rev_not_fwd = (mf > mu/20);
@@ -255,10 +254,7 @@ int kernel()
         // update distance                //
         // build next frontier            //
         ////////////////////////////////////
-        bsg_barrier_hw_tile_group_sync();
         if (rev_not_fwd) {
-            serial (bsg_print_hexadecimal(0xcccc0000));
-            serial ({ pr_dbg("bottom up\n"); });
             int *dense_frontier = to_dense(curr_frontier, curr_frontier_size, curr_frontier_dense);
             for (int dst_start = bsg_amoadd(&g_dst, BLOCK_WORDS);
                  dst_start < V;
@@ -272,11 +268,11 @@ int kernel()
                         int nz_stop  = rev_offsets[dst+1];
                         for (int nz = nz_start; nz < nz_stop; nz++) {
                             int src = rev_nonzeros[nz];
-                            bsg_print_int(2000000+src);                            
+                            pr_int_dbg(2000000+src);                            
                             if (in_dense(src, dense_frontier)) {
                                 distance[dst] = d;
                                 pr_dbg("discoverd %d, d=%d\n", dst, d);
-                                bsg_print_int(1000000+dst);
+                                pr_int_dbg(1000000+dst);
                                 insert_into_dense(dst, next_frontier, &next_frontier_size);
                                 break;
                             }
@@ -285,11 +281,9 @@ int kernel()
                 }
             }
         } else {
-            serial (bsg_print_hexadecimal(0xcccc1111) );
-            serial ({ pr_dbg("top down\n"); });
             for (int v = bsg_amoadd(&g_src, 1); v < curr_frontier_size; v = bsg_amoadd(&g_src, 1)) {
                 int src = sparse_frontier[v];
-                bsg_print_int(2000000+src);
+                pr_int_dbg(2000000+src);
                 int nz_start = fwd_offsets[src];
                 int nz_stop  = fwd_offsets[src+1];
                 for (int nz = nz_start; nz < nz_stop; nz++) {
@@ -297,7 +291,7 @@ int kernel()
                     if (distance[dst] == -1) {
                         distance[dst] = d;
                         pr_dbg("discoverd %d, d=%d\n", dst, d);
-                        bsg_print_int(1000000+dst);                        
+                        pr_int_dbg(1000000+dst);                        
                         insert_into_dense(dst, next_frontier, &next_frontier_size);
                     }
                 }
@@ -306,7 +300,6 @@ int kernel()
         ////////////////////
         // swap frontiers //
         ////////////////////
-        serial (bsg_print_hexadecimal(0xdddddddd));
         serial(
             {
                 // curr = next
@@ -324,8 +317,6 @@ int kernel()
             );
         // zero out next frontier
         zero_dense_set(next_frontier);
-        serial (bsg_print_hexadecimal(0xeeeeeeee));
-        bsg_barrier_hw_tile_group_sync();
     }
     bsg_cuda_print_stat_kernel_end();
     bsg_barrier_hw_tile_group_sync();
