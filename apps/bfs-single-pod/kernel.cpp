@@ -70,7 +70,7 @@ int g_mf = 0;
         bsg_barrier_hw_tile_group_sync();       \
     } while (0)
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 #define pr_int_dbg(i)                           \
     bsg_print_int(i)
