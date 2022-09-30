@@ -163,8 +163,9 @@ static inline void insert_into_dense(int member, int *set, int *set_size)
     bsg_amoadd(set_size, 1);
 }
 
-static inline int *to_sparse(int *set, int set_size, int set_is_dense)
+static inline int *to_sparse(int *set, int *set_sizep, int set_is_dense)
 {
+    int set_size = *set_sizep;
     __attribute__((section(".dram"))) static int new_set_size = 0;
     serial({
             new_set_size = 0;
@@ -175,14 +176,20 @@ static inline int *to_sparse(int *set, int set_size, int set_is_dense)
         parallel_foreach_static(0, V, STRIDE, [=](int v_start){
                 int members[STRIDE];
                 int members_size = 0;
-                int v_stop = v_start + STRIDE;
-                for (int v = v_start; v < v_stop; v += 32) {
+                int v_stop = std::min(v_start + STRIDE, V);
+                int v;
+                for (v = v_start; v+32 <= v_stop; v += 32) {
                     int idx = v/32;
                     int w = set[idx];
                     for (int m = 0; m < 32; m++) {
                         if (w & (1<<m)) {
                             members[members_size++] = v+m;
                         }
+                    }
+                }
+                for (; v < v_stop; v++) {
+                    if (in_dense(v, set)) {
+                        members[members_size++] = v;
                     }
                 }
                 int start = bsg_amoadd(&new_set_size, members_size);
@@ -197,8 +204,12 @@ static inline int *to_sparse(int *set, int set_size, int set_is_dense)
             });
         serial (
             {
+                // set_size is incremented racily
+                // as a result set_size >= the actual size of the set
+                // new_set_size is the actual set size
                 pr_int_dbg(3000000+set_size);
                 pr_int_dbg(4000000+new_set_size);
+                *set_sizep = new_set_size;
             }
             );
         bsg_barrier_hw_tile_group_sync();
@@ -271,7 +282,7 @@ int kernel()
         /////////////////////////
         // determine direction //
         /////////////////////////
-        int *sparse_frontier = to_sparse(g_curr_frontier, g_curr_frontier_size, g_curr_frontier_dense);
+        int *sparse_frontier = to_sparse(g_curr_frontier, &g_curr_frontier_size, g_curr_frontier_dense);
         serial({
                 pr_int_dbg(g_curr_frontier_size);
                 pr_dbg("curr_frontier_size = %d\n", g_curr_frontier_size);
