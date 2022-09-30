@@ -1,6 +1,8 @@
 #include "bsg_manycore.h"
+#include "bsg_manycore.hpp"
 #include "bsg_manycore_atomic.h"
 #include "bsg_cuda_lite_barrier.h"
+#include "bsg_mcs_mutex.h"
 #include <algorithm>
 __attribute__((section(".dram")))
 int g_root;
@@ -60,6 +62,9 @@ int g_mu = 0;
 __attribute__((section(".dram")))
 int g_mf = 0;
 
+__attribute__((section(".dram")))
+bsg_mcs_mutex_t printf_lock = 0;
+
 #define serial(block)                           \
     do {                                        \
         bsg_barrier_hw_tile_group_sync();       \
@@ -70,7 +75,7 @@ int g_mf = 0;
         bsg_barrier_hw_tile_group_sync();       \
     } while (0)
 
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
 #define pr_int_dbg(i)                           \
     bsg_print_int(i)
@@ -78,18 +83,30 @@ int g_mf = 0;
 #define pr_int_dbg(i)
 #endif
 
-//#define VDEBUG
+#define VDEBUG
 #ifdef  VDEBUG
-#define pr_dbg(fmt, ...)                        \
-    bsg_printf(fmt, ##__VA_ARGS__)
+#define pr_dbg(fmt, ...)                                                \
+    do {                                                                \
+        bsg_mcs_mutex_node_t __node;                                    \
+        bsg_mcs_mutex_node_t*__nptr = bsg_tile_group_remote_pointer(__bsg_x, __bsg_y, &__node); \
+        bsg_mcs_mutex_acquire(&printf_lock, &__node, __nptr);           \
+        bsg_printf(fmt, ##__VA_ARGS__);                                 \
+        bsg_mcs_mutex_release(&printf_lock, &__node, __nptr);            \
+    } while (0);
 #else
 #define pr_dbg(fmt, ...)
 #endif
 
 //#define VVDEBUG
 #ifdef  VVDEBUG
-#define pr_vdbg(fmt, ...)                       \
-    bsg_printf(fmt, ##__VA_ARGS__)
+#define pr_vdbg(fmt, ...)                                               \
+    do {                                                                \
+        bsg_mcs_mutex_node_t __node;                                    \
+        bsg_mcs_mutex_node_t*__nptr = bsg_tile_remote_group_pointer(__bsg_x, __bsg_y, &__node); \
+        bsg_mcs_mutex_acquire(&printf_lock, &__node, __nptr);           \
+        bsg_printf(fmt, ##__VA_ARGS__);                                 \
+        bsg_mcs_mutex_release(&printf_lock, &__node, __nptr);            \
+    } while (0);
 #else
 #define pr_vdbg(fmt, ...)
 #endif
