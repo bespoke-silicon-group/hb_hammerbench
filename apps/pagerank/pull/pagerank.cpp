@@ -290,14 +290,14 @@ int launch(int argc, char * argv[]){
         for(int64_t i= 0; i < rows_in_pod; i++) {
                 rmse += (old_rank_hb[i] - old_rank_cpu[i]) * (old_rank_hb[i] - old_rank_cpu[i]);
                 std::cout << "old_rank_hb[" << i << "] is " << old_rank_hb[i] << " and old_rank_cpu[" << i << "] is " << old_rank_cpu[CURRENT_POD+i*NUM_PODS] << std::endl;
-                if (std::fabs(old_rank_hb[i] - old_rank_cpu[i]) > 0.0001) {
+                if (std::fabs(old_rank_hb[i] - old_rank_cpu[CURRENT_POD+i*NUM_PODS]) > 0.0000001) {
                         std::cerr << "Result is not equal at index " << i << ". FAIL!" << std::endl;
                         fail = true;
                 }
         }
         std::cerr << "RMSE: " << rmse << std::endl;
 
-        return fail == false;
+        return fail == true;
 }
 
 declare_program_main("GraphIt PageRank", launch);
