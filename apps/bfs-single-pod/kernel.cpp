@@ -348,7 +348,7 @@ int kernel()
                                 pr_int_dbg(2000000+src);
                                 if (in_dense(src, dense_frontier)) {
                                     distance[dst] = d;
-                                    pr_vdbg("discoverd %d, d=%d\n", dst, d);
+                                    pr_vdbg("d= %d, found %d from %d\n", d, dst, src);
                                     pr_int_dbg(1000000+dst);
                                     insert_into_dense(dst, g_next_frontier, &g_next_frontier_size);
                                     break;
@@ -368,7 +368,7 @@ int kernel()
                         int dst = fwd_nonzeros[nz];
                         if (distance[dst] == -1) {
                             distance[dst] = d;
-                            pr_vdbg("discoverd %d, d=%d\n", dst, d);
+                            pr_vdbg("d= %d, found %d from %d\n", d, dst, src);
                             pr_int_dbg(1000000+dst);
                             insert_into_dense(dst, g_next_frontier, &g_next_frontier_size);
                         }
