@@ -1,7 +1,7 @@
-u7k1-link   := https://drive.google.com/uc?id=17GY8qA_ObPz9IeV4rnCMAMbBKGmziiz4
-u10k8-link  := https://drive.google.com/uc?id=1tQuEwDajCOXgCAyvPo3T7hSmGXMZCDNu
-g7k1-link   := https://drive.google.com/uc?id=1eAhwjzMxGm1WVOmBoWePFWLGff4MPI1D
-g10k8-link  := https://drive.google.com/uc?id=16PJPSBZ1hdYr4vWdp0UQPgmGNHfC5PcM
+u7k1-link   := https://drive.google.com/uc?id=1KJsixsZKgkIuqOs5TceKAEOBvhPn6PCZ
+u10k8-link  := https://drive.google.com/uc?id=1KJsixsZKgkIuqOs5TceKAEOBvhPn6PCZ
+g7k1-link   := https://drive.google.com/uc?id=1U8ge3qZ5NTrC9ypvP-w1ct5xZzJ0PSTS
+g10k8-link  := https://drive.google.com/uc?id=1uVMe5eb8ND1JNkVxIDTKQh_Ig08_Nobq
 %.mtx:
 	gdown $($*-link)
 
