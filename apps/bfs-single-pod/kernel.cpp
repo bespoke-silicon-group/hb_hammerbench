@@ -134,12 +134,12 @@ static inline void parallel_foreach_dynamic(int &START, int STOP, int STEP, Body
 static inline void zero_dense_set(int *set)
 {
     bsg_barrier_hw_tile_group_sync();
-    static constexpr int STRIDE = 32*BLOCK_WORDS;
-    parallel_foreach_static(0, V, STRIDE, [=](int v_start){
-            int v_stop = v_start+STRIDE;
-            for (int v = v_start; v < v_stop; v += 32) {
-                int idx = v/32;
-                set[idx] = 0;
+    int words = (V+31)/32;
+    static constexpr int STRIDE = BLOCK_WORDS;
+    parallel_foreach_static(0, words, STRIDE, [=](int w_start){
+            int w_stop = std::min(w_start+STRIDE, words);
+            for (int w = w_start; w < w_stop; w++) {
+                set[w] = 0;
             }
             return 0;
         });
