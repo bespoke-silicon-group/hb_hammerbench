@@ -292,7 +292,7 @@ int kernel()
             });
         // 1. find sum (degree in frontier)
         int mf_local = 0;
-        parallel_foreach_static(0, g_curr_frontier_size, 1, [=](int m) mutable {
+        parallel_foreach_static(0, g_curr_frontier_size, 1, [&](int m) mutable {
                 pr_vdbg("m = %d, sparse_frontier[%d]=%d\n", m, m, sparse_frontier[m]);
                 pr_vdbg("fwd_offsets[%d+1]=%d, fwd_offsets[%d]=%d\n",
                         sparse_frontier[m],
@@ -305,8 +305,8 @@ int kernel()
             });
         bsg_amoadd(&g_mf, mf_local);
         // 2. find sum (degree unvisited)
-        int mu_local;
-        parallel_foreach_static(0, V, 1, [=](int v) mutable {
+        int mu_local = 0;
+        parallel_foreach_static(0, V, 1, [&](int v) mutable {
                 pr_vdbg("v = %d, distance[%d]=%d\n", v, v, distance[v]);
                 if (distance[v] == -1) {
                     pr_vdbg("fwd_offsets[%d+1]=%d, fwd_offsets[%d]=%d\n",
@@ -319,10 +319,10 @@ int kernel()
         // 3. compare
         serial(
             {
-                g_rev_not_fwd = (g_mf > g_mu/20);
+                g_rev_not_fwd = (g_mf > (g_mu/20));
                 g_dst = 0;
                 g_src = 0;
-                pr_vdbg("mf = %d, mu = %d, rev_not_fwd = %d\n", g_mf, g_mu, g_rev_not_fwd);
+                pr_dbg("mf = %d, mu = %d, rev_not_fwd = %d\n", g_mf, g_mu, g_rev_not_fwd);
                 bsg_fence();
             }
             );
