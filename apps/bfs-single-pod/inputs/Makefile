@@ -1,9 +1,13 @@
-u7k1-link   := https://drive.google.com/uc?id=1KJsixsZKgkIuqOs5TceKAEOBvhPn6PCZ
-u10k8-link  := https://drive.google.com/uc?id=1KJsixsZKgkIuqOs5TceKAEOBvhPn6PCZ
-g7k1-link   := https://drive.google.com/uc?id=1U8ge3qZ5NTrC9ypvP-w1ct5xZzJ0PSTS
-g10k8-link  := https://drive.google.com/uc?id=1uVMe5eb8ND1JNkVxIDTKQh_Ig08_Nobq
+u7k1-link   := https://drive.google.com/uc?id=1hefg63DFUdCSs-dE8vOgX-0komVS_nXS
+g7k1-link   := https://drive.google.com/uc?id=1vFrohxOijg-HjckN0PTN22KGXlVJTtis
+u10k8-link  := https://drive.google.com/uc?id=127ZnCdQg4xmgJtrck9uzj5xmQcwDJNx6
+g10k8-link  := https://drive.google.com/uc?id=1iu3uKe-QGHLgHt-PbYfKxQtDjaFidVZk
+u16k16-link := https://drive.google.com/uc?id=10klumtpAqpSRJD43tc3eDivyTw9SlAdm
+g16k16-link := https://drive.google.com/uc?id=1RhNjC2m_m2OEExF7j2BN0YhHJZfJ3U9W
 %.mtx:
 	gdown $($*-link)
+	tar zxf $*.mtx.tar.gz
+	rm -f $*.mtx.tar.gz
 
 .PHONY: clean
 clean:
