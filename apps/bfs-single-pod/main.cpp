@@ -52,6 +52,26 @@ int set_symbol(hb_mc_device_t *devp, const std::string &symbol, T val) {
     return HB_MC_SUCCESS;
 }
 
+int malloc_pod_cache_aligned(hb_mc_device_t *device,
+                             int size,
+                             hb_mc_eva_t *datap,
+                             hb_mc_eva_t*freeablep) {
+    hb_mc_eva_t ptr;
+    hb_mc_manycore_t *mc = device->mc;
+    hb_mc_config_t *cfg = &mc->config;
+    int align = sizeof(int)*cfg->vcache_block_words*cfg->pod_shape.x*2;
+    int alloc_size = size  + align;
+    BSG_CUDA_CALL(hb_mc_device_malloc(device, alloc_size, &ptr));
+    hb_mc_eva_t rem = ptr % align;
+    *datap = ptr - rem + align;
+    // set outputs
+    if (datap != nullptr)
+        *datap = ptr - rem + align;
+    if (freeablep != nullptr)
+        *freeablep = ptr;
+    return HB_MC_SUCCESS;
+}
+
 int bfs_single_pod(int argc, char **argv) {
   auto cli = CommandLine::Parse(argc, argv);  
   const char *bin_path = cli.bin_path.c_str();  
@@ -90,31 +110,31 @@ int bfs_single_pod(int argc, char **argv) {
     // Allocate memory on device
     // 1. allocate curr_frontier
     hb_mc_eva_t d_curr_frontier;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, V*sizeof(int), &d_curr_frontier));
+    BSG_CUDA_CALL(malloc_pod_cache_aligned(&device, V*sizeof(int), &d_curr_frontier, nullptr));
     // 2. allocate next_frontier
     hb_mc_eva_t d_next_frontier;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, V*sizeof(int), &d_next_frontier));
+    BSG_CUDA_CALL(malloc_pod_cache_aligned(&device, V*sizeof(int), &d_next_frontier, nullptr));
     // 3. allocate dense_to_sparse_set
     hb_mc_eva_t d_dense_to_sparse_set;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, V*sizeof(int), &d_dense_to_sparse_set));
+    BSG_CUDA_CALL(malloc_pod_cache_aligned(&device, V*sizeof(int), &d_dense_to_sparse_set, nullptr));
     // 4. allocate sparse_to_dense_set
     hb_mc_eva_t d_sparse_to_dense_set;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, V*sizeof(int), &d_sparse_to_dense_set));
+    BSG_CUDA_CALL(malloc_pod_cache_aligned(&device, V*sizeof(int), &d_sparse_to_dense_set, nullptr));
     // 5. allocate fwd_offsets
     hb_mc_eva_t d_fwd_offsets;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, fwd_offsets.size()*sizeof(int), &d_fwd_offsets));
+    BSG_CUDA_CALL(malloc_pod_cache_aligned(&device, fwd_offsets.size()*sizeof(int), &d_fwd_offsets, nullptr));
     // 6. allocate fwd_nonzeros
     hb_mc_eva_t d_fwd_nonzeros;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, fwd_nonzeros.size()*sizeof(int), &d_fwd_nonzeros));
+    BSG_CUDA_CALL(malloc_pod_cache_aligned(&device, fwd_nonzeros.size()*sizeof(int), &d_fwd_nonzeros, nullptr));
     // 7. allocate rev_offsets
     hb_mc_eva_t d_rev_offsets;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, rev_offsets.size()*sizeof(int), &d_rev_offsets));
+    BSG_CUDA_CALL(malloc_pod_cache_aligned(&device, rev_offsets.size()*sizeof(int), &d_rev_offsets, nullptr));
     // 8. allocate rev_nonzeros
     hb_mc_eva_t d_rev_nonzeros;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, rev_nonzeros.size()*sizeof(int), &d_rev_nonzeros));
+    BSG_CUDA_CALL(malloc_pod_cache_aligned(&device, rev_nonzeros.size()*sizeof(int), &d_rev_nonzeros, nullptr));
     // 9. allocate distance
     hb_mc_eva_t d_distance;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, V*sizeof(int), &d_distance));
+    BSG_CUDA_CALL(malloc_pod_cache_aligned(&device, V*sizeof(int), &d_distance, nullptr));
     
     // IO to device.
     // set globals
