@@ -4,12 +4,12 @@ HB_HAMMERBENCH_PATH = $(shell git rev-parse --show-toplevel)
 all: generate
 
 # call to generate a test name
-test-name = input_$(1)__start_$(2)
+test-name = input_$(1)__start_$(2)__opt-fwd-ilp-inner_$(3)
 
 # call to get parameter from test name
 get-input = $(lastword $(subst _, ,$(filter input_%,$(subst __, ,$(1)))))
 get-start = $(lastword $(subst _, ,$(filter start_%,$(subst __, ,$(1)))))
-
+get-opt-fwd-ilp-inner = $(lastword $(subst _, ,$(filter opt-fwd-ilp-inner_%,$(subst __, ,$(1)))))
 # defines tests
 TESTS =
 include tests.mk
@@ -23,6 +23,7 @@ $(addsuffix /parameters.mk,$(TESTS_DIRS)): %/parameters.mk:
 	@echo test-name  = $* >> $@
 	@echo input = $(call get-input,$*) >> $@
 	@echo start = $(call get-start,$*) >> $@
+	@echo opt-fwd-ilp-inner = $(call get-opt-fwd-ilp-inner,$*) >> $@
 
 include $(HB_HAMMERBENCH_PATH)/mk/testbench_common.mk
 

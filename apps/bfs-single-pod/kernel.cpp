@@ -386,7 +386,35 @@ int kernel()
                     pr_int_dbg(2000000+src);
                     int nz_start = fwd_offsets[src];
                     int nz_stop  = fwd_offsets[src+1];
-                    for (int nz = nz_start; nz < nz_stop; nz++) {
+                    int nz = nz_start;
+#ifndef OPT_FWD_ILP_INNER
+#define OPT_FWD_ILP_INNER 1
+#endif
+#if (OPT_FWD_ILP_INNER > 1)
+                    constexpr int ILP = OPT_FWD_ILP_INNER;
+                    for (; nz + ILP <= nz_stop; nz += ILP) {
+                        register int dst[ILP];
+                        bsg_unroll(32)
+                        for (int ilp = 0; ilp < ILP; ilp++) {
+                            dst[ilp] = fwd_nonzeros[nz+ilp];
+                        }
+                        bsg_compiler_memory_barrier();
+                        register int l_distance[ILP];
+                        bsg_unroll(32)
+                        for (int ilp = 0; ilp < ILP; ilp++) {
+                            l_distance[ilp] = distance[dst[ilp]];
+                        }
+                        bsg_compiler_memory_barrier();
+                        bsg_unroll(32)
+                        for (int ilp = 0; ilp < ILP; ilp++) {
+                            if (l_distance[ilp] == -1) {
+                                distance[dst[ilp]] = d;
+                                insert_into_dense(dst[ilp], g_next_frontier, &g_next_frontier_size);
+                            }
+                        }
+                    }
+#endif
+                    for (; nz < nz_stop; nz++) {
                         int dst = fwd_nonzeros[nz];
                         if (distance[dst] == -1) {
                             distance[dst] = d;
