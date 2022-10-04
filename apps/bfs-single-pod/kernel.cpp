@@ -4,6 +4,14 @@
 #include "bsg_cuda_lite_barrier.h"
 #include "bsg_mcs_mutex.h"
 #include <algorithm>
+
+#define TAG_TO_SPARSE 0
+#define TAG_TO_DENSE  1
+#define TAG_ZERO_DENSE  2
+#define TAG_FWD_TRAVERSAL 3
+#define TAG_REV_TRAVERSAL 4
+#define TAG_DECIDE_DIRECTION 5
+
 __attribute__((section(".dram")))
 int g_root;
 
@@ -382,13 +390,77 @@ int kernel()
         ////////////////////////////////////
         if (g_rev_not_fwd) {
             // backwards traversal
+            bsg_cuda_print_stat_start(TAG_REV_TRAVERSAL);
             int *dense_frontier = to_dense(g_curr_frontier,
                                            g_curr_frontier_size,
                                            g_curr_frontier_dense);
             parallel_foreach_dynamic(g_dst, V, BLOCK_WORDS, [=](int dst_start){
                     int dst_stop = dst_start + BLOCK_WORDS;
                     dst_stop = std::min(dst_stop, V);
-                    for (int dst = dst_start; dst < dst_stop; dst++) {
+                    int dst = dst_start;
+#ifndef OPT_REV_PRE_OUTER
+#define OPT_REV_PRE_OUTER 1
+#endif
+#if     (OPT_REV_PRE_OUTER > 4)
+#error "OPT_REV_PRE_OUTER must be <= 2"
+#endif
+#if    (OPT_REV_PRE_OUTER > 1)
+                    constexpr int PRE = OPT_REV_PRE_OUTER;
+                    for (; dst + PRE <= dst_stop; dst += PRE) {
+                        int l_distance[PRE];
+                        int l_rev_offsets[PRE+1];
+#if    (OPT_REV_PRE_OUTER >= 2)
+                        int d0, d1, rvo0, rvo1, rvo2;
+                        d0 = distance[dst+0];
+                        d1 = distance[dst+1];
+                        rvo0 = rev_offsets[dst+0];
+                        rvo1 = rev_offsets[dst+1];
+                        rvo2 = rev_offsets[dst+2];
+#endif
+#if    (OPT_REV_PRE_OUTER >= 3)
+                        int d2, rvo3;
+                        d2 = distance[dst+2];
+                        rvo3 = rev_offsets[dst+3];
+#endif
+#if    (OPT_REV_PRE_OUTER >= 4)
+                        int d3, rvo4;
+                        d3 = distance[dst+3];
+                        rvo4 = rev_offsets[dst+4];
+#endif
+                        bsg_compiler_memory_barrier();                        
+#if    (OPT_REV_PRE_OUTER >= 2)
+                        l_distance[0]=d0;
+                        l_distance[1]=d1;
+                        l_rev_offsets[0]=rvo0;
+                        l_rev_offsets[1]=rvo1;
+                        l_rev_offsets[2]=rvo2;
+#endif
+#if    (OPT_REV_PRE_OUTER >= 3)
+                        l_distance[2]=d2;
+                        l_rev_offsets[3]=rvo3;
+#endif
+#if    (OPT_REV_PRE_OUTER >= 4)
+                        l_distance[3]=d3;
+                        l_rev_offsets[4]=rvo4;
+#endif                        
+                        bsg_compiler_memory_barrier();
+                        for (int pre = 0; pre < PRE; pre++) {
+                            if (l_distance[pre] == -1) {
+                                int nz_start = l_rev_offsets[pre];
+                                int nz_stop  = l_rev_offsets[pre+1];
+                                for (int nz = nz_start; nz < nz_stop; nz++) {
+                                    int src = rev_nonzeros[nz];
+                                    if (in_dense(src, dense_frontier)) {
+                                        distance[dst+pre] = d;
+                                        insert_into_dense(dst+pre, g_next_frontier, &g_next_frontier_size);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+#endif
+                    for (; dst < dst_stop; dst++) {
                         // skip if visited already
                         if (distance[dst] == -1) {
                             int nz_start = rev_offsets[dst];
