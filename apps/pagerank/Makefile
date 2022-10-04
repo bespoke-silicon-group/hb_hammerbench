@@ -5,10 +5,11 @@ all: generate
 
 # call to generate a test name
 #test-name = buffer-size_$(1)__warm-cache_$(2)
-test-name = direction_$(1)__graph_$(2)__pod-id_$(3)
+test-name = direction_$(1)__graph_$(2)__pod-id_$(3)__npods_$(4)
 
 get-element = $(lastword $(subst _, ,$(filter $(1)_%,$(subst __, ,$(2)))))
 # call to get parameter from test name
+get-npods = $(lastword $(subst _, ,$(call get-element,npods,$(1))))
 get-pod-id = $(lastword $(subst _, ,$(call get-element,pod-id,$(1))))
 get-direction = $(lastword $(subst _, ,$(call get-element,direction,$(1))))
 get-graph = $(lastword $(subst _, ,$(call get-element,graph,$(1))))
@@ -25,12 +26,12 @@ $(TESTS_DIRS):
 
 PULL_TEST_DIRS = $(filter direction_pull%,$(TESTS_DIRS))
 PUSH_TEST_DIRS = $(filter direction_push%,$(TESTS_DIRS))
-$(info $(TESTS_DIRS))
 
 %/parameters.mk: %
 $(addsuffix /parameters.mk,$(PULL_TEST_DIRS)): %/parameters.mk:
 	@touch $@
 	@echo test-name  = $* >> $@
+	@echo num-pods=$(call get-npods,$*) >> $@
 	@echo graph=$(call get-graph,$*) >> $@
 	@echo pod-id=$(call get-pod-id,$*) >> $@
 	@echo direction=$(call get-direction,$*) >> $@
@@ -38,6 +39,7 @@ $(addsuffix /parameters.mk,$(PULL_TEST_DIRS)): %/parameters.mk:
 $(addsuffix /parameters.mk,$(PUSH_TEST_DIRS)): %/parameters.mk:
 	@touch $@
 	@echo test-name  = $* >> $@
+	@echo num-pods=$(call get-npods,$*) >> $@
 	@echo graph=$(call get-graph,$*) >> $@
 	@echo pod-id=$(call get-pod-id,$*) >> $@
 	@echo direction=$(call get-direction,$*) >> $@

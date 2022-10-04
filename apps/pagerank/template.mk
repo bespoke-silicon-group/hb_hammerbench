@@ -17,7 +17,6 @@ include $(HB_HAMMERBENCH_PATH)/apps/pagerank/common.mk
 
 # Meta-Parameters
 -include parameters.mk
-npods=64
 
 TILE_GROUP_DIM_X ?= $(BSG_MACHINE_GLOBAL_X)
 TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_GLOBAL_Y)
@@ -35,8 +34,10 @@ vpath %.cpp $(APP_PATH)/$(direction)
 TEST_SOURCES = pagerank.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
-CDEFINES += 
-CXXDEFINES += -DSIM_CURRENT_POD=$(pod-id)
+DEFINES += -DSIM_CURRENT_POD=$(pod-id)
+DEFINES += -DNUM_PODS=$(num-pods)
+CDEFINES +=
+CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
 FLAGS	 += -I$(GRAPHIT_PATH)/src/runtime_lib -I$(HB_HAMMERBENCH_PATH)/apps/pagerank/

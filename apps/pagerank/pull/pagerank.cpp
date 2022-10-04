@@ -1,4 +1,15 @@
-#include <pr.hpp>
+#include <hb_intrinsics.h>
+#include <infra_hb/host/arg_parser.hpp>
+#include <bsg_manycore_regression.h>
+#include <string.h>
+#include <stdio.h>
+#include <fstream> 
+
+using hammerblade::Device;
+using hammerblade::Vector;
+using hammerblade::GraphHB;
+using hammerblade::GlobalScalar;
+
 #define X 16
 #define Y 8
 
