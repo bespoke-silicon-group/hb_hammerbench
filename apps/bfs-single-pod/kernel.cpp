@@ -313,6 +313,35 @@ int kernel()
             int mu_local = 0;
             parallel_foreach_static(0, V, BLOCK_WORDS, [&](int v_start) mutable {
                     int v_stop = std::min(v_start+BLOCK_WORDS, V);
+                    int v = v_start;
+#ifndef OPT_MU_ILP_INNER
+#define OPT_MU_ILP_INNER 1
+#endif
+#if (OPT_MU_ILP_INNER > 1)
+                    constexpr int ILP = OPT_MU_ILP_INNER;
+                    for (; v + ILP <= v_stop; v += ILP) {
+                        register int l_distance[ILP];
+                        bsg_unroll(32)
+                        for (int ilp = 0; ilp < ILP; ilp++) {
+                            l_distance[ilp] = distance[v+ilp];
+                        }
+                        bsg_compiler_memory_barrier();
+                        // add an if-statement to check if we should do this...
+                        // this may results in unneccesary loads in later iterations
+                        register int l_fwd_offsets[ILP+1];
+                        bsg_unroll(32)
+                        for (int ilp = 0; ilp < ILP+1; ilp++) {
+                            l_fwd_offsets[ilp] = fwd_offsets[v+ilp];
+                        }
+                        bsg_compiler_memory_barrier();
+                        bsg_unroll(32)
+                        for (int ilp = 0; ilp < ILP; ilp++) {
+                            if (l_distance[ilp] == -1) {
+                                mu_local += l_fwd_offsets[ilp+1]-l_fwd_offsets[ilp];
+                            }
+                        }
+                    }
+#endif
                     for (int v = v_start; v < v_stop; v++) {
                         pr_vdbg("distance[%d]=%d\n", v, distance[v]);
                         if (distance[v] == -1) {
