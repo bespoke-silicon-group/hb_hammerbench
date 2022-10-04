@@ -1,0 +1,51 @@
+HB_HAMMERBENCH_PATH = $(shell git rev-parse --show-toplevel)
+
+.PHONY: all
+all: generate
+
+# call to generate a test name
+#test-name = buffer-size_$(1)__warm-cache_$(2)
+test-name = direction_$(1)__graph_$(2)__pod-id_$(3)
+
+get-element = $(lastword $(subst _, ,$(filter $(1)_%,$(subst __, ,$(2)))))
+# call to get parameter from test name
+get-pod-id = $(lastword $(subst _, ,$(call get-element,pod-id,$(1))))
+get-direction = $(lastword $(subst _, ,$(call get-element,direction,$(1))))
+get-graph = $(lastword $(subst _, ,$(call get-element,graph,$(1))))
+
+# defines tests
+TESTS =
+include tests.mk
+
+TESTS_DIRS =$(TESTS)
+
+$(TESTS_DIRS):
+	@echo Creating $@
+	@mkdir -p $@
+
+PULL_TEST_DIRS = $(filter direction_pull%,$(TESTS_DIRS))
+PUSH_TEST_DIRS = $(filter direction_push%,$(TESTS_DIRS))
+$(info $(TESTS_DIRS))
+
+%/parameters.mk: %
+$(addsuffix /parameters.mk,$(PULL_TEST_DIRS)): %/parameters.mk:
+	@touch $@
+	@echo test-name  = $* >> $@
+	@echo graph=$(call get-graph,$*) >> $@
+	@echo pod-id=$(call get-pod-id,$*) >> $@
+	@echo direction=$(call get-direction,$*) >> $@
+
+$(addsuffix /parameters.mk,$(PUSH_TEST_DIRS)): %/parameters.mk:
+	@touch $@
+	@echo test-name  = $* >> $@
+	@echo graph=$(call get-graph,$*) >> $@
+	@echo pod-id=$(call get-pod-id,$*) >> $@
+	@echo direction=$(call get-direction,$*) >> $@
+
+include $(HB_HAMMERBENCH_PATH)/mk/testbench_common.mk
+
+# for regression
+EXECUTION_DIRS := $(addprefix $(APP_PATH)/,$(TESTS_DIRS))
+#include $(HB_HAMMERBENCH_PATH)/apps/common_complex.mk
+
+

@@ -1,34 +1,3 @@
-##################################################################################
-# BSD 3-Clause License								 #
-# 										 #
-# Copyright (c) 2022, Bespoke Silicon Group					 #
-# All rights reserved.								 #
-# 										 #
-# Redistribution and use in source and binary forms, with or without		 #
-# modification, are permitted provided that the following conditions are met:	 #
-# 										 #
-# 1. Redistributions of source code must retain the above copyright notice, this #
-#    list of conditions and the following disclaimer.				 #
-# 										 #
-# 2. Redistributions in binary form must reproduce the above copyright notice,	 #
-#    this list of conditions and the following disclaimer in the documentation	 #
-#    and/or other materials provided with the distribution.			 #
-# 										 #
-# 3. Neither the name of the copyright holder nor the names of its		 #
-#    contributors may be used to endorse or promote products derived from	 #
-#    this software without specific prior written permission.			 #
-# 										 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"	 #
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE	 #
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE #
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE	 #
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL	 #
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR	 #
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER	 #
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,	 #
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE	 #
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.		 #
-##################################################################################
 
 # This Makefile compiles, links, and executes examples Run `make help`
 # to see the available targets for the selected platform.
@@ -48,9 +17,15 @@ include $(HB_HAMMERBENCH_PATH)/apps/pagerank/common.mk
 
 # Meta-Parameters
 -include parameters.mk
-pod-id ?= 0
-graph=$(call get-graph,$*) >> $@
-pod-id=$(call get-pod-id,$*) >> $@
+npods=64
+
+TILE_GROUP_DIM_X ?= $(BSG_MACHINE_GLOBAL_X)
+TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_GLOBAL_Y)
+
+include app_path.mk
+vpath %.c   $(APP_PATH)/$(direction)
+vpath %.cpp $(APP_PATH)/$(direction)
+
 
 ###############################################################################
 # Host code compilation flags and flow
@@ -89,14 +64,10 @@ include $(EXAMPLES_PATH)/link.mk
 # be built before executing.
 BSG_MANYCORE_KERNELS = kernel.riscv
 
-vpath %.cpp $(HB_HAMMERBENCH_PATH)/apps/pagerank/kernel/pr_merge
-
 kernel.rvo:RISCV_CXX=$(RISCV_CLANGXX)
 kernel.riscv: kernel.rvo
 
 # Tile Group Dimensions
-TILE_GROUP_DIM_X = $(BSG_MACHINE_GLOBAL_X)
-TILE_GROUP_DIM_Y = $(BSG_MACHINE_GLOBAL_Y)
 RISCV_DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_DEFINES += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_DEFINES += -DSIM_KERNEL_CURRENT_POD=1
@@ -131,9 +102,4 @@ regression: exec.log
 	@grep "BSG REGRESSION TEST .*PASSED.*" $< > /dev/null
 
 .DEFAULT_GOAL := help
-
-.PHONY: clean
-
-clean:
-
 
