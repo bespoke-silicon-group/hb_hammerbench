@@ -274,7 +274,7 @@ int launch(int argc, char * argv[]){
                 out_degree_dev.copyToDevice(out_degree_blocked_hb, rows_in_pod);
                 device->write_dma();
 
-                std::cerr << "Launching Kernel" << std::endl;
+                std::cerr << "Launching Kernel (pod CURRENT_POD of NUM_PODS) " << std::endl;
                 device->enqueueJob("pagerank_pull", hb_mc_dimension(X,Y),{edges.getInIndicesAddr(), edges.getInNeighborsAddr(), out_degree_dev.getAddr(), old_rank_dev.getAddr(), new_rank_dev.getAddr(), contrib_dev.getAddr(), contrib_new_dev.getAddr(), rows_in_pod});
                 device->runJobs();
                 std::cerr << "finished call" << std::endl;

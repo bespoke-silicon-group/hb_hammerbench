@@ -86,7 +86,7 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 #
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
-GRAPH_PATH ?= $(PAGERANK_PATH)/$(graph)/$(graph).el
+GRAPH_PATH ?= $(PAGERANK_PATH)/$(graph).el
 C_ARGS ?= $(BSG_MANYCORE_KERNELS) -g $(GRAPH_PATH)
 
 SIM_ARGS ?=
