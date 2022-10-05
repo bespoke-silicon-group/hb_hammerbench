@@ -1,21 +1,15 @@
 
-# Structure:
-   graphit: contains the different versions of interfaces that handle the format of input graphs on the host, including different partitioning stragies
-   pull: Contains pull implementation of pagerank
-   (Ignore other directories)
-
-
 # Instructions
 
-0. Edit [tests.mk](tests.mk) to specify which tests to run.
-1. `make all-graphs`: Downloads all graphs
-2. `make exec -j <parallel jobs>: To run all tests. Replace goal as desired.
-3. Profit.
+0. `make -f common.mk setup`: Downloads GAPBS, GraphIt and performs required builds
+1. `make -f common.mk all-graphs`: Downloads all graphs and convert to .el format
+2. Edit [tests.mk](tests.mk) to specify which tests to run.
+3. `make <goal> -j <parallel jobs>`: To run all tests. Common goals are `exec` `stats` and `pc-histogram`.
+4. Profit.
 
 I've set this up with more small graphs than big graphs. The goal is
 to run a lot of little graphs to verify correctness and get some
 insight into what happens when we change the RTL.
-
 
 
 # Running pagerank examples (Deprecated)
