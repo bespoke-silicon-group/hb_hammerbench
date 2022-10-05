@@ -3,7 +3,7 @@
 #include <bsg_manycore_regression.h>
 #include <string.h>
 #include <stdio.h>
-#include <fstream> 
+#include <fstream>
 
 using hammerblade::Device;
 using hammerblade::Vector;
@@ -144,7 +144,7 @@ int launch(int argc, char * argv[]){
         contrib_cpu = new float [ builtin_getVertices(edges_cpu) ];
         error_cpu = new float [ builtin_getVertices(edges_cpu) ];
 
-        // Set parameters        
+        // Set parameters
         damp_cpu = ((float) 0.85) ;
         beta_score_cpu = ((((float) 1)  - damp_cpu) / builtin_getVertices(edges_cpu) );
 
@@ -199,8 +199,8 @@ int launch(int argc, char * argv[]){
 
         // Start HB Code
         InputParser input(argc, argv);
-        if(!input.cmdOptionExists("-g")){ 
-  
+        if(!input.cmdOptionExists("-g")){
+
                 std::cerr << "no input args\n";
                 return 0;
         }
@@ -212,13 +212,13 @@ int launch(int argc, char * argv[]){
         std::cerr << "load graph" << std::endl;
 
         std::string graph_f = input.getCmdOption("-g");
-        edges = hammerblade::builtin_loadEdgesFromFileToHB (graph_f.c_str()); 
+        edges = hammerblade::builtin_loadEdgesFromFileToHB (graph_f.c_str());
         std::cerr << "Finish initialize graph" << std::endl;
         float tmp_rank_val = (((float) 1)  / builtin_getVertices(edges_cpu) );
         std::vector<float> zerosf(edges.num_nodes(), 0.0);
         std::vector<int32_t> zeros(edges.num_nodes(), 0);
         std::vector<float> rank(edges.num_nodes(), tmp_rank_val);
- 
+
         //  float* rank_test = rank.data();
         //  for(int i = 0; i < edges.num_nodes(); i++) {
         //    std::cout << rank_test[i] << std::endl;
@@ -252,7 +252,7 @@ int launch(int argc, char * argv[]){
         device->write_dma();
 
         hb_mc_manycore_trace_enable(device->getDevice()->mc);
-  
+
         //  edges.getInIndices().copyToHost(index_hb, edges.num_nodes()+1);
         //  edges.getInNeighbors().copyToHost(inneighbor_hb, edges.num_edges());
         //  old_rank_dev.copyToHost(old_rank_hb, edges.num_nodes());
@@ -267,8 +267,12 @@ int launch(int argc, char * argv[]){
         //  }
         //
         int64_t nodes = edges.num_nodes();
-        int64_t rows_in_pod = (nodes-CURRENT_POD) % NUM_PODS == 0 ? ((nodes-CURRENT_POD) / NUM_PODS) : ((nodes-CURRENT_POD) / NUM_PODS + 1);
-        int* __restrict out_degree_blocked_hb = new int[rows_in_pod];
+
+        int64_t rows_per_pod = (nodes % NUM_PODS) == 0 ? (nodes / NUM_PODS) : ((nodes / NUM_PODS) + 1);
+        int pod_row_start = CURRENT_POD * rows_per_pod;
+        // Handle edge case
+        int64_t rows_in_pod = CURRENT_POD == (NUM_PODS - 1) ? nodes - (pod_row_start) : rows_per_pod;
+        int* __restrict out_degree_blocked_hb = new int[rows_per_pod];
         switch(version) {
         case 0:
                 old_rank_dev.copyToHost(old_rank_hb, edges.num_nodes());
@@ -280,7 +284,12 @@ int launch(int argc, char * argv[]){
                 }
                 contrib_dev.copyToDevice(contrib_hb, edges.num_nodes());
                 for(int i = 0; i < rows_in_pod; i++) {
+#ifdef HB_CYCLIC
                         out_degree_blocked_hb[i] = out_degree_hb[CURRENT_POD+i*NUM_PODS];
+#else
+                        out_degree_blocked_hb[i] = out_degree_hb[pod_row_start + i];
+#endif
+
                 }
                 out_degree_dev.copyToDevice(out_degree_blocked_hb, rows_in_pod);
                 device->write_dma();
@@ -290,7 +299,7 @@ int launch(int argc, char * argv[]){
                 device->runJobs();
                 std::cerr << "finished call" << std::endl;
         }
- 
+
         old_rank_dev.copyToHost(old_rank_hb, rows_in_pod);
         device->read_dma();
         std::cout << "Total nodes: " << nodes << std::endl;
@@ -298,20 +307,21 @@ int launch(int argc, char * argv[]){
 
         double rmse = 0.0;
         bool fail = false;
-        int pod_row_start = CURRENT_POD * rows_in_pod;
-        
+
         for(int64_t i= 0; i < rows_in_pod; i++) {
-#ifndef HB_CYCLIC                
-                rmse += (old_rank_hb[i] - old_rank_cpu[i]) * (old_rank_hb[i] - old_rank_cpu[pod_row_start+i]);
-                std::cout << "old_rank_hb[" << i << "] is " << old_rank_hb[i] << " and old_rank_cpu[" << i << "] is " << old_rank_cpu[pod_row_start+i] << std::endl;
-                if (std::fabs(old_rank_hb[i] - old_rank_cpu[pod_row_start+i]) > 0.0000001) {
+#ifdef HB_CYCLIC
+                int64_t cyclic_i = CURRENT_POD+i*NUM_PODS;
+                rmse += (old_rank_hb[i] - old_rank_cpu[cyclic_i]) * (old_rank_hb[i] - old_rank_cpu[cyclic_i]);
+                std::cout << "old_rank_hb[" << i << "] is " << old_rank_hb[i] << " and old_rank_cpu[" << i << "] is " << old_rank_cpu[cyclic_i] << std::endl;
+                if (std::fabs(old_rank_hb[i] - old_rank_cpu[cyclic_i]) > 0.0000001) {
                         std::cerr << "Result is not equal at index " << i << ". FAIL!" << std::endl;
                         fail = true;
                 }
 #else
-                rmse += (old_rank_hb[i] - old_rank_cpu[i]) * (old_rank_hb[i] - old_rank_cpu[CURRENT_POD+i*NUM_PODS]);
-                std::cout << "old_rank_hb[" << i << "] is " << old_rank_hb[i] << " and old_rank_cpu[" << i << "] is " << old_rank_cpu[CURRENT_POD+i*NUM_PODS] << std::endl;
-                if (std::fabs(old_rank_hb[i] - old_rank_cpu[CURRENT_POD+i*NUM_PODS]) > 0.0000001) {
+                int64_t block_i = pod_row_start+i;
+                rmse += (old_rank_hb[i] - old_rank_cpu[block_i]) * (old_rank_hb[i] - old_rank_cpu[block_i]);
+                std::cout << "old_rank_hb[" << i << "] is " << old_rank_hb[i] << " and old_rank_cpu[" << i << "] is " << old_rank_cpu[block_i] << std::endl;
+                if (std::fabs(old_rank_hb[i] - old_rank_cpu[block_i]) > 0.0000001) {
                         std::cerr << "Result is not equal at index " << i << ". FAIL!" << std::endl;
                         fail = true;
                 }
