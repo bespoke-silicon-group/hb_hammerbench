@@ -268,11 +268,27 @@ int launch(int argc, char * argv[]){
         //
         int64_t nodes = edges.num_nodes();
 
+        // Rows per pod, is the number of rows in pods 0 to NUM_PODS-2. NUM_PODS-1 is a special case (handled by rows_in_pod).
         int64_t rows_per_pod = (nodes % NUM_PODS) == 0 ? (nodes / NUM_PODS) : ((nodes / NUM_PODS) + 1);
         int pod_row_start = CURRENT_POD * rows_per_pod;
         // Handle edge case
         int64_t rows_in_pod = CURRENT_POD == (NUM_PODS - 1) ? nodes - (pod_row_start) : rows_per_pod;
         int* __restrict out_degree_blocked_hb = new int[rows_per_pod];
+
+        std::cout << "Current Pod: " << CURRENT_POD << std::endl;
+        std::cout << "Num Pods: " << NUM_PODS << std::endl;
+        std::cout << "Technique: Pull" << std::endl;
+        std::cout << "Graph: " << graph_f << std::endl;
+        std::cout << "Total Nodes: " << nodes << std::endl;
+        std::cout << "Local Nodes: " << rows_in_pod << std::endl;
+#ifdef HB_CYCLIC
+        std::cout << "Distribution: Cyclic" << std::endl;
+#else
+        std::cout << "Distribution: Blocking" << std::endl;
+#endif
+        string kernel_function = "pagerank_pull";
+        std::cout << "Function: " << kernel_function << std::endl;
+
         switch(version) {
         case 0:
                 old_rank_dev.copyToHost(old_rank_hb, edges.num_nodes());
@@ -294,16 +310,15 @@ int launch(int argc, char * argv[]){
                 out_degree_dev.copyToDevice(out_degree_blocked_hb, rows_in_pod);
                 device->write_dma();
 
-                std::cerr << "Launching Kernel (pod CURRENT_POD of NUM_PODS) " << std::endl;
-                device->enqueueJob("pagerank_pull", hb_mc_dimension(X,Y),{edges.getInIndicesAddr(), edges.getInNeighborsAddr(), out_degree_dev.getAddr(), old_rank_dev.getAddr(), new_rank_dev.getAddr(), contrib_dev.getAddr(), contrib_new_dev.getAddr(), rows_in_pod});
+                device->enqueueJob(kernel_function.c_str(), hb_mc_dimension(X,Y),{edges.getInIndicesAddr(), edges.getInNeighborsAddr(), out_degree_dev.getAddr(), old_rank_dev.getAddr(), new_rank_dev.getAddr(), contrib_dev.getAddr(), contrib_new_dev.getAddr(), rows_in_pod});
+                uint64_t start_cycle = device->getCycle();
                 device->runJobs();
-                std::cerr << "finished call" << std::endl;
+                uint64_t end_cycle = device->getCycle();
+                std::cerr << "Finished. Execution Cycles: " << (end_cycle - start_cycle) << std::endl;
         }
 
         old_rank_dev.copyToHost(old_rank_hb, rows_in_pod);
         device->read_dma();
-        std::cout << "Total nodes: " << nodes << std::endl;
-        std::cout << "Simulating current pod " << CURRENT_POD << " with " << rows_in_pod << " rows " << std::endl;
 
         double rmse = 0.0;
         bool fail = false;
