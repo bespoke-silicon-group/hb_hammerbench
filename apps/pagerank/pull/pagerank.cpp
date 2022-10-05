@@ -298,13 +298,24 @@ int launch(int argc, char * argv[]){
 
         double rmse = 0.0;
         bool fail = false;
+        int pod_row_start = CURRENT_POD * rows_in_pod;
+        
         for(int64_t i= 0; i < rows_in_pod; i++) {
-                rmse += (old_rank_hb[i] - old_rank_cpu[i]) * (old_rank_hb[i] - old_rank_cpu[i]);
+#ifndef HB_CYCLIC                
+                rmse += (old_rank_hb[i] - old_rank_cpu[i]) * (old_rank_hb[i] - old_rank_cpu[pod_row_start+i]);
+                std::cout << "old_rank_hb[" << i << "] is " << old_rank_hb[i] << " and old_rank_cpu[" << i << "] is " << old_rank_cpu[pod_row_start+i] << std::endl;
+                if (std::fabs(old_rank_hb[i] - old_rank_cpu[pod_row_start+i]) > 0.0000001) {
+                        std::cerr << "Result is not equal at index " << i << ". FAIL!" << std::endl;
+                        fail = true;
+                }
+#else
+                rmse += (old_rank_hb[i] - old_rank_cpu[i]) * (old_rank_hb[i] - old_rank_cpu[CURRENT_POD+i*NUM_PODS]);
                 std::cout << "old_rank_hb[" << i << "] is " << old_rank_hb[i] << " and old_rank_cpu[" << i << "] is " << old_rank_cpu[CURRENT_POD+i*NUM_PODS] << std::endl;
                 if (std::fabs(old_rank_hb[i] - old_rank_cpu[CURRENT_POD+i*NUM_PODS]) > 0.0000001) {
                         std::cerr << "Result is not equal at index " << i << ". FAIL!" << std::endl;
                         fail = true;
                 }
+#endif
         }
         std::cerr << "RMSE: " << rmse << std::endl;
 
