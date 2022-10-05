@@ -1,11 +1,12 @@
 
 # Instructions
 
-0. `make -f common.mk setup`: Downloads GAPBS, GraphIt and performs required builds
-1. `make -f common.mk all-graphs`: Downloads all graphs and convert to .el format
+0. `make -f common.mk setup`: Downloads GAPBS, GraphIt and performs required builds.
+1. `make -f common.mk all-graphs`: Downloads all graphs and convert to .el format.
 2. Edit [tests.mk](tests.mk) to specify which tests to run.
-3. `make <goal> -j <parallel jobs>`: To run all tests. Common goals are `exec` `stats` and `pc-histogram`.
-4. Profit.
+3. `make generate`: Generates all test directories.
+4. `make <goal> -j <parallel jobs>`: To run all tests. Common goals are `exec` `stats` and `pc-histogram`.
+5. Profit.
 
 I've set this up with more small graphs than big graphs. The goal is
 to run a lot of little graphs to verify correctness and get some
