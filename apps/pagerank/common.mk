@@ -5,22 +5,22 @@ PAGERANK_PATH:=$(HB_HAMMERBENCH_PATH)/apps/pagerank
 GRAPHIT_PATH:=$(HB_HAMMERBENCH_PATH)/apps/pagerank/graphit
 GAPBS_PATH:=$(HB_HAMMERBENCH_PATH)/apps/pagerank/gapbs
 
-setup: checkout_graphit $(GAPBS_PATH)/converter
+setup: $(GAPBS_PATH)/converter checkout_graphit 
 
 .PHONY: checkout_graphit checkout_gapbs
 
-checkout_graphit:
+checkout_graphit: $(GRAPHIT_PATH)
+checkout_gapbs: $(GAPBS_PATH)
+
+$(GRAPHIT_PATH):
 	cd $(PAGERANK_PATH) && git clone git@github.com:bespoke-silicon-group/graphit
 	cd $(GRAPHIT_PATH) && git checkout pagerank
-
-checkout_gapbs: $(GAPBS_PATH)
 
 $(GAPBS_PATH):
 	cd $(PAGERANK_PATH) && git clone git@github.com:sbeamer/gapbs
 
-$(GAPBS_PATH)/converter: $(GAPBS_PATH)
-	make -j -f $(GAPBS_PATH)
-
+$(GAPBS_PATH)/converter: | $(GAPBS_PATH)
+	make -j -C $(GAPBS_PATH)
 
 # Matrix setup:
 %.el: %.mtx $(GAPBS_PATH)/converter
