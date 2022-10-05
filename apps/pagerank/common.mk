@@ -28,6 +28,12 @@ wiki-Vote.tar.gz:
 rgg_n_2_15_s0.tar.gz:
 	wget "https://suitesparse-collection-website.herokuapp.com/MM/DIMACS10/rgg_n_2_15_s0.tar.gz"
 
+rgg_n_2_16_s0.tar.gz:
+	wget "https://suitesparse-collection-website.herokuapp.com/MM/DIMACS10/rgg_n_2_16_s0.tar.gz"
+
+rgg_n_2_20_s0.tar.gz:
+	wget "https://suitesparse-collection-website.herokuapp.com/MM/DIMACS10/rgg_n_2_20_s0.tar.gz"
+
 p2p-Gnutella09.tar.gz:
 	wget "https://suitesparse-collection-website.herokuapp.com/MM/SNAP/p2p-Gnutella09.tar.gz"
 
@@ -52,11 +58,20 @@ road_central.tar.gz:
 road_usa.tar.gz:
 	wget "https://suitesparse-collection-website.herokuapp.com/MM/DIMACS10/road_usa.tar.gz"
 
+kron_g500-logn16.tar.gz:
+	wget "https://suitesparse-collection-website.herokuapp.com/MM/DIMACS10/kron_g500-logn16.tar.gz"
 
+hi2010.tar.gz:
+	wget "https://suitesparse-collection-website.herokuapp.com/MM/DIMACS10/hi2010.tar.gz"
+
+delaunay_n15.tar.gz:
+	wget "https://suitesparse-collection-website.herokuapp.com/MM/DIMACS10/delaunay_n15.tar.gz"
 
 %.mtx: %.tar.gz
 	tar -xf $< --strip-components 1 $(basename $@)/$@
 
 
 all-graphs: wiki-Vote.el soc-Pokec.el p2p-Gnutella09.el email-Enron.el hollywood-2009.el \
-	road_usa.el road_central.el roadNet-CA.el ljournal-2008.el cit-HepTh.el
+	road_usa.el road_central.el roadNet-CA.el ljournal-2008.el cit-HepTh.el \
+	rgg_n_2_16_s0.el rgg_n_2_15_s0.el kron_g500-logn16.el hi2010.el delaunay_n15.el
+	rgg_n_2_20_s0.el
