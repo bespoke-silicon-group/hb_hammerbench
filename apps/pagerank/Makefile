@@ -8,11 +8,12 @@ all: generate
 test-name = direction_$(1)__graph_$(2)__pod-id_$(3)__npods_$(4)
 
 get-element = $(lastword $(subst _, ,$(filter $(1)_%,$(subst __, ,$(2)))))
-# call to get parameter from test name
-get-npods = $(lastword $(subst _, ,$(call get-element,npods,$(1))))
-get-pod-id = $(lastword $(subst _, ,$(call get-element,pod-id,$(1))))
-get-direction = $(lastword $(subst _, ,$(call get-element,direction,$(1))))
-get-graph = $(lastword $(subst _, ,$(call get-element,graph,$(1))))
+# call these to get parameters from test name
+get-direction = $(call get-element,direction,$(1))
+get-npods = $(call get-element,npods,$(1))
+get-pod-id = $(call get-element,pod-id,$(1))
+# get-graph is special because some graphs have underscores in their names
+get-graph = $(lastword $(subst graph_, ,$(filter graph_%,$(subst __, ,$(1)))))
 
 # defines tests
 TESTS =
