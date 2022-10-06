@@ -5,6 +5,7 @@
 # These tests run relatively quickly:
 # Social network-like
 TESTS +=$(foreach i,$(shell seq -s" " 0 63),$(call test-name,pull,pagerank_pull,wiki-Vote,$(i),64))
+TESTS +=$(foreach i,$(shell seq -s" " 0 63),$(call test-name,pull,pagerank_pull_u8,wiki-Vote,$(i),64))
 # TESTS +=$(foreach i,$(shell seq -s" " 0 63),$(call test-name,pull,pagerank_pull,p2p-Gnutella09,$(i),64))
 # TESTS +=$(foreach i,$(shell seq -s" " 0 63),$(call test-name,pull,pagerank_pull,email-Enron,$(i),64))
 # TESTS +=$(foreach i,$(shell seq -s" " 0 63),$(call test-name,pull,pagerank_pull,cit-HepTh,$(i),64))
