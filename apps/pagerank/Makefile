@@ -3,7 +3,12 @@ HB_HAMMERBENCH_PATH = $(shell git rev-parse --show-toplevel)
 .PHONY: all
 all: generate
 
-# call to generate a test name
+# Call test-name to generate a test name
+#   direction: [push,pull] (Only pull supported right now)
+#   fn (function): Name of a function in pull/kernel.cpp or push/kernel.cpp
+#   graph: Filename of a graph (without .el extension)
+#   pod-id: Which pod to simulate
+#   npods: How many pods is work distributed over
 test-name = direction_$(1)__fn_$(2)__graph_$(3)__pod-id_$(4)__npods_$(5)
 
 get-element = $(lastword $(subst _, ,$(filter $(1)_%,$(subst __, ,$(2)))))
