@@ -47,8 +47,8 @@ p2p-Gnutella09.tar.gz:
 email-Enron.tar.gz:
 	wget "https://suitesparse-collection-website.herokuapp.com/MM/SNAP/email-Enron.tar.gz"
 
-soc-Pokec.tar.gz:
-	wget "https://suitesparse-collection-website.herokuapp.com/MM/SNAP/soc-Pokec.tar.gz"
+#soc-Pokec.tar.gz:
+#	wget "https://suitesparse-collection-website.herokuapp.com/MM/SNAP/soc-Pokec.tar.gz"
 
 hollywood-2009.tar.gz:
 	wget "https://suitesparse-collection-website.herokuapp.com/MM/LAW/hollywood-2009.tar.gz"
