@@ -285,7 +285,7 @@ int launch(int argc, char * argv[]){
 #else
         std::cout << "Distribution: Blocking" << std::endl;
 #endif
-        string kernel_function = "pagerank_pull";
+        string kernel_function = KERNEL_FUNCTION;
         std::cout << "Function: " << kernel_function << std::endl;
 
         switch(version) {

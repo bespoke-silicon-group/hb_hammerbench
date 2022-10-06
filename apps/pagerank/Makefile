@@ -4,16 +4,16 @@ HB_HAMMERBENCH_PATH = $(shell git rev-parse --show-toplevel)
 all: generate
 
 # call to generate a test name
-#test-name = buffer-size_$(1)__warm-cache_$(2)
-test-name = direction_$(1)__graph_$(2)__pod-id_$(3)__npods_$(4)
+test-name = direction_$(1)__fn_$(2)__graph_$(3)__pod-id_$(4)__npods_$(5)
 
 get-element = $(lastword $(subst _, ,$(filter $(1)_%,$(subst __, ,$(2)))))
 # call these to get parameters from test name
 get-direction = $(call get-element,direction,$(1))
 get-npods = $(call get-element,npods,$(1))
 get-pod-id = $(call get-element,pod-id,$(1))
-# get-graph is special because some graphs have underscores in their names
+# get-graph and get-function are special because some have underscores in their names
 get-graph = $(lastword $(subst graph_, ,$(filter graph_%,$(subst __, ,$(1)))))
+get-function = $(lastword $(subst fn_, ,$(filter fn_%,$(subst __, ,$(1)))))
 
 # defines tests
 TESTS =
@@ -36,6 +36,7 @@ $(addsuffix /parameters.mk,$(PULL_TEST_DIRS)): %/parameters.mk:
 	@echo graph=$(call get-graph,$*) >> $@
 	@echo pod-id=$(call get-pod-id,$*) >> $@
 	@echo direction=$(call get-direction,$*) >> $@
+	@echo function=\"$(call get-function,$*)\" >> $@
 
 $(addsuffix /parameters.mk,$(PUSH_TEST_DIRS)): %/parameters.mk:
 	@touch $@
@@ -44,6 +45,7 @@ $(addsuffix /parameters.mk,$(PUSH_TEST_DIRS)): %/parameters.mk:
 	@echo graph=$(call get-graph,$*) >> $@
 	@echo pod-id=$(call get-pod-id,$*) >> $@
 	@echo direction=$(call get-direction,$*) >> $@
+	@echo function=\"$(call get-function,$*)\" >> $@
 
 include $(HB_HAMMERBENCH_PATH)/mk/testbench_common.mk
 
