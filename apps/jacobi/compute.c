@@ -18,13 +18,10 @@ void copySelf(
   }
 
   // set middle
-  int line_id = __bsg_id % (LOCAL_SIZE/16);
-
+  float bsg_attr_remote * bsg_attr_noalias temp_dst = &dst[1];
+  float bsg_attr_remote * bsg_attr_noalias temp_src = &src[start_idx];
   bsg_unroll(1)
-  for (int i = 0; i < (LOCAL_SIZE/16); i++) {
-    float bsg_attr_remote * bsg_attr_noalias temp_dst = &dst[1+(16*line_id)];
-    float bsg_attr_remote * bsg_attr_noalias temp_src = &src[start_idx+(16*line_id)];
-
+  for (int i = 0; i < (LOCAL_SIZE); i+=16) {
     register float tmp00 =  temp_src[0];
     register float tmp01 =  temp_src[1];
     register float tmp02 =  temp_src[2];
@@ -58,7 +55,8 @@ void copySelf(
     temp_dst[13] = tmp13;
     temp_dst[14] = tmp14;
     temp_dst[15] = tmp15;
-    line_id = (line_id+1)%(LOCAL_SIZE/16);
+    temp_src += 16;
+    temp_dst += 16;
   }
 
   // set last
