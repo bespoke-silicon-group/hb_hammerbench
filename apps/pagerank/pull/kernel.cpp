@@ -100,10 +100,34 @@ int __attribute__ ((noinline)) pagerank_pull_u8(int bsg_attr_remote * bsg_attr_n
       register int od = out_degree[d];
       int s = first;
       for(;s + 8 < last; s += 8) {
-              bsg_unroll(8) for(int si = 0; si < 8; ++si){
-                      int idx = in_neighbors[s + si];
-                      temp_new += contrib[idx];
-              }
+              //              bsg_unroll(8) for(int si = 0; si < 8; ++si){
+              register int idx0 asm ("s8");
+              register int idx1 asm ("s9");
+              register int idx2 asm ("s10");
+              register int idx3 asm ("s11");
+              register int idx4 asm ("t3");
+              register int idx5 asm ("t4");
+              register int idx6 asm ("t5");
+              register int idx7 asm ("t6");
+              idx0 = in_neighbors[s + 0];
+              idx1 = in_neighbors[s + 1];
+              idx2 = in_neighbors[s + 2];
+              idx3 = in_neighbors[s + 3];
+              idx4 = in_neighbors[s + 4];
+              idx5 = in_neighbors[s + 5];
+              idx6 = in_neighbors[s + 6];
+              idx7 = in_neighbors[s + 7];
+              asm volatile ("" ::: "memory");
+              temp_new += contrib[idx0];
+              temp_new += contrib[idx1];
+              temp_new += contrib[idx2];
+              temp_new += contrib[idx3];
+              temp_new += contrib[idx4];
+              temp_new += contrib[idx5];
+              temp_new += contrib[idx6];
+              temp_new += contrib[idx7];
+              //temp_new += contrib[idx];
+                      //              }
       }
 
       for(; s < last; ++s){

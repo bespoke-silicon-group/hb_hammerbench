@@ -67,7 +67,7 @@ include $(EXAMPLES_PATH)/link.mk
 # be built before executing.
 BSG_MANYCORE_KERNELS = kernel.riscv
 
-kernel.rvo:RISCV_CXX=$(RISCV_CLANGXX)
+# kernel.rvo:RISCV_CXX=$(RISCV_CLANGXX)
 kernel.riscv: kernel.rvo
 
 # Tile Group Dimensions
