@@ -78,7 +78,7 @@ delaunay_n15.tar.gz:
 	tar -xf $< --strip-components 1 $(basename $@)/$@
 
 
-all-graphs: wiki-Vote.el soc-Pokec.el p2p-Gnutella09.el email-Enron.el hollywood-2009.el \
+all-graphs: wiki-Vote.el p2p-Gnutella09.el email-Enron.el hollywood-2009.el \
 	road_usa.el road_central.el roadNet-CA.el ljournal-2008.el cit-HepTh.el \
-	rgg_n_2_16_s0.el rgg_n_2_15_s0.el kron_g500-logn16.el hi2010.el delaunay_n15.el
+	rgg_n_2_16_s0.el rgg_n_2_15_s0.el kron_g500-logn16.el hi2010.el delaunay_n15.el \
 	rgg_n_2_20_s0.el
