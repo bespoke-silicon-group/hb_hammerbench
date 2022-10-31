@@ -12,6 +12,8 @@
 # TESTS += $(call test-name,g16k16,61526,1,2,1)
 # TESTS += $(call test-name,g16k16,61526,1,4,1)
 
-TESTS += $(call test-name,g16k16,61526,1,2,1)
-TESTS += $(call test-name,g16k16,61526,1,2,2)
-TESTS += $(call test-name,g16k16,61526,1,2,4)
+# TESTS += $(call test-name,g16k16,61526,1,2,1)
+# TESTS += $(call test-name,g16k16,61526,1,2,2)
+# TESTS += $(call test-name,g16k16,61526,1,2,4)
+
+TESTS += $(call test-name,u15k16,18554,1,1,1)
