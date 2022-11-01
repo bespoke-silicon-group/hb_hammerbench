@@ -72,7 +72,7 @@ int kernel_memcpy(int argc, char **argv) {
 
 
     // CUDA arguments
-    hb_mc_dimension_t tg_dim = { .x = 16, .y = 8};
+    hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
     hb_mc_dimension_t grid_dim = { .x = 1, .y = 1};
     #define CUDA_ARGC 3
     uint32_t cuda_argv[CUDA_ARGC] = {A_device, B_device, SIZE};
