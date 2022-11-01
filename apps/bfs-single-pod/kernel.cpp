@@ -142,7 +142,7 @@ static inline void parallel_foreach_dynamic(int &START, int STOP, int STEP, Body
 static inline void zero_dense_set(int *set)
 {
     bsg_barrier_hw_tile_group_sync();
-    bsg_cuda_print_stat_start(TAG_ZERO_DENSE);
+    //bsg_cuda_print_stat_start(TAG_ZERO_DENSE);
     int words = (V+31)/32;
     static constexpr int STRIDE = BLOCK_WORDS;
     parallel_foreach_static(0, words, STRIDE, [=](int w_start){
@@ -153,7 +153,7 @@ static inline void zero_dense_set(int *set)
             return 0;
         });
     bsg_barrier_hw_tile_group_sync();
-    bsg_cuda_print_stat_end(TAG_ZERO_DENSE);
+    //bsg_cuda_print_stat_end(TAG_ZERO_DENSE);
 }
 
 static inline int in_dense(int member, int *set)
@@ -182,7 +182,7 @@ static inline int *to_sparse(int *set, int *set_sizep, int set_is_dense)
             bsg_fence();
         });
     if (set_is_dense) {
-        bsg_cuda_print_stat_start(TAG_TO_SPARSE);
+        //bsg_cuda_print_stat_start(TAG_TO_SPARSE);
         static constexpr int STRIDE = BLOCK_WORDS*32;
         parallel_foreach_static(0, V, STRIDE, [=](int v_start){
                 int members[STRIDE];
@@ -224,7 +224,7 @@ static inline int *to_sparse(int *set, int *set_sizep, int set_is_dense)
             }
             );
         bsg_barrier_hw_tile_group_sync();
-        bsg_cuda_print_stat_end(TAG_TO_SPARSE);
+        //bsg_cuda_print_stat_end(TAG_TO_SPARSE);
         return g_dense_to_sparse_set;
     } else {
         bsg_barrier_hw_tile_group_sync();
@@ -242,14 +242,14 @@ static inline int *to_dense(int *set, int set_size, int set_is_dense)
     if (set_is_dense) {
         return set;
     } else {
-        bsg_cuda_print_stat_start(TAG_TO_DENSE);
+        //bsg_cuda_print_stat_start(TAG_TO_DENSE);
         zero_dense_set(g_sparse_to_dense_set);
         parallel_foreach_static(0, set_size, 1, [=](int m){
                 insert_into_dense(set[m], g_sparse_to_dense_set, &new_set_size);
                 return 0;
             });
         bsg_barrier_hw_tile_group_sync();
-        bsg_cuda_print_stat_end(TAG_TO_DENSE);
+        //bsg_cuda_print_stat_end(TAG_TO_DENSE);
         return g_sparse_to_dense_set;
     }
 }
@@ -307,7 +307,7 @@ int kernel()
                 g_src = g_dst = 0;
                 bsg_fence();
             });
-        bsg_cuda_print_stat_start(TAG_DECIDE_DIRECTION);
+        //bsg_cuda_print_stat_start(TAG_DECIDE_DIRECTION);
         if (g_rev_not_fwd == 0) {
             // determine if we should switch from forward to backward
             // 1. find sum (degree in frontier)
@@ -390,7 +390,7 @@ int kernel()
                 }
                 );
         }
-        bsg_cuda_print_stat_end(TAG_DECIDE_DIRECTION);
+        //bsg_cuda_print_stat_end(TAG_DECIDE_DIRECTION);
         ////////////////////////////////////
         // traverse from current frontier //
         // update distance                //
@@ -398,7 +398,7 @@ int kernel()
         ////////////////////////////////////
         if (g_rev_not_fwd) {
             // backwards traversal
-            bsg_cuda_print_stat_start(TAG_REV_TRAVERSAL);
+            //bsg_cuda_print_stat_start(TAG_REV_TRAVERSAL);
             int *dense_frontier = to_dense(g_curr_frontier,
                                            g_curr_frontier_size,
                                            g_curr_frontier_dense);
@@ -488,9 +488,9 @@ int kernel()
                     }
                     return 0;
                 });
-            bsg_cuda_print_stat_end(TAG_REV_TRAVERSAL);
+            //bsg_cuda_print_stat_end(TAG_REV_TRAVERSAL);
         } else {
-            bsg_cuda_print_stat_start(TAG_FWD_TRAVERSAL);
+            //bsg_cuda_print_stat_start(TAG_FWD_TRAVERSAL);
             // forward traversal
             parallel_foreach_dynamic(g_src, g_curr_frontier_size, 1, [=](int v){
                     int src = sparse_frontier[v];
@@ -536,7 +536,7 @@ int kernel()
                     }
                     return  0;
                 });
-            bsg_cuda_print_stat_end(TAG_REV_TRAVERSAL);
+            //bsg_cuda_print_stat_end(TAG_REV_TRAVERSAL);
         }
         ////////////////////
         // swap frontiers //
