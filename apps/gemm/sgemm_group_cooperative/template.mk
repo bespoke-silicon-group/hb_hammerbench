@@ -22,8 +22,8 @@ include parameters.mk
 include app_path.mk
 
 # Tile Group Dimensions
-TILE_GROUP_DIM_X = 4
-TILE_GROUP_DIM_Y = 4
+TILE_GROUP_DIM_X = 8
+TILE_GROUP_DIM_Y = 8
 BLOCK_DIM = 16
 
 vpath %.c   $(APP_PATH)
