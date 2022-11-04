@@ -2,7 +2,7 @@
 #include <bsg_cuda_lite_barrier.h>
 
 #define MAX_UPDATES 512
-#define CONCURRENCY 1
+#define CONCURRENCY 8
 
 #ifdef WARM_CACHE
 #define CACHE_LINE_WORDS 16
