@@ -31,7 +31,6 @@ kernel_tile_gups(int * A, int N) {
   bsg_fence();
 
   // Run tile gups
-  #define UNROLL 1
   #define NUM_ITER 16
   bsg_unroll(1)
   for (int iter = 0; iter < NUM_ITER; iter++) {
