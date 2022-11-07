@@ -16,7 +16,7 @@
 #define ALLOC_NAME "default_allocator"
 
 #define NUM_UPDATE 512
-#define MAX_NUM_TILE 128
+#define MAX_NUM_TILE (TILE_GROUP_DIM_X*TILE_GROUP_DIM_Y)
 
 int kernel_gups_rmw(int argc, char **argv) {
 
@@ -77,7 +77,7 @@ int kernel_gups_rmw(int argc, char **argv) {
 
 
     // CUDA arguments
-    hb_mc_dimension_t tg_dim = { .x = 16, .y = 8};
+    hb_mc_dimension_t tg_dim = { .x = TILE_GROUP_DIM_X, .y = TILE_GROUP_DIM_Y};
     hb_mc_dimension_t grid_dim = { .x = 1, .y = 1};
     #define CUDA_ARGC 3
     uint32_t cuda_argv[CUDA_ARGC] = {A_device, X_device, NUM_UPDATE};
@@ -86,9 +86,9 @@ int kernel_gups_rmw(int argc, char **argv) {
     BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_gups_rmw", CUDA_ARGC, cuda_argv));
     
     // Launch kernel.
-    hb_mc_manycore_trace_enable((&device)->mc);
+    //hb_mc_manycore_trace_enable((&device)->mc);
     BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(&device));
-    hb_mc_manycore_trace_disable((&device)->mc);
+    //hb_mc_manycore_trace_disable((&device)->mc);
 
     // Freeze tiles.
     BSG_CUDA_CALL(hb_mc_device_program_finish(&device));

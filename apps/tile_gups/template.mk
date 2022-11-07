@@ -14,8 +14,9 @@
 include parameters.mk
 include app_path.mk
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
-override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
+override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel 
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
+
 
 ###############################################################################
 # Host code compilation flags and flow
@@ -30,19 +31,16 @@ vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
 
 # TEST_SOURCES is a list of source files that need to be compiled
-TEST_SOURCES = main.c
+TEST_SOURCES = main.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
-DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X)
-DEFINES += -DTILE_GROUP_DIM_Y=$(TILE_GROUP_DIM_Y)
-DEFINES += -DA_SIZE=$(A-size)
-CDEFINES +=
+DEFINES += -DSIZE=$(buffer-size)
+DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X) -DTILE_GROUP_DIM_Y=$(TILE_GROUP_DIM_Y)
 CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++11 $(FLAGS)
-
 # compilation.mk defines rules for compilation of C/C++
 include $(EXAMPLES_PATH)/compilation.mk
 
@@ -59,18 +57,19 @@ include $(EXAMPLES_PATH)/link.mk
 # Device code compilation flow
 ###############################################################################
 
+# BSG_MANYCORE_KERNELS is a list of manycore executables that should
+# be built before executing.
+
 RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
-RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y) -DA_SIZE=$(A-size)
-ifeq ($(warm-cache),yes)
-RISCV_CCPPFLAGS += -DWARM_CACHE
-endif
+RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+RISCV_CCPPFLAGS += -DCACHE_LINE_WORDS=$(BSG_MACHINE_VCACHE_LINE_WORDS)
+RISCV_CCPPFLAGS += -DUNROLL=$(unroll)
 RISCV_LDFLAGS += -flto
 RISCV_TARGET_OBJECTS = kernel.rvo
 BSG_MANYCORE_KERNELS = main.riscv
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
-
 ###############################################################################
 # Execution flow
 #
@@ -79,7 +78,7 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 #
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
-C_ARGS ?= $(BSG_MANYCORE_KERNELS) gups_rmw
+C_ARGS ?= $(BSG_MANYCORE_KERNELS) tile_gups
 
 SIM_ARGS ?=
 
@@ -94,4 +93,5 @@ regression: exec.log
 	@grep "BSG REGRESSION TEST .*PASSED.*" $< > /dev/null
 
 .DEFAULT_GOAL := help
+
 

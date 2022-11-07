@@ -1,8 +1,9 @@
-
-# Test name : (A-size, warm-cache)
-
-# A fits in vcache
-TESTS += $(call test-name,262144,yes)
-# Maximum DRAM size
-TESTS += $(call test-name,67108864,no)
-
+#ASIZE = 67108864
+ASIZE = 1024
+WARMCACHE = yes
+TESTS += $(call test-name,4,2,$(ASIZE),$(WARMCACHE))
+TESTS += $(call test-name,4,4,$(ASIZE),$(WARMCACHE))
+TESTS += $(call test-name,8,4,$(ASIZE),$(WARMCACHE))
+TESTS += $(call test-name,8,8,$(ASIZE),$(WARMCACHE))
+TESTS += $(call test-name,16,8,$(ASIZE),$(WARMCACHE))
+TESTS += $(call test-name,16,16,$(ASIZE),$(WARMCACHE))

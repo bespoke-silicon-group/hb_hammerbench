@@ -2,7 +2,7 @@
 #include <bsg_cuda_lite_barrier.h>
 
 #define MAX_UPDATES 512
-#define CONCURRENCY 4
+#define CONCURRENCY 8
 
 #ifdef WARM_CACHE
 #define CACHE_LINE_WORDS 16
@@ -44,19 +44,22 @@ kernel_gups_rmw(int * dram_A, int * dram_X, int num_update) {
   bsg_cuda_print_stat_kernel_start();
   bsg_fence();
 
-  for (int i = 0; i < num_update; i += CONCURRENCY) {
-    int reg_x[CONCURRENCY];
-    int reg_a[CONCURRENCY];
+  #define NUM_ITER 8
+  for (int iter = 0; iter < NUM_ITER; iter++) {
+    for (int i = 0; i < num_update; i += CONCURRENCY) {
+      int reg_x[CONCURRENCY];
+      int reg_a[CONCURRENCY];
 
-    bsg_unroll(32)
-    for (int j = 0; j < CONCURRENCY; j++) {
-      reg_x[j] = LOCAL_X[i+j];
-      reg_a[j] = dram_A[reg_x[j]]; // load
-    }
+      bsg_unroll(32)
+      for (int j = 0; j < CONCURRENCY; j++) {
+        reg_x[j] = LOCAL_X[i+j];
+        reg_a[j] = dram_A[reg_x[j]]; // load
+      }
     
-    bsg_unroll(32)
-    for (int j = 0; j < CONCURRENCY; j++) {
-      dram_A[reg_x[j]] = reg_a[j] ^ reg_x[j]; // modify + store
+      bsg_unroll(32)
+      for (int j = 0; j < CONCURRENCY; j++) {
+        dram_A[reg_x[j]] = reg_a[j] ^ reg_x[j]; // modify + store
+      }
     }
   }
   
