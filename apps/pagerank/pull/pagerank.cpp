@@ -10,8 +10,14 @@ using hammerblade::Vector;
 using hammerblade::GraphHB;
 using hammerblade::GlobalScalar;
 
-#define X 16
-#define Y 8
+#ifndef bsg_tiles_X
+#error "define bsg_tiles_X"
+#endif
+#ifndef bsg_tiles_Y
+#errror "define bsg_tiles_Y"
+#endif
+#define X bsg_tiles_X
+#define Y bsg_tiles_Y
 
 GraphHB edges;
 Vector<float> old_rank_dev;
