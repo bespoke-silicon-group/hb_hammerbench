@@ -37,6 +37,9 @@ DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 DEFINES += -DSIM_CURRENT_POD=$(pod-id)
 DEFINES += -DNUM_PODS=$(num-pods)
 DEFINES += -DKERNEL_FUNCTION=\"$(function)\"
+ifeq ($(strip $(distribution)),"cyclic")
+DEFINES += -DHB_CYCLIC
+endif
 DEFINES += -DCOSIM
 CDEFINES +=
 CXXDEFINES +=
