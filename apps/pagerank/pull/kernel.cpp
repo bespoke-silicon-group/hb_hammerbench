@@ -100,7 +100,9 @@ int __attribute__ ((noinline)) pagerank_pull_u8(int bsg_attr_remote * bsg_attr_n
       register int od = out_degree[d];
       int s = first;
       for(;s + 8 < last; s += 8) {
-              //              bsg_unroll(8) for(int si = 0; si < 8; ++si){
+              // Unrolled by hand so that loads end up consecutive For
+              // some reason they do not. Register allocation only
+              // works in GCC and is not necessary.
               register int idx0 asm ("s8");
               register int idx1 asm ("s9");
               register int idx2 asm ("s10");
@@ -126,8 +128,6 @@ int __attribute__ ((noinline)) pagerank_pull_u8(int bsg_attr_remote * bsg_attr_n
               temp_new += contrib[idx5];
               temp_new += contrib[idx6];
               temp_new += contrib[idx7];
-              //temp_new += contrib[idx];
-                      //              }
       }
 
       for(; s < last; ++s){
@@ -148,3 +148,4 @@ int __attribute__ ((noinline)) pagerank_pull_u8(int bsg_attr_remote * bsg_attr_n
   bsg_barrier_hw_tile_group_sync();
   return 0;
 }
+
