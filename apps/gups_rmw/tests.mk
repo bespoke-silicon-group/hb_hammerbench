@@ -1,6 +1,6 @@
-#ASIZE = 67108864
-ASIZE = 1024
-WARMCACHE = yes
+ASIZE = 67108864
+#ASIZE = 1024
+WARMCACHE = no
 TESTS += $(call test-name,4,2,$(ASIZE),$(WARMCACHE))
 TESTS += $(call test-name,4,4,$(ASIZE),$(WARMCACHE))
 TESTS += $(call test-name,8,4,$(ASIZE),$(WARMCACHE))
