@@ -238,9 +238,13 @@ int hb_mc_manycore_device_build_tree(hb_mc_device_t *device, eva_t _config, unsi
         BSG_CUDA_CALL(hb_mc_kernel_enqueue (device, grid_dim, tg_dim, "build", 8, cuda_argv));
 
         /* Launch and execute all tile groups on device and wait for all to finish.  */
+#ifdef TRACE_ENABLE
         hb_mc_manycore_trace_enable(device->mc);
+#endif
         BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(device));
+#ifdef TRACE_ENABLE
         hb_mc_manycore_trace_disable(device->mc);
+#endif
 
         hb_mc_dma_dtoh_t dtoh_nnodes = {
                 .d_addr = _node_idx,
@@ -370,9 +374,13 @@ int hb_mc_manycore_device_summarize_centers(hb_mc_device_t *device, eva_t _confi
         BSG_CUDA_CALL(hb_mc_kernel_enqueue (device, grid_dim, tg_dim, "summarize", 4, cuda_argv));
 
         /* Launch and execute all tile groups on device and wait for all to finish.  */
+#ifdef TRACE_ENABLE
         hb_mc_manycore_trace_enable(device->mc);
+#endif
         BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(device));
+#ifdef TRACE_ENABLE
         hb_mc_manycore_trace_disable(device->mc);
+#endif
 
         hb_mc_dma_dtoh_t dtoh = {
                 .d_addr = _hnodes,
@@ -878,9 +886,13 @@ int hb_mc_manycore_device_compute_forces(hb_mc_device_t *device, eva_t _config, 
         BSG_CUDA_CALL(hb_mc_kernel_enqueue (device, grid_dim, tg_dim, "forces", 7, cuda_argv));
 
         /* Launch and execute all tile groups on device and wait for all to finish.  */
+#ifdef TRACE_ENABLE
         hb_mc_manycore_trace_enable(device->mc);
+#endif
         BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(device));
+#ifdef TRACE_ENABLE
         hb_mc_manycore_trace_disable(device->mc);
+#endif
 
         hb_mc_dma_dtoh_t dtoh = {
                 .d_addr = _hbodies,
@@ -908,9 +920,13 @@ int hb_mc_manycore_device_update_bodies(hb_mc_device_t *device, eva_t _config, u
         BSG_CUDA_CALL(hb_mc_kernel_enqueue (device, grid_dim, tg_dim, "update", 3, cuda_argv));
 
         /* Launch and execute all tile groups on device and wait for all to finish.  */
+#ifdef TRACE_ENABLE
         hb_mc_manycore_trace_enable(device->mc);
+#endif
         BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(device));
+#ifdef TRACE_ENABLE
         hb_mc_manycore_trace_disable(device->mc);
+#endif
 
         hb_mc_dma_dtoh_t dtoh = {
                 .d_addr = _hbodies,
