@@ -21,8 +21,6 @@ include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 # Host code compilation flags and flow
 ###############################################################################
 # import parameters and APP_PATH
-include parameters.mk
-include app_path.mk
 
 # Tile Group Dimensions
 TILE_GROUP_DIM_X = $(BSG_MACHINE_POD_TILES_X)
