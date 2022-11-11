@@ -229,6 +229,66 @@ LiveJournal__solnnz  = 0
 $(LiveJournal): url=https://suitesparse-collection-website.herokuapp.com/MM/LAW/ljournal-2008.tar.gz
 $(LiveJournal): tar=ljournal-2008.tar.gz
 
+#########
+# U12K4 #
+#########
+INPUTS += u12k4
+u12k4 = $(INPUTS_DIR)/u12k4.mtx
+u12k4__directed = yes
+u12k4__weighted = yes
+u12k4__zero-indexed = no
+u12k4__rows = 4096
+u12k4__cols = 4096
+u12k4__nnz  = 32730
+u12k4__solnnz = 0
+$(u12k4): url=https://drive.google.com/file/d/1wWd42ZjZEsbyknE7LrC375unaW28LeHk/view?usp=share_link
+$(u12k4): tar=u12k4.mtx.tar.gz
+
+########
+# G7K1 #
+########
+INPUTS += g7k1
+g7k1 = $(INPUTS_DIR)/g7k1.mtx
+g7k1__directed = yes
+g7k1__weighted = yes
+g7k1__zero-indexed = no
+g7k1__rows = 128
+g7k1__cols = 128
+g7k1__nnz  = 234
+g7k1__solnnz = 0
+$(g7k1): url=https://drive.google.com/file/d/1vFrohxOijg-HjckN0PTN22KGXlVJTtis/view?usp=share_link
+$(g7k1): tar=g7k1.mtx.tar.gz
+
+########
+# U7K1 #
+########
+INPUTS += u7k1
+u7k1 = $(INPUTS_DIR)/u7k1.mtx
+u7k1__directed = yes
+u7k1__weighted = yes
+u7k1__zero-indexed = no
+u7k1__rows = 128
+u7k1__cols = 128
+u7k1__nnz  = 254
+u7k1__solnnz = 0
+$(u7k1): url=https://drive.google.com/file/d/1hefg63DFUdCSs-dE8vOgX-0komVS_nXS/view?usp=share_link
+$(u7k1): tar=u7k1.mtx.tar.gz
+
+########
+# U8K2 #
+########
+INPUTS += u8k2
+u8k2 = $(INPUTS_DIR)/u8k2.mtx
+u8k2__directed = yes
+u8k2__weighted = yes
+u8k2__zero-indexed = no
+u8k2__rows = 256
+u8k2__cols = 256
+u8k2__nnz  = 1016
+u8k2__solnnz = 0
+$(u8k2): url=https://drive.google.com/file/d/1fWJSVA8-pQ64tPBklhpJhIkUe0t_1sKD/view?usp=share_link
+$(u8k2): tar=u8k2.mtx.tar.gz
+
 # Download and unpack
 $(foreach i,$(INPUTS),$($i)):
 	@echo "Downloading and unpacking $@"
@@ -243,6 +303,12 @@ $(empty1024):
 	@mkdir -p $(dirname $@)
 	@echo "%%MatrixMarket matrix coordinate integer general" > $@
 	@echo "1024 1024 0" >> $@
+
+$(u12k4) $(g7k1) $(u7k1) $(u8k2):
+	@echo "Generating $@"
+	@mkdir -p $(INPUTS_DIR)
+	@cd $(INPUTS_DIR) && gdown --fuzzy $(url)
+	@cd $(INPUTS_DIR) && tar zxf $(tar)
 
 inputs: $(foreach i,$(INPUTS),$($i))
 inputs: $(empty1024)
