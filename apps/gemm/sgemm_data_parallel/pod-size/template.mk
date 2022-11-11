@@ -67,7 +67,7 @@ include $(EXAMPLES_PATH)/link.mk
 # be built before executing.
 BSG_MANYCORE_KERNELS = kernel.riscv
 
-RISCV_INCLUDES += -I..
+RISCV_INCLUDES += -I$(APP_PATH)
 # To switch between g++ and clang, uncomment the line below. g++ is
 # the default. To view the disassembly, type `make kernel.dis`
 
