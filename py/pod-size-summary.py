@@ -14,8 +14,8 @@ for test_dir in test_dirs:
         l = [c for c in l.split(' ') if c]
         instrs = l[1]
         cycles = l[6]
-        x = re.search(r'x_(\d+)', test_dir).group(1)
-        y = re.search(r'y_(\d+)', test_dir).group(1)
+        x = re.search(r'\-x_(\d+)', test_dir).group(1)
+        y = re.search(r'\-y_(\d+)', test_dir).group(1)
         r['%sx%s'%(x,y)] = (instrs,cycles)
 
 order = ['16x16', '16x8', '4x2', '4x4', '8x4', '8x8']
