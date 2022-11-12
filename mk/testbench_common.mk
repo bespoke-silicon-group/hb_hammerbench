@@ -64,5 +64,12 @@ purge:
 	rm -rf $(TESTS_DIRS)
 
 .PHONY: pod-size-summary
+
+ifeq ($(EX16X8),y)
+DOEX16X8 ?= exclude-16x8
+else
+DOEX16X8 ?= no
+endif
+
 pod-size-summary:
-	python3 $(HB_HAMMERBENCH_PATH)/py/pod-size-summary.py $(TESTS_DIRS)
+	python3 $(DOEX16X8) $(HB_HAMMERBENCH_PATH)/py/pod-size-summary.py $(TESTS_DIRS)
