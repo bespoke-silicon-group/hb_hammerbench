@@ -63,3 +63,6 @@ pchistpdf: $(addsuffix .pchistpdf,$(TESTS))
 purge:
 	rm -rf $(TESTS_DIRS)
 
+.PHONY: pod-size-summary
+pod-size-summary:
+	python3 $(HB_HAMMERBENCH_PATH)/py/pod-size-summary.py $(TESTS_DIRS)
