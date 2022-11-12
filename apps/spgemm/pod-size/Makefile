@@ -114,3 +114,14 @@ $(foreach test,$(TESTS),$(test).stats): %.stats:
 	$(MAKE) -C $* stats
 
 stats: $(foreach test,$(TESTS),$(test).stats)
+
+.PHONY: pod-size-summary
+
+ifeq ($(EX16X8),y)
+DOEX16X8 ?= exclude-16x8
+else
+DOEX16X8 ?= no
+endif
+
+pod-size-summary:
+	python3 $(HB_HAMMERBENCH_PATH)/py/pod-size-summary-spgemm.py $(DOEX16X8)  $(TESTS)
