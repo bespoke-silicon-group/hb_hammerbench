@@ -46,6 +46,9 @@
 #include <assert.h>
 
 using namespace std;
+const char *query_file;
+const char *reference_file;
+const char *output_file;
 
 #define PRINT_SCORE
 //#define PRINT_MATRIX
@@ -102,11 +105,11 @@ class Sequence {
                               unsigned* sizea, unsigned* sizeb) {
       // read N queries
       unsigned* seqa_unpacked = new unsigned[N*SIZEA_MAX]();
-      read_seq("data/dna-query32.fasta", N, SIZEA_MAX, seqa_unpacked, sizea);
+      read_seq(query_file, N, SIZEA_MAX, seqa_unpacked, sizea);
 
       // read N references
       unsigned* seqb_unpacked = new unsigned[N*SIZEB_MAX]();
-      read_seq("data/dna-reference32.fasta", N, SIZEB_MAX, seqb_unpacked, sizeb);
+      read_seq(reference_file, N, SIZEB_MAX, seqb_unpacked, sizeb);
 
       // pack
       int num_unpacked = N * SIZEA_MAX;
@@ -127,19 +130,22 @@ class Sequence {
 
 int kernel_smith_waterman (int argc, char **argv) {
         char *bin_path, *test_name;
-        struct arguments_path args = {NULL, NULL};
 
-        argp_parse (&argp_path, argc, argv, 0, 0, &args);
-        bin_path = args.path;
-        test_name = args.name;
+        bin_path = argv[1];
+        test_name = argv[2];
+        query_file = argv[3];
+        reference_file = argv[4];
+        output_file = argv[5];
 
-        bsg_pr_test_info("Running the CUDA Vector Addition Kernel on one 2x2 tile groups.\n");
+        bsg_pr_test_info("query: %s\n", query_file);
+        bsg_pr_test_info("reference: %s\n", reference_file);
+        bsg_pr_test_info("output: %s\n", output_file);
 
         srand(static_cast<unsigned>(time(0)));
 
         /* Define path to binary. */
         /* Initialize device, load binary and unfreeze tiles. */
-        hb_mc_dimension_t tg_dim = { .x = 16, .y = 8};
+        hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y };
         hb_mc_device_t device;
         BSG_CUDA_CALL(hb_mc_device_init_custom_dimensions(&device, test_name, 0, tg_dim));
 
@@ -256,7 +262,7 @@ int kernel_smith_waterman (int argc, char **argv) {
                 // check N scores against golden
                 unsigned score_golden[N];
                 ifstream fin;
-                fin.open("data/output32", ios::in);
+                fin.open(output_file, ios::in);
                 for (int i = 0; i < N; i++) {
                   fin >> score_golden[i];
                 }
