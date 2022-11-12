@@ -43,11 +43,14 @@
 # BASEJUMP_STL_DIR: Path to a clone of BaseJump STL
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
+include parameters.mk
+include app_path.mk
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tiles-x)Y$(tiles-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
-TILE_GROUP_DIM_X ?= 16
-TILE_GROUP_DIM_Y ?= 8
+TILE_GROUP_DIM_X ?= $(BSG_MACHINE_POD_TILES_X)
+TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_POD_TILES_Y)
 
 SPMD_SRC_PATH = $(BSG_MANYCORE_DIR)/software/spmd
 CUDALITE_SRC_PATH = $(SPMD_SRC_PATH)/bsg_cuda_lite_runtime
@@ -58,6 +61,9 @@ KERNEL_NAME = smith_waterman
 ###############################################################################
 # Host code compilation flags and flow
 ###############################################################################
+
+vpath %.c   $(APP_PATH)
+vpath %.cpp $(APP_PATH)
 
 # TEST_SOURCES is a list of source files that need to be compiled
 TEST_SOURCES = main.cpp
