@@ -72,4 +72,4 @@ DOEX16X8 ?= no
 endif
 
 pod-size-summary:
-	python3 $(DOEX16X8) $(HB_HAMMERBENCH_PATH)/py/pod-size-summary.py $(TESTS_DIRS)
+	python3 $(HB_HAMMERBENCH_PATH)/py/pod-size-summary.py $(DOEX16X8)  $(TESTS_DIRS)
