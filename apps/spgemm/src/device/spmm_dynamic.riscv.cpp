@@ -171,9 +171,9 @@ extern "C" int kernel_spmm(
 
     bsg_cuda_print_stat_end(TAG_RESULTS_COPY);
     spmm_print_int(__bsg_id);
-    barrier::spmm_barrier();
     bsg_cuda_print_stat_kernel_end();
-    bsg_fence();
+    bsg_fence();    
+    barrier::spmm_barrier();
     return 0;
 }
 #endif
