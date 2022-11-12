@@ -41,7 +41,7 @@ extern "C" int kernel_spmm(
     int row_range = row_stop-row_start;
     // sync
     barrier::spmm_barrier();
-    
+    bsg_cuda_print_stat_kernel_start();
     bsg_cuda_print_stat_start(TAG_ROW_SOLVE);
 
     // foreach row
@@ -112,7 +112,8 @@ extern "C" int kernel_spmm(
     bsg_cuda_print_stat_end(TAG_RESULTS_COPY);
     // sync
     barrier::spmm_barrier();
-    
+    bsg_cuda_print_stat_kernel_end();
+    bsg_fence();
     return 0;
 }
 #endif
