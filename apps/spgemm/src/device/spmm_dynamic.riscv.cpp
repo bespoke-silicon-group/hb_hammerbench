@@ -60,6 +60,7 @@ extern "C" int kernel_spmm(
 
 
     barrier::spmm_barrier();
+    bsg_cuda_print_stat_kernel_start();
     spmm_solve_row_init();
     bsg_cuda_print_stat_start(TAG_ROW_SOLVE);
 //#if 0
@@ -171,7 +172,8 @@ extern "C" int kernel_spmm(
     bsg_cuda_print_stat_end(TAG_RESULTS_COPY);
     spmm_print_int(__bsg_id);
     barrier::spmm_barrier();
-
+    bsg_cuda_print_stat_kernel_end();
+    bsg_fence();
     return 0;
 }
 #endif
