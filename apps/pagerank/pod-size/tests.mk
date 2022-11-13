@@ -11,7 +11,7 @@ TESTS += $(call test-name,pull,pagerank_pull_u8,wiki-Vote,0,1,4,2)
 TESTS += $(call test-name,pull,pagerank_pull_u8,wiki-Vote,0,1,4,4)
 TESTS += $(call test-name,pull,pagerank_pull_u8,wiki-Vote,0,1,8,4)
 TESTS += $(call test-name,pull,pagerank_pull_u8,wiki-Vote,0,1,8,8)
-#TESTS += $(call test-name,pull,pagerank_pull_u8,wiki-Vote,0,1,16,8)
+TESTS += $(call test-name,pull,pagerank_pull_u8,wiki-Vote,0,1,16,8)
 TESTS += $(call test-name,pull,pagerank_pull_u8,wiki-Vote,0,1,16,16)
 
 # TESTS +=$(foreach i,$(shell seq -s" " 0 0),$(call test-name,pull,pagerank_pull_u8,wiki-Vote,$(i),1))
