@@ -15,6 +15,10 @@ for test_dir in test_dirs:
         _ = stats_file.readline()
         _ = stats_file.readline()
         _ = stats_file.readline()
+        _ = stats_file.readline()
+        _ = stats_file.readline()
+        _ = stats_file.readline()
+        _ = stats_file.readline()
         l = stats_file.readline()
         l = [c for c in l.split(' ') if c]
         instrs = l[1]
