@@ -62,7 +62,7 @@ kernel_fft(FP32Complex * bsg_attr_noalias  in,
         // twiddle scaling
         twiddle_scaling(fft_workset, tw+(((iter*NUM_TILES)+__bsg_id)*NUM_POINTS));
         // store strided
-        store_strided(input_vec, fft_workset);
+        store_strided(input_vec, fft_workset);        
       }
       asm volatile("": : :"memory");
       bsg_barrier_hw_tile_group_sync();
