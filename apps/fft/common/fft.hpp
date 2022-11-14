@@ -626,6 +626,22 @@ fft_store(FP32Complex *local_lst,
     opt_data_transfer_dst_strided(out+start, local_lst, stride, local_point);
 }
 
+
+// Unoptimized vector transposition: simply do remote loads and stores
+// NOTE: this in-place algorithm is trivial because lst is a square matrix.
+// In-place transposition for non-square matrices is possible but non-trivial.
+inline void
+square_transpose_stride(FP32Complex *lst, int size, int start, int stride) {
+    FP32Complex tmp;
+    // TODO: Increase unroll factoor
+    for (int i = start; i < size; i += stride)
+        for (int j = i+1; j < size; j++) {
+            tmp = lst[i+j*size];
+            lst[i+j*size] = lst[j+i*size];
+            lst[j+i*size] = tmp;
+        }
+}
+
 // Unoptimized vector transposition: simply do remote loads and stores
 // NOTE: this in-place algorithm is trivial because lst is a square matrix.
 // In-place transposition for non-square matrices is possible but non-trivial.

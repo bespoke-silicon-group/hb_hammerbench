@@ -192,7 +192,7 @@ int kernel_fft (int argc, char **argv) {
                  ******************************************************************************************************************/
 
                 // NOTE: If you change NUM_POINTS you need to update the tg size accordingly
-                hb_mc_dimension_t tg_dim = { .x = 16, .y = 8};
+                hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
                 hb_mc_dimension_t grid_dim = { .x = 1, .y = 1};
 
                 /*****************************************************************************************************************
