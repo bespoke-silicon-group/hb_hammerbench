@@ -76,11 +76,11 @@ kernel_fft(FP32Complex * bsg_attr_noalias  in,
 
 
       // step 3
-      bsg_cuda_print_stat_start(stat_count);
+      //bsg_cuda_print_stat_start(stat_count);
       for (int iter = 0; iter < n_iter_inner; iter++) {
         load_fft_store_no_twiddle(&in[i*N], &out[i*N], fft_workset, tw, iter*stride_inner+__bsg_id, 256, 256, N, 0);
       }
-      bsg_cuda_print_stat_end(stat_count); stat_count++;
+      //bsg_cuda_print_stat_end(stat_count); stat_count++;
       bsg_barrier_hw_tile_group_sync();
     }
 
