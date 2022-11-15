@@ -301,7 +301,7 @@ u12k2__rows = 4096
 u12k2__cols = 4096
 u12k2__nnz  = 16372
 u12k2__solnnz = 0
-$(u12k2): url=https://drive.google.com/file/d/1fWJSVA8-pQ64tPBklhpJhIkUe0t_1sKD/view?usp=share_link
+$(u12k2): url=https://drive.google.com/file/d/1MYFVdQxPik4l-KHJlI6k4T5ym_M6DkN3/view?usp=share_link
 $(u12k2): tar=u12k2.mtx.tar.gz
 
 # Download and unpack

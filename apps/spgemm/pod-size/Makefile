@@ -57,12 +57,12 @@ PARTITIONS=$(call cartesian,$(call range,0,$(PFACTOR)),$(call range,0,$(PFACTOR)
 
 # CHANGE ME: INPUTS
 $(foreach part,$(PARTITIONS),\
-$(eval TESTS += $(call test-name,u12k4,$(PFACTOR),$(part),yes,yes,4,2))\
-$(eval TESTS += $(call test-name,u12k4,$(PFACTOR),$(part),yes,yes,4,4))\
-$(eval TESTS += $(call test-name,u12k4,$(PFACTOR),$(part),yes,yes,8,4))\
-$(eval TESTS += $(call test-name,u12k4,$(PFACTOR),$(part),yes,yes,8,8))\
-$(eval TESTS += $(call test-name,u12k4,$(PFACTOR),$(part),yes,yes,16,8))\
-$(eval TESTS += $(call test-name,u12k4,$(PFACTOR),$(part),yes,yes,16,16)))
+$(eval TESTS += $(call test-name,u12k2,$(PFACTOR),$(part),yes,yes,4,2))\
+$(eval TESTS += $(call test-name,u12k2,$(PFACTOR),$(part),yes,yes,4,4))\
+$(eval TESTS += $(call test-name,u12k2,$(PFACTOR),$(part),yes,yes,8,4))\
+$(eval TESTS += $(call test-name,u12k2,$(PFACTOR),$(part),yes,yes,8,8))\
+$(eval TESTS += $(call test-name,u12k2,$(PFACTOR),$(part),yes,yes,16,8))\
+$(eval TESTS += $(call test-name,u12k2,$(PFACTOR),$(part),yes,yes,16,16)))
 
 # $(eval TESTS += $(call test-name,offshore,$(PFACTOR),$(part),yes,yes))\
 # $(eval TESTS += $(call test-name,road-central,$(PFACTOR),$(part),yes,yes))\
