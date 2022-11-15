@@ -289,6 +289,21 @@ u8k2__solnnz = 0
 $(u8k2): url=https://drive.google.com/file/d/1fWJSVA8-pQ64tPBklhpJhIkUe0t_1sKD/view?usp=share_link
 $(u8k2): tar=u8k2.mtx.tar.gz
 
+#########
+# U12K2 #
+#########
+INPUTS += u12k2
+u12k2 = $(INPUTS_DIR)/u12k2.mtx
+u12k2__directed = yes
+u12k2__weighted = yes
+u12k2__zero-indexed = no
+u12k2__rows = 4096
+u12k2__cols = 4096
+u12k2__nnz  = 16372
+u12k2__solnnz = 0
+$(u12k2): url=https://drive.google.com/file/d/1fWJSVA8-pQ64tPBklhpJhIkUe0t_1sKD/view?usp=share_link
+$(u12k2): tar=u12k2.mtx.tar.gz
+
 # Download and unpack
 $(foreach i,$(INPUTS),$($i)):
 	@echo "Downloading and unpacking $@"
@@ -304,7 +319,7 @@ $(empty1024):
 	@echo "%%MatrixMarket matrix coordinate integer general" > $@
 	@echo "1024 1024 0" >> $@
 
-$(u12k4) $(g7k1) $(u7k1) $(u8k2):
+$(u12k4) $(u12k2) $(g7k1) $(u7k1) $(u8k2):
 	@echo "Generating $@"
 	@mkdir -p $(INPUTS_DIR)
 	@cd $(INPUTS_DIR) && gdown --fuzzy $(url)
