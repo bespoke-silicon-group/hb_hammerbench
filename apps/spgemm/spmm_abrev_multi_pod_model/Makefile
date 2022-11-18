@@ -51,7 +51,7 @@ include $(APPLICATION_PATH)/utils.mk
 # set to 1 for the entire ouput matrix to be solved at once
 # set to 8 to split into 8x8=64 submatrices
 # CHANGE ME: PARTITIONING
-PFACTOR=1
+PFACTOR=8
 PARTITIONS=$(call cartesian,$(call range,0,$(PFACTOR)),$(call range,0,$(PFACTOR)),x)
 
 # CHANGE ME: INPUTS
