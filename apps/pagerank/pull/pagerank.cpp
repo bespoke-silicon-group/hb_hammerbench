@@ -311,9 +311,9 @@ int launch(int argc, char * argv[]){
 
                 device->enqueueJob(kernel_function.c_str(), hb_mc_dimension(X,Y),{edges.getInIndicesAddr(), edges.getInNeighborsAddr(), out_degree_dev.getAddr(), old_rank_dev.getAddr(), new_rank_dev.getAddr(), contrib_dev.getAddr(), contrib_new_dev.getAddr(), rows_in_pod});
                 uint64_t start_cycle = device->getCycle();
-                hb_mc_manycore_trace_enable(device->getDevice()->mc);
+                //                hb_mc_manycore_trace_enable(device->getDevice()->mc);
                 device->runJobs();
-                hb_mc_manycore_trace_disable(device->getDevice()->mc);
+                //                hb_mc_manycore_trace_disable(device->getDevice()->mc);
                 uint64_t end_cycle = device->getCycle();
                 std::cerr << "Finished. Execution Cycles: " << (end_cycle - start_cycle) << std::endl;
         }
