@@ -213,33 +213,47 @@ $(foreach y,$(RANGE_PODS_Y),\
 $(eval FORCES_TEST_8192 += $(call test-name,forces,$x,$y,8192,8,8))))
 
 # Forces, 16384 Bodies, 64 pods
-#$(foreach x,$(RANGE_PODS_X),\
-#$(foreach y,$(RANGE_PODS_Y),\
-#$(eval FORCES_TEST_16384 += $(call test-name,forces,$x,$y,16384,8,8))))
+$(foreach x,$(RANGE_PODS_X),\
+$(foreach y,$(RANGE_PODS_Y),\
+$(eval FORCES_TEST_16384 += $(call test-name,forces,$x,$y,16384,8,8))))
 
 # Forces, 32768 Bodies, 64 pods
-$(foreach x,$(call range,0,8), $(foreach y,$(call range,0,8), $(eval FORCES_TEST_8192_64 += $(call test-name,forces,$x,$y,8192,8,8))))
-$(foreach x,$(call range,0,7), $(foreach y,$(call range,0,7), $(eval FORCES_TEST_8192_49 += $(call test-name,forces,$x,$y,8192,7,7))))
-$(foreach x,$(call range,0,6), $(foreach y,$(call range,0,6), $(eval FORCES_TEST_8192_36 += $(call test-name,forces,$x,$y,8192,6,6))))
-$(foreach x,$(call range,0,5), $(foreach y,$(call range,0,5), $(eval FORCES_TEST_8192_25 += $(call test-name,forces,$x,$y,8192,5,5))))
-$(foreach x,$(call range,0,4), $(foreach y,$(call range,0,4), $(eval FORCES_TEST_8192_16 += $(call test-name,forces,$x,$y,8192,4,4))))
-$(foreach x,$(call range,0,3), $(foreach y,$(call range,0,3), $(eval FORCES_TEST_8192_9 += $(call test-name,forces,$x,$y,8192,3,3))))
-$(foreach x,$(call range,0,2), $(foreach y,$(call range,0,2), $(eval FORCES_TEST_8192_4 += $(call test-name,forces,$x,$y,8192,2,2))))
-$(foreach x,$(call range,0,1), $(foreach y,$(call range,0,1), $(eval FORCES_TEST_8192_1 += $(call test-name,forces,$x,$y,8192,1,1))))
+$(foreach x,$(RANGE_PODS_X),\
+$(foreach y,$(RANGE_PODS_Y),\
+$(eval FORCES_TEST_32768 += $(call test-name,forces,$x,$y,32768,8,8))))
 
-$(foreach x,$(call range,0,8), $(foreach y,$(call range,0,8), $(eval FORCES_TEST_4096_64 += $(call test-name,forces,$x,$y,4096,8,8))))
-$(foreach x,$(call range,0,7), $(foreach y,$(call range,0,7), $(eval FORCES_TEST_4096_49 += $(call test-name,forces,$x,$y,4096,7,7))))
-$(foreach x,$(call range,0,6), $(foreach y,$(call range,0,6), $(eval FORCES_TEST_4096_36 += $(call test-name,forces,$x,$y,4096,6,6))))
-$(foreach x,$(call range,0,5), $(foreach y,$(call range,0,5), $(eval FORCES_TEST_4096_25 += $(call test-name,forces,$x,$y,4096,5,5))))
-$(foreach x,$(call range,0,4), $(foreach y,$(call range,0,4), $(eval FORCES_TEST_4096_16 += $(call test-name,forces,$x,$y,4096,4,4))))
-$(foreach x,$(call range,0,3), $(foreach y,$(call range,0,3), $(eval FORCES_TEST_4096_9 += $(call test-name,forces,$x,$y,4096,3,3))))
-$(foreach x,$(call range,0,2), $(foreach y,$(call range,0,2), $(eval FORCES_TEST_4096_4 += $(call test-name,forces,$x,$y,4096,2,2))))
-$(foreach x,$(call range,0,1), $(foreach y,$(call range,0,1), $(eval FORCES_TEST_4096_1 += $(call test-name,forces,$x,$y,4096,1,1))))
+# Forces, 8192 Bodies, 1-64 pods
+$(foreach x,$(call range,0,8), $(foreach y,$(call range,0,8), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,8,8))))
+$(foreach x,$(call range,0,7), $(foreach y,$(call range,0,7), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,7,7))))
+$(foreach x,$(call range,0,6), $(foreach y,$(call range,0,6), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,6,6))))
+$(foreach x,$(call range,0,5), $(foreach y,$(call range,0,5), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,5,5))))
+$(foreach x,$(call range,0,4), $(foreach y,$(call range,0,4), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,4,4))))
+$(foreach x,$(call range,0,3), $(foreach y,$(call range,0,3), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,3,3))))
+$(foreach x,$(call range,0,2), $(foreach y,$(call range,0,2), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,2,2))))
+$(foreach x,$(call range,0,1), $(foreach y,$(call range,0,1), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,1,1))))
 
+# Forces, 16384 Bodies, 1-64 pods
+$(foreach x,$(call range,0,8), $(foreach y,$(call range,0,8), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,8,8))))
+$(foreach x,$(call range,0,7), $(foreach y,$(call range,0,7), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,7,7))))
+$(foreach x,$(call range,0,6), $(foreach y,$(call range,0,6), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,6,6))))
+$(foreach x,$(call range,0,5), $(foreach y,$(call range,0,5), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,5,5))))
+$(foreach x,$(call range,0,4), $(foreach y,$(call range,0,4), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,4,4))))
+$(foreach x,$(call range,0,3), $(foreach y,$(call range,0,3), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,3,3))))
+$(foreach x,$(call range,0,2), $(foreach y,$(call range,0,2), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,2,2))))
+$(foreach x,$(call range,0,1), $(foreach y,$(call range,0,1), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,1,1))))
 
-go: $(FORCES_TEST_8192_64) $(FORCES_TEST_8192_49) $(FORCES_TEST_8192_36) $(FORCES_TEST_8192_25) $(FORCES_TEST_8192_16) $(FORCES_TEST_8192_9) $(FORCES_TEST_8192_4)
+# Forces, 32768 Bodies, 1-64 pods
+$(foreach x,$(call range,0,8), $(foreach y,$(call range,0,8), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,8,8))))
+$(foreach x,$(call range,0,7), $(foreach y,$(call range,0,7), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,7,7))))
+$(foreach x,$(call range,0,6), $(foreach y,$(call range,0,6), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,6,6))))
+$(foreach x,$(call range,0,5), $(foreach y,$(call range,0,5), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,5,5))))
+$(foreach x,$(call range,0,4), $(foreach y,$(call range,0,4), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,4,4))))
+$(foreach x,$(call range,0,3), $(foreach y,$(call range,0,3), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,3,3))))
+$(foreach x,$(call range,0,2), $(foreach y,$(call range,0,2), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,2,2))))
+$(foreach x,$(call range,0,1), $(foreach y,$(call range,0,1), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,1,1))))
 
-go2: $(FORCES_TEST_4096_9) $(FORCES_TEST_4096_4) $(FORCES_TEST_4096_1) $(FORCES_TEST_4096_64) $(FORCES_TEST_4096_49) $(FORCES_TEST_4096_36) $(FORCES_TEST_4096_25) $(FORCES_TEST_4096_16) 
+go: $(FORCES_TEST_8192_SWEEP) $(FORCES_TEST_16384_SWEEP) $(FORCES_TEST_32768_SWEEP)
+
 
 %.deploy:
 	mkdir $@
