@@ -48,4 +48,4 @@ which step is the default in the Makefile.
 
 # Sweeping
 
-You can a sweep of program pameters with `make go`
+You can a sweep of program pameters with `make go`. After this completes, run parse.sh to parse manycore_stats.log of each run
