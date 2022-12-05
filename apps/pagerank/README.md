@@ -6,7 +6,8 @@
 2. Edit [tests.mk](tests.mk) to specify which tests to run.
 3. `make generate`: Generates all test directories.
 4. `make <goal> -j <parallel jobs>`: To run all tests. Common goals are `exec` `stats` and `pc-histogram`.
-5. Profit.
+5. Wait
+6. Run parse.sh to summarize the results. Each dataset will be summarized into its own CSV file.
 
 I've set this up with more small graphs than big graphs. The goal is
 to run a lot of little graphs to verify correctness and get some
