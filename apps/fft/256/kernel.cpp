@@ -6,7 +6,7 @@
 #include <bsg_set_tile_x_y.h>
 #include <bsg_cuda_lite_barrier.h>
 
-#include <fft.hpp>
+#include <fft256.hpp>
 
 
 // Cache warming function.
@@ -54,29 +54,22 @@ kernel_fft(FP32Complex * bsg_attr_noalias  in,
     int stat_count = 1;
     for (int i = 0; i < num_iter; i++) {
       // Step 1
-      //bsg_cuda_print_stat_start(stat_count);
       for (int iter = 0; iter < 2; iter++) {
         load_fft_store_no_twiddle(&in[i*N], &in[i*N], fft_workset, tw, iter*128+__bsg_id, 256, 256, N, 1);
       }
-      //bsg_cuda_print_stat_end(stat_count); stat_count++;
       asm volatile("": : :"memory");
       bsg_barrier_hw_tile_group_sync();
 
       // Step 2
-      //bsg_cuda_print_stat_start(stat_count);
-      // Unroll this
       opt_square_transpose(&in[i*N], 256);
-      //bsg_cuda_print_stat_end(stat_count); stat_count++;
       asm volatile("": : :"memory");
       bsg_barrier_hw_tile_group_sync();
 
 
       // step 3
-      bsg_cuda_print_stat_start(stat_count);
       for (int iter = 0; iter < 2; iter++) {
         load_fft_store_no_twiddle(&in[i*N], &out[i*N], fft_workset, tw, iter*128+__bsg_id, 256, 256, N, 0);
       }
-      bsg_cuda_print_stat_end(stat_count); stat_count++;
       bsg_barrier_hw_tile_group_sync();
     }
 
