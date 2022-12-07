@@ -55,7 +55,7 @@ kernel_fft(FP32Complex * bsg_attr_noalias  in,
     for (int i = 0; i < num_iter; i++) {
       // Step 1
       for (int iter = 0; iter < 2; iter++) {
-        load_fft_store_no_twiddle(&in[i*N], &in[i*N], fft_workset, tw, iter*128+__bsg_id, 256, 256, N, 1);
+        load_fft_store_no_twiddle(&in[i*N], &in[i*N], fft_workset, tw, iter*128+__bsg_id, 1);
       }
       asm volatile("": : :"memory");
       bsg_barrier_hw_tile_group_sync();
@@ -68,7 +68,7 @@ kernel_fft(FP32Complex * bsg_attr_noalias  in,
 
       // step 3
       for (int iter = 0; iter < 2; iter++) {
-        load_fft_store_no_twiddle(&in[i*N], &out[i*N], fft_workset, tw, iter*128+__bsg_id, 256, 256, N, 0);
+        load_fft_store_no_twiddle(&in[i*N], &out[i*N], fft_workset, tw, iter*128+__bsg_id, 0);
       }
       bsg_barrier_hw_tile_group_sync();
     }

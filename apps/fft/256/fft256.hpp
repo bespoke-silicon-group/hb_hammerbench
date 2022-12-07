@@ -224,38 +224,43 @@ load_fft_store_no_twiddle(FP32Complex *lst,
                           FP32Complex *local_lst,
                           float bsg_attr_remote * bsg_attr_noalias tw,
                           int start,
-                          int stride,
-                          int local_point,
-                          int total_point,
                           int scaling)
 {
     // Strided load into DMEM
-    opt_data_transfer_src_strided(local_lst, lst+start, stride, local_point);
+    opt_data_transfer_src_strided(local_lst, lst+start, NUM_POINTS, NUM_POINTS);
 
     // 256-point
     fft_specialized(local_lst);
 
     // Optional twiddle scaling
     if (scaling) {
-      tw = tw+(sizeof(FP32Complex)/sizeof(float))*local_point*start;
+      tw = tw+(sizeof(FP32Complex)/sizeof(float))*NUM_POINTS*start;
       float buf[(sizeof(FP32Complex)/sizeof(float)) * UNROLL];
       FP32Complex *_tw = reinterpret_cast<FP32Complex *>(&buf);
     
-      for (int c = 0; c < local_point; c+=UNROLL, tw+=(sizeof(FP32Complex)/sizeof(float))*UNROLL) {
+      for (int c = 0; c < NUM_POINTS; c+=UNROLL, tw+=(sizeof(FP32Complex)/sizeof(float))*UNROLL) {
         bsg_unroll(8)
         for (int u = 0; u < (UNROLL * (sizeof(FP32Complex)/sizeof(float))); ++u){
           buf[u] = tw[u];
         }
-        bsg_unroll(8)
-        for (int u = 0; u < UNROLL; ++u){
-          FP32Complex w = _tw[u];
-          local_lst[c + u] = w * local_lst[c + u];
-        }
+
+        FP32Complex w0 = _tw[0];
+        FP32Complex w1 = _tw[1];
+        FP32Complex w2 = _tw[2];
+        FP32Complex w3 = _tw[3];
+        FP32Complex l0 = local_lst[c+0];
+        FP32Complex l1 = local_lst[c+1];
+        FP32Complex l2 = local_lst[c+2];
+        FP32Complex l3 = local_lst[c+3];
+        local_lst[c + 0] = w0 * l0;
+        local_lst[c + 1] = w1 * l1;
+        local_lst[c + 2] = w2 * l2;
+        local_lst[c + 3] = w3 * l3;
       }
     }
 
     // Strided store into DRAM
-    opt_data_transfer_dst_strided(out+start, local_lst, stride, local_point);
+    opt_data_transfer_dst_strided(out+start, local_lst, NUM_POINTS, NUM_POINTS);
 }
 
 
