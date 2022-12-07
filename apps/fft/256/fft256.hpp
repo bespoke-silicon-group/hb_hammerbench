@@ -5,6 +5,7 @@
 #include "bsg_set_tile_x_y.h"
 
 #include <complex>
+#include "reverse256.hpp"
 
 // This library has sinf/cosf functions specialized for the following
 // number of points
@@ -164,8 +165,10 @@ opt_data_transfer_dst_strided(FP32Complex *dst, const FP32Complex *src, const in
     }
 }
 
+
 inline void
 opt_bit_reverse(FP32Complex *list, const int N) {
+/*
     // Efficient bit reverse
     // http://wwwa.pikara.ne.jp/okojisan/otfft-en/cooley-tukey.html
     // The idea is to perform a reversed binary +1. The inner for loop
@@ -180,6 +183,22 @@ opt_bit_reverse(FP32Complex *list, const int N) {
             list[j] = tmp;
         }
     }
+*/
+  #define REV_UNROLL 2
+  for (int i = 0; i < NUM_REVERSE*2; i+=REV_UNROLL*2) {
+    unsigned char a0 = reverse256[i+0];
+    unsigned char b0 = reverse256[i+1];
+    unsigned char a1 = reverse256[i+2];
+    unsigned char b1 = reverse256[i+3];
+    FP32Complex temp_a0 = list[a0];
+    FP32Complex temp_a1 = list[a1];
+    FP32Complex temp_b0 = list[b0];
+    FP32Complex temp_b1 = list[b1];
+    list[b0] = temp_a0;
+    list[b1] = temp_a1;
+    list[a0] = temp_b0;
+    list[a1] = temp_b1;
+  }
 }
 
 // In-place implementation
