@@ -11,21 +11,11 @@
 // number of points
 #define MAX_NUM_POINTS      256
 #define MAX_LOG2_NUM_POINTS 8
-#define UNROLL 4
-
-#ifdef FFT128
-#define NUM_POINTS      128
-#define LOG2_NUM_POINTS 7
-#else
-// By default we provide utilities for 256-point FFT
 #define NUM_POINTS      256
 #define LOG2_NUM_POINTS 8
-#endif
 
 typedef std::complex<float> FP32Complex;
 
-float minus_2pi = -6.283185307f;
-float zerof     = 0.0f;
 
 /*******************************************************************************
  * Efficient sinf and cosf implementation
@@ -104,29 +94,22 @@ float sinf_pi_over_2[(MAX_NUM_POINTS>>2)+1] = {
 
 inline float
 opt_fft_sinf(int x) {
-    const int No2 = MAX_NUM_POINTS >> 1;
-    const int No4 = MAX_NUM_POINTS >> 2;
+    const int No2 = MAX_NUM_POINTS >> 1; // 128
+    const int No4 = MAX_NUM_POINTS >> 2; // 64
     if ((x >= No4) && (x < No2)) {
         x = No2 - x;
     }
-    else if (x >= No2) {
-        bsg_fail();
-    }
-    // consult lookup table for sinf(x)
     return -sinf_pi_over_2[x];
 }
 
 inline float
 opt_fft_cosf(int x) {
-    const int No2 = MAX_NUM_POINTS >> 1;
-    const int No4 = MAX_NUM_POINTS >> 2;
+    const int No2 = MAX_NUM_POINTS >> 1; // 128
+    const int No4 = MAX_NUM_POINTS >> 2; // 64
     if ((x >= No4) && (x < No2)) {
-        return -sinf_pi_over_2[x-No4];
-    }
-    else if (x >= No2) {
-        bsg_fail();
+      return -sinf_pi_over_2[x-No4];
     } else {
-        return sinf_pi_over_2[No4-x];
+      return sinf_pi_over_2[No4-x];
     }
 }
 
@@ -137,10 +120,10 @@ inline void
 opt_data_transfer_src_strided(FP32Complex *dst, const FP32Complex *src, const int stride, const int N) {
     int i = 0, strided_i = 0;
     for (; i < N-3; i += 4, strided_i += 4*stride) {
-        register FP32Complex tmp0 = src[strided_i           ];
-        register FP32Complex tmp1 = src[strided_i + stride  ];
-        register FP32Complex tmp2 = src[strided_i + stride*2];
-        register FP32Complex tmp3 = src[strided_i + stride*3];
+        FP32Complex tmp0 = src[strided_i           ];
+        FP32Complex tmp1 = src[strided_i + stride  ];
+        FP32Complex tmp2 = src[strided_i + stride*2];
+        FP32Complex tmp3 = src[strided_i + stride*3];
         asm volatile("": : :"memory");
         dst[i    ] = tmp0;
         dst[i + 1] = tmp1;
@@ -153,10 +136,10 @@ inline void
 opt_data_transfer_dst_strided(FP32Complex *dst, const FP32Complex *src, const int stride, const int N) {
     int i = 0, strided_i = 0;
     for (; i < N-3; i += 4, strided_i += 4*stride) {
-        register FP32Complex tmp0 = src[i    ];
-        register FP32Complex tmp1 = src[i + 1];
-        register FP32Complex tmp2 = src[i + 2];
-        register FP32Complex tmp3 = src[i + 3];
+        FP32Complex tmp0 = src[i    ];
+        FP32Complex tmp1 = src[i + 1];
+        FP32Complex tmp2 = src[i + 2];
+        FP32Complex tmp3 = src[i + 3];
         asm volatile("": : :"memory");
         dst[strided_i              ] = tmp0;
         dst[strided_i + stride  ] = tmp1;
@@ -167,23 +150,7 @@ opt_data_transfer_dst_strided(FP32Complex *dst, const FP32Complex *src, const in
 
 
 inline void
-opt_bit_reverse(FP32Complex *list, const int N) {
-/*
-    // Efficient bit reverse
-    // http://wwwa.pikara.ne.jp/okojisan/otfft-en/cooley-tukey.html
-    // The idea is to perform a reversed binary +1. The inner for loop
-    // executes M times, where M is the number of carries in the
-    // reversed binary +1 operation.
-    for (int i = 0, j = 1; j < N-1; j++) {
-        for (int k = N >> 1; k > (i ^= k); k >>= 1);
-        // after the for loop above i is bit-reversed j
-        if (i < j) {
-            register FP32Complex tmp = list[i];
-            list[i] = list[j];
-            list[j] = tmp;
-        }
-    }
-*/
+opt_bit_reverse(FP32Complex *list) {
   #define REV_UNROLL 2
   for (int i = 0; i < NUM_REVERSE*2; i+=REV_UNROLL*2) {
     unsigned char a0 = reverse256[i+0];
@@ -201,14 +168,16 @@ opt_bit_reverse(FP32Complex *list, const int N) {
   }
 }
 
+
 // In-place implementation
 inline void
-fft_specialized(FP32Complex *list) {
-    int even_idx, odd_idx, n = 2, lshift = MAX_LOG2_NUM_POINTS-1;
-    FP32Complex exp_val, tw_val, even_val, odd_val;
+fft256_specialized(FP32Complex *list) {
+    //int even_idx, odd_idx, n = 2, lshift = MAX_LOG2_NUM_POINTS-1;
+    //FP32Complex exp_val, tw_val, even_val, odd_val;
 
-    opt_bit_reverse(list, NUM_POINTS);
+    opt_bit_reverse(list);
 
+/*
     while (n <= NUM_POINTS) {
         for (int i = 0; i < NUM_POINTS; i += n) {
             for (int k = 0; k < n/2; k++) {
@@ -230,6 +199,43 @@ fft_specialized(FP32Complex *list) {
         n = n * 2;
         lshift--;
     }
+*/
+
+  int even_idx, odd_idx;
+  FP32Complex exp_val, tw_val, even_val, odd_val;
+  FP32Complex even_result, odd_result;
+  int n = 2;
+  int lshift = MAX_LOG2_NUM_POINTS-1;
+  while (n <= NUM_POINTS) {
+
+    int half_n = (n/2);
+
+    for (int k = 0; k < half_n; k++) {
+      int x = k << lshift;
+      exp_val = FP32Complex(opt_fft_cosf(x), opt_fft_sinf(x));
+
+      even_idx = k;
+      odd_idx = k + half_n;
+      for (int i = 0; i < NUM_POINTS; i += n) {
+        odd_val  = list[odd_idx];
+        even_val = list[even_idx];
+
+        tw_val = exp_val*odd_val;
+
+        even_result = even_val + tw_val;
+        odd_result  = even_val - tw_val;
+        list[even_idx] = even_result;
+        list[odd_idx]  = odd_result;
+
+        even_idx += n;
+        odd_idx += n;
+      }
+    }
+
+    n = n*2;
+    lshift--;
+  }
+
 }
 
 
@@ -249,9 +255,10 @@ load_fft_store_no_twiddle(FP32Complex *lst,
     opt_data_transfer_src_strided(local_lst, lst+start, NUM_POINTS, NUM_POINTS);
 
     // 256-point
-    fft_specialized(local_lst);
+    fft256_specialized(local_lst);
 
     // Optional twiddle scaling
+    #define UNROLL 4
     if (scaling) {
       tw = tw+(sizeof(FP32Complex)/sizeof(float))*NUM_POINTS*start;
       float buf[(sizeof(FP32Complex)/sizeof(float)) * UNROLL];
