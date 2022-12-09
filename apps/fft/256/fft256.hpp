@@ -172,69 +172,161 @@ opt_bit_reverse(FP32Complex *list) {
 // In-place implementation
 inline void
 fft256_specialized(FP32Complex *list) {
-    //int even_idx, odd_idx, n = 2, lshift = MAX_LOG2_NUM_POINTS-1;
-    //FP32Complex exp_val, tw_val, even_val, odd_val;
 
-    opt_bit_reverse(list);
+  opt_bit_reverse(list);
 
-/*
-    while (n <= NUM_POINTS) {
-        for (int i = 0; i < NUM_POINTS; i += n) {
-            for (int k = 0; k < n/2; k++) {
-                even_idx = i+k;
-                odd_idx  = even_idx + n/2;
-
-                exp_val = FP32Complex(opt_fft_cosf(k << lshift),
-                                      opt_fft_sinf(k << lshift));
-
-                even_val = list[even_idx];
-                odd_val  = list[odd_idx];
-
-                tw_val = exp_val*odd_val;
-
-                list[even_idx] = even_val + tw_val;
-                list[odd_idx]  = even_val - tw_val;
-            }
-        }
-        n = n * 2;
-        lshift--;
-    }
-*/
 
   int even_idx, odd_idx;
-  FP32Complex exp_val, tw_val, even_val, odd_val;
-  FP32Complex even_result, odd_result;
+  float exp1_re, exp1_im;
+  float tw1_re, tw1_im;
+  float even1_re, even1_im;
+  float odd1_re, odd1_im;
+  float even_res1_re, even_res1_im;
+  float odd_res1_re,  odd_res1_im;
+
+  float exp2_re, exp2_im;
+  float tw2_re, tw2_im;
+  float even2_re, even2_im;
+  float odd2_re, odd2_im;
+  float even_res2_re, even_res2_im;
+  float odd_res2_re,  odd_res2_im;
+
+  float tw1_re_temp, tw1_im_temp;
+  float tw2_re_temp, tw2_im_temp;
+
   int n = 2;
   int lshift = MAX_LOG2_NUM_POINTS-1;
-  while (n <= NUM_POINTS) {
 
+  while (n < NUM_POINTS) {
     int half_n = (n/2);
 
     for (int k = 0; k < half_n; k++) {
       int x = k << lshift;
-      exp_val = FP32Complex(opt_fft_cosf(x), opt_fft_sinf(x));
+      exp1_re = opt_fft_cosf(x);
+      exp1_im = opt_fft_sinf(x);
 
       even_idx = k;
       odd_idx = k + half_n;
-      for (int i = 0; i < NUM_POINTS; i += n) {
-        odd_val  = list[odd_idx];
-        even_val = list[even_idx];
+      for (int i = 0; i < NUM_POINTS; i += 2*n) {
+        odd1_re = list[odd_idx].real();
+        odd1_im = list[odd_idx].imag();
+        odd2_re = list[odd_idx+n].real();
+        odd2_im = list[odd_idx+n].imag();
+        even1_re = list[even_idx].real();
+        even1_im = list[even_idx].imag();
+        even2_re = list[even_idx+n].real();
+        even2_im = list[even_idx+n].imag();
 
-        tw_val = exp_val*odd_val;
+        asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+          : [rd] "=f" (tw1_re_temp) \
+          : [rs1] "f" (odd1_im), [rs2] "f" (exp1_im));
+        asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+          : [rd] "=f" (tw1_im_temp) \
+          : [rs1] "f" (odd1_re), [rs2] "f" (exp1_im));
+        asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+          : [rd] "=f" (tw2_re_temp) \
+          : [rs1] "f" (odd2_im), [rs2] "f" (exp1_im));
+        asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+          : [rd] "=f" (tw2_im_temp) \
+          : [rs1] "f" (odd2_re), [rs2] "f" (exp1_im));
 
-        even_result = even_val + tw_val;
-        odd_result  = even_val - tw_val;
-        list[even_idx] = even_result;
-        list[odd_idx]  = odd_result;
+        asm volatile ("fmsub.s %[rd], %[rs1], %[rs2], %[rs3]" \
+          : [rd] "=f" (tw1_re) \
+          : [rs1] "f" (odd1_re), [rs2] "f" (exp1_re), [rs3] "f" (tw1_re_temp));
+        asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
+          : [rd] "=f" (tw1_im) \
+          : [rs1] "f" (odd1_im), [rs2] "f" (exp1_re), [rs3] "f" (tw1_im_temp));
+        asm volatile ("fmsub.s %[rd], %[rs1], %[rs2], %[rs3]" \
+          : [rd] "=f" (tw2_re) \
+          : [rs1] "f" (odd2_re), [rs2] "f" (exp1_re), [rs3] "f" (tw2_re_temp));
+        asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
+          : [rd] "=f" (tw2_im) \
+          : [rs1] "f" (odd2_im), [rs2] "f" (exp1_re), [rs3] "f" (tw2_im_temp));
 
-        even_idx += n;
-        odd_idx += n;
+        even_res1_re = even1_re + tw1_re;
+        even_res1_im = even1_im + tw1_im;
+        odd_res1_re = even1_re - tw1_re;
+        odd_res1_im = even1_im - tw1_im;
+        even_res2_re = even2_re + tw2_re;
+        even_res2_im = even2_im + tw2_im;
+        odd_res2_re = even2_re - tw2_re;
+        odd_res2_im = even2_im - tw2_im;
+
+        list[even_idx]   = FP32Complex(even_res1_re, even_res1_im);
+        list[odd_idx]    = FP32Complex(odd_res1_re, odd_res1_im);
+        list[even_idx+n] = FP32Complex(even_res2_re, even_res2_im);
+        list[odd_idx+n]  = FP32Complex(odd_res2_re, odd_res2_im);
+
+        even_idx += 2*n;
+        odd_idx += 2*n;
       }
     }
 
     n = n*2;
     lshift--;
   }
+
+
+  // last stage
+  odd_idx  = NUM_POINTS/2;
+  for (int i = 0; i < NUM_POINTS/2; i += 2) {
+    exp1_re = opt_fft_cosf(i);
+    exp1_im = opt_fft_sinf(i);
+    exp2_re = opt_fft_cosf(i+1);
+    exp2_im = opt_fft_sinf(i+1);
+ 
+    odd1_re = list[odd_idx].real();
+    odd1_im = list[odd_idx].imag();
+    odd2_re = list[odd_idx+1].real();
+    odd2_im = list[odd_idx+1].imag();
+    even1_re = list[i].real();
+    even1_im = list[i].imag();
+    even2_re = list[i+1].real();
+    even2_im = list[i+1].imag();
+
+    asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (tw1_re_temp) \
+      : [rs1] "f" (odd1_im), [rs2] "f" (exp1_im));
+    asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (tw1_im_temp) \
+      : [rs1] "f" (odd1_re), [rs2] "f" (exp1_im));
+    asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (tw2_re_temp) \
+      : [rs1] "f" (odd2_im), [rs2] "f" (exp2_im));
+    asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (tw2_im_temp) \
+      : [rs1] "f" (odd2_re), [rs2] "f" (exp2_im));
+    asm volatile ("fmsub.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (tw1_re) \
+      : [rs1] "f" (odd1_re), [rs2] "f" (exp1_re), [rs3] "f" (tw1_re_temp));
+    asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (tw1_im) \
+      : [rs1] "f" (odd1_im), [rs2] "f" (exp1_re), [rs3] "f" (tw1_im_temp));
+    asm volatile ("fmsub.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (tw2_re) \
+      : [rs1] "f" (odd2_re), [rs2] "f" (exp2_re), [rs3] "f" (tw2_re_temp));
+    asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (tw2_im) \
+      : [rs1] "f" (odd2_im), [rs2] "f" (exp2_re), [rs3] "f" (tw2_im_temp));
+
+    even_res1_re = even1_re + tw1_re;
+    even_res1_im = even1_im + tw1_im;
+    odd_res1_re = even1_re - tw1_re;
+    odd_res1_im = even1_im - tw1_im;
+    even_res2_re = even2_re + tw2_re;
+    even_res2_im = even2_im + tw2_im;
+    odd_res2_re = even2_re - tw2_re;
+    odd_res2_im = even2_im - tw2_im;
+
+    list[i]          = FP32Complex(even_res1_re, even_res1_im);
+    list[odd_idx]    = FP32Complex(odd_res1_re, odd_res1_im);
+    list[i+1]        = FP32Complex(even_res2_re, even_res2_im);
+    list[odd_idx+1]  = FP32Complex(odd_res2_re, odd_res2_im);
+   
+    odd_idx += 2;
+  }
+
+
 
 }
 
