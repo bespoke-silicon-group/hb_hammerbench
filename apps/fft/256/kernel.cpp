@@ -83,7 +83,7 @@ kernel_fft(FP32Complex * bsg_attr_noalias  in,
         load_sequential(fft_workset, input_vec);
         // fft256
         fft256_specialized(fft_workset);
-        // store sequential
+        // store strided
         store_strided(output_vec, fft_workset);
       }
       bsg_barrier_hw_tile_group_sync();

@@ -1,21 +1,15 @@
-// common_fft.hpp
-// FFT utilities and an optimized 256-point radix-2 DIT implementation
-
 #include "bsg_manycore.h"
 #include "bsg_set_tile_x_y.h"
 
 #include <complex>
-#include "reverse256.hpp"
+#include "reverse128.hpp"
 
-// This library has sinf/cosf functions specialized for the following
-// number of points
 #define MAX_NUM_POINTS      256
 #define MAX_LOG2_NUM_POINTS 8
-#define NUM_POINTS      256
-#define LOG2_NUM_POINTS 8
+#define NUM_POINTS      128
+#define LOG2_NUM_POINTS 7
 
 typedef std::complex<float> FP32Complex;
-
 
 /*******************************************************************************
  * Efficient sinf and cosf implementation
@@ -94,22 +88,29 @@ float sinf_pi_over_2[(MAX_NUM_POINTS>>2)+1] = {
 
 inline float
 opt_fft_sinf(int x) {
-    const int No2 = MAX_NUM_POINTS >> 1; // 128
-    const int No4 = MAX_NUM_POINTS >> 2; // 64
+    const int No2 = MAX_NUM_POINTS >> 1;
+    const int No4 = MAX_NUM_POINTS >> 2;
     if ((x >= No4) && (x < No2)) {
         x = No2 - x;
     }
+    else if (x >= No2) {
+        bsg_fail();
+    }
+    // consult lookup table for sinf(x)
     return -sinf_pi_over_2[x];
 }
 
 inline float
 opt_fft_cosf(int x) {
-    const int No2 = MAX_NUM_POINTS >> 1; // 128
-    const int No4 = MAX_NUM_POINTS >> 2; // 64
+    const int No2 = MAX_NUM_POINTS >> 1;
+    const int No4 = MAX_NUM_POINTS >> 2;
     if ((x >= No4) && (x < No2)) {
-      return -sinf_pi_over_2[x-No4];
+        return -sinf_pi_over_2[x-No4];
+    }
+    else if (x >= No2) {
+        bsg_fail();
     } else {
-      return sinf_pi_over_2[No4-x];
+        return sinf_pi_over_2[No4-x];
     }
 }
 
@@ -131,6 +132,7 @@ load_strided(FP32Complex *dst, const FP32Complex *src) {
         dst[i + 3] = tmp3;
     }
 }
+
 
 inline void
 load_sequential(FP32Complex *dst, const FP32Complex *src) {
@@ -157,22 +159,21 @@ store_strided(FP32Complex *dst, const FP32Complex *src) {
         FP32Complex tmp2 = src[i + 2];
         FP32Complex tmp3 = src[i + 3];
         asm volatile("": : :"memory");
-        dst[strided_i              ] = tmp0;
+        dst[strided_i               ] = tmp0;
         dst[strided_i + NUM_POINTS  ] = tmp1;
         dst[strided_i + NUM_POINTS*2] = tmp2;
         dst[strided_i + NUM_POINTS*3] = tmp3;
     }
 }
 
-
 inline void
 opt_bit_reverse(FP32Complex *list) {
   #define REV_UNROLL 2
   for (int i = 0; i < NUM_REVERSE*2; i+=REV_UNROLL*2) {
-    unsigned char a0 = reverse256[i+0];
-    unsigned char b0 = reverse256[i+1];
-    unsigned char a1 = reverse256[i+2];
-    unsigned char b1 = reverse256[i+3];
+    unsigned char a0 = reverse128[i+0];
+    unsigned char b0 = reverse128[i+1];
+    unsigned char a1 = reverse128[i+2];
+    unsigned char b1 = reverse128[i+3];
     FP32Complex temp_a0 = list[a0];
     FP32Complex temp_a1 = list[a1];
     FP32Complex temp_b0 = list[b0];
@@ -184,12 +185,9 @@ opt_bit_reverse(FP32Complex *list) {
   }
 }
 
-
 // In-place implementation
-void fft256_specialized(FP32Complex *list) {
-
+void fft128_specialized(FP32Complex *list) {
   opt_bit_reverse(list);
-
 
   int even_idx, odd_idx;
   float exp1_re, exp1_im;
@@ -285,11 +283,11 @@ void fft256_specialized(FP32Complex *list) {
   // last stage
   odd_idx  = NUM_POINTS/2;
   for (int i = 0; i < NUM_POINTS/2; i += 2) {
-    exp1_re = opt_fft_cosf(i);
-    exp1_im = opt_fft_sinf(i);
-    exp2_re = opt_fft_cosf(i+1);
-    exp2_im = opt_fft_sinf(i+1);
- 
+    exp1_re = opt_fft_cosf(2*i);
+    exp1_im = opt_fft_sinf(2*i);
+    exp2_re = opt_fft_cosf((2*i)+2);
+    exp2_im = opt_fft_sinf((2*i)+2);
+
     odd1_re = list[odd_idx].real();
     odd1_im = list[odd_idx].imag();
     odd2_re = list[odd_idx+1].real();
@@ -337,14 +335,10 @@ void fft256_specialized(FP32Complex *list) {
     list[odd_idx]    = FP32Complex(odd_res1_re, odd_res1_im);
     list[i+1]        = FP32Complex(even_res2_re, even_res2_im);
     list[odd_idx+1]  = FP32Complex(odd_res2_re, odd_res2_im);
-   
+
     odd_idx += 2;
   }
-
-
-
 }
-
 
 __attribute__ ((always_inline))
 void twiddle_scaling( FP32Complex *local_lst,
@@ -380,7 +374,7 @@ void twiddle_scaling( FP32Complex *local_lst,
     l2_im = local_lst[c+2].imag();
     l3_re = local_lst[c+3].real();
     l3_im = local_lst[c+3].imag();
-    
+
     asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
       : [rd] "=f" (res0_re_temp) \
       : [rs1] "f" (w0_im), [rs2] "f" (l0_im));
@@ -438,4 +432,3 @@ void twiddle_scaling( FP32Complex *local_lst,
     local_lst[c+3] = FP32Complex(res3_re, res3_im);
   }
 }
-

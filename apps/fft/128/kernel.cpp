@@ -1,29 +1,24 @@
 // 128x128 FFT using four-step method
-// In this implementation all tiles communicate through scratchpad stores
 
 #include <bsg_manycore.h>
 #include <bsg_cuda_lite_barrier.h>
-
-
-#define FFT128
-#include <fft.hpp>
+#include "fft128.hpp"
 
 // Cache warming function
 #ifdef WARM_CACHE
 #define CACHE_LINE_COMPLEX 8
 __attribute__ ((noinline))
-static int warmup(FP32Complex *in, FP32Complex *out, float bsg_attr_remote * bsg_attr_noalias tw, int N, int num_iter)
+static void warmup(FP32Complex *in, FP32Complex *out, FP32Complex *tw, int N)
 {
-  for (int i = __bsg_id*CACHE_LINE_COMPLEX; i < N*num_iter; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_COMPLEX) {
+  for (int i = __bsg_id*CACHE_LINE_COMPLEX; i < N; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_COMPLEX) {
       asm volatile ("lw x0, %[p]" :: [p] "m" (in[i]));
-      asm volatile ("lw x0, %[p]" :: [p] "m" (out[i]));
+      //asm volatile ("sw x0, %[p]" :: [p] "m" (out[i]));
   }
   for (int i = __bsg_id*CACHE_LINE_COMPLEX; i < N; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_COMPLEX) {
       asm volatile ("lw x0, %[p]" :: [p] "m" (tw[i]));
   }
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
-  return 0;
 }
 #endif
 
@@ -32,51 +27,53 @@ FP32Complex fft_workset[NUM_POINTS];
 
 extern "C" __attribute__ ((noinline))
 int
-kernel_fft(FP32Complex *in, FP32Complex *out, float bsg_attr_remote * bsg_attr_noalias tw, int N, int num_iter) {
-
-
+kernel_fft(FP32Complex * bsg_attr_noalias in,
+           FP32Complex * bsg_attr_noalias out,
+           FP32Complex * bsg_attr_noalias tw,
+           int N,
+           int num_iter) 
+{
     bsg_barrier_hw_tile_group_init();
     bsg_fence();
 
     #ifdef WARM_CACHE
-    warmup(in, out, tw, N, num_iter);
+    warmup(in, out, tw, N);
     #endif
 
     // Kernel Start
     bsg_cuda_print_stat_kernel_start();
-    bsg_fence();
-  
-    int stat_count = 0;
     
     for (int i = 0; i < num_iter; i++) {
+      FP32Complex *input_sq = &in[i*N];
+      FP32Complex *input_vec = input_sq + __bsg_id;
+
       // step 1
-      //bsg_cuda_print_stat_start(stat_count);
-      load_fft_scale_no_twiddle(&in[N*i], fft_workset, tw, __bsg_id, 128, 128, N);
-      //bsg_cuda_print_stat_end(stat_count); stat_count++;
-      asm volatile("": : :"memory");
+      load_strided(fft_workset, input_vec);
+      fft128_specialized(fft_workset);
+      twiddle_scaling(fft_workset, tw+(__bsg_id*NUM_POINTS));
+      store_strided(input_vec, fft_workset);
+      bsg_fence();
       bsg_barrier_hw_tile_group_sync();
 
       // step 2
-      //bsg_cuda_print_stat_start(stat_count);
-      tg_mem_square_transpose_inp(fft_workset, 128);
-      //bsg_cuda_print_stat_end(stat_count); stat_count++;
-      asm volatile("": : :"memory");
-      bsg_barrier_hw_tile_group_sync();
+      //tg_mem_square_transpose_inp(fft_workset, 128);
+      //bsg_barrier_hw_tile_group_sync();
 
       // step 3
-      //bsg_cuda_print_stat_start(stat_count);
-      fft_store(fft_workset, &out[N*i], __bsg_id, 128, 128, N);
+      input_vec = input_sq + (__bsg_id * NUM_POINTS);
+      FP32Complex *output_sq = &out[i*N];
+      FP32Complex *output_vec = output_sq + __bsg_id;
+      load_sequential(fft_workset, input_vec);
+      fft128_specialized(fft_workset);
+      store_strided(output_vec, fft_workset);
       bsg_fence();
-      asm volatile("": : :"memory");
       bsg_barrier_hw_tile_group_sync();
-      //bsg_cuda_print_stat_end(stat_count); stat_count++;
     }
 
 
     // Kernel end
     bsg_cuda_print_stat_kernel_end();
     bsg_fence();
-    asm volatile("": : :"memory");
     bsg_barrier_hw_tile_group_sync();
 
     return 0;
