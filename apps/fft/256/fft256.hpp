@@ -117,13 +117,13 @@ opt_fft_cosf(int x) {
 
 
 inline void
-opt_data_transfer_src_strided(FP32Complex *dst, const FP32Complex *src, const int stride, const int N) {
+load_strided(FP32Complex *dst, const FP32Complex *src) {
     int i = 0, strided_i = 0;
-    for (; i < N-3; i += 4, strided_i += 4*stride) {
-        FP32Complex tmp0 = src[strided_i           ];
-        FP32Complex tmp1 = src[strided_i + stride  ];
-        FP32Complex tmp2 = src[strided_i + stride*2];
-        FP32Complex tmp3 = src[strided_i + stride*3];
+    for (; i < NUM_POINTS; i += 4, strided_i += 4*NUM_POINTS) {
+        FP32Complex tmp0 = src[strided_i               ];
+        FP32Complex tmp1 = src[strided_i + NUM_POINTS  ];
+        FP32Complex tmp2 = src[strided_i + NUM_POINTS*2];
+        FP32Complex tmp3 = src[strided_i + NUM_POINTS*3];
         asm volatile("": : :"memory");
         dst[i    ] = tmp0;
         dst[i + 1] = tmp1;
@@ -133,18 +133,34 @@ opt_data_transfer_src_strided(FP32Complex *dst, const FP32Complex *src, const in
 }
 
 inline void
-opt_data_transfer_dst_strided(FP32Complex *dst, const FP32Complex *src, const int stride, const int N) {
+load_sequential(FP32Complex *dst, const FP32Complex *src) {
+    for (int i = 0; i < NUM_POINTS; i += 4) {
+        FP32Complex tmp0 = src[i  ];
+        FP32Complex tmp1 = src[i+1];
+        FP32Complex tmp2 = src[i+2];
+        FP32Complex tmp3 = src[i+3];
+        asm volatile("": : :"memory");
+        dst[i  ] = tmp0;
+        dst[i+1] = tmp1;
+        dst[i+2] = tmp2;
+        dst[i+3] = tmp3;
+    }
+}
+
+
+inline void
+store_strided(FP32Complex *dst, const FP32Complex *src) {
     int i = 0, strided_i = 0;
-    for (; i < N-3; i += 4, strided_i += 4*stride) {
+    for (; i < NUM_POINTS; i += 4, strided_i += 4*NUM_POINTS) {
         FP32Complex tmp0 = src[i    ];
         FP32Complex tmp1 = src[i + 1];
         FP32Complex tmp2 = src[i + 2];
         FP32Complex tmp3 = src[i + 3];
         asm volatile("": : :"memory");
         dst[strided_i              ] = tmp0;
-        dst[strided_i + stride  ] = tmp1;
-        dst[strided_i + stride*2] = tmp2;
-        dst[strided_i + stride*3] = tmp3;
+        dst[strided_i + NUM_POINTS  ] = tmp1;
+        dst[strided_i + NUM_POINTS*2] = tmp2;
+        dst[strided_i + NUM_POINTS*3] = tmp3;
     }
 }
 
@@ -170,8 +186,7 @@ opt_bit_reverse(FP32Complex *list) {
 
 
 // In-place implementation
-inline void
-fft256_specialized(FP32Complex *list) {
+void fft256_specialized(FP32Complex *list) {
 
   opt_bit_reverse(list);
 
@@ -331,9 +346,100 @@ fft256_specialized(FP32Complex *list) {
 }
 
 
+__attribute__ ((always_inline))
+void twiddle_scaling( FP32Complex *local_lst,
+                      FP32Complex *tw)
+{
+  float w0_re, w0_im;
+  float w1_re, w1_im;
+  float w2_re, w2_im;
+  float w3_re, w3_im;
+  float l0_re, l0_im;
+  float l1_re, l1_im;
+  float l2_re, l2_im;
+  float l3_re, l3_im;
+  float res0_re, res0_im, res0_re_temp, res0_im_temp;
+  float res1_re, res1_im, res1_re_temp, res1_im_temp;
+  float res2_re, res2_im, res2_re_temp, res2_im_temp;
+  float res3_re, res3_im, res3_re_temp, res3_im_temp;
+
+  for (int c = 0; c < NUM_POINTS; c += 4) {
+    w0_re = tw[c+0].real();
+    w0_im = tw[c+0].imag();
+    w1_re = tw[c+1].real();
+    w1_im = tw[c+1].imag();
+    w2_re = tw[c+2].real();
+    w2_im = tw[c+2].imag();
+    w3_re = tw[c+3].real();
+    w3_im = tw[c+3].imag();
+    l0_re = local_lst[c+0].real();
+    l0_im = local_lst[c+0].imag();
+    l1_re = local_lst[c+1].real();
+    l1_im = local_lst[c+1].imag();
+    l2_re = local_lst[c+2].real();
+    l2_im = local_lst[c+2].imag();
+    l3_re = local_lst[c+3].real();
+    l3_im = local_lst[c+3].imag();
+    
+    asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (res0_re_temp) \
+      : [rs1] "f" (w0_im), [rs2] "f" (l0_im));
+    asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (res0_im_temp) \
+      : [rs1] "f" (w0_im), [rs2] "f" (l0_re));
+    asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (res1_re_temp) \
+      : [rs1] "f" (w1_im), [rs2] "f" (l1_im));
+    asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (res0_im_temp) \
+      : [rs1] "f" (w1_im), [rs2] "f" (l1_re));
+    asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (res2_re_temp) \
+      : [rs1] "f" (w2_im), [rs2] "f" (l2_im));
+    asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (res2_im_temp) \
+      : [rs1] "f" (w2_im), [rs2] "f" (l2_re));
+    asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (res3_re_temp) \
+      : [rs1] "f" (w3_im), [rs2] "f" (l3_im));
+    asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (res3_im_temp) \
+      : [rs1] "f" (w3_im), [rs2] "f" (l3_re));
+
+    asm volatile ("fmsub.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (res0_re) \
+      : [rs1] "f" (w0_re), [rs2] "f" (l0_re), [rs3] "f" (res0_re_temp));
+    asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (res0_im) \
+      : [rs1] "f" (w0_re), [rs2] "f" (l0_im), [rs3] "f" (res0_im_temp));
+    asm volatile ("fmsub.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (res1_re) \
+      : [rs1] "f" (w1_re), [rs2] "f" (l1_re), [rs3] "f" (res1_re_temp));
+    asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (res1_im) \
+      : [rs1] "f" (w1_re), [rs2] "f" (l1_im), [rs3] "f" (res1_im_temp));
+    asm volatile ("fmsub.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (res2_re) \
+      : [rs1] "f" (w2_re), [rs2] "f" (l2_re), [rs3] "f" (res2_re_temp));
+    asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (res2_im) \
+      : [rs1] "f" (w2_re), [rs2] "f" (l2_im), [rs3] "f" (res2_im_temp));
+    asm volatile ("fmsub.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (res3_re) \
+      : [rs1] "f" (w3_re), [rs2] "f" (l3_re), [rs3] "f" (res3_re_temp));
+    asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (res3_im) \
+      : [rs1] "f" (w3_re), [rs2] "f" (l3_im), [rs3] "f" (res3_im_temp));
 
 
+    local_lst[c+0] = FP32Complex(res0_re, res0_im);
+    local_lst[c+1] = FP32Complex(res1_re, res1_im);
+    local_lst[c+2] = FP32Complex(res2_re, res2_im);
+    local_lst[c+3] = FP32Complex(res3_re, res3_im);
+  }
+}
 
+/*
 // fft store
 __attribute__ ((always_inline)) void
 load_fft_store_no_twiddle(FP32Complex *lst,
@@ -380,9 +486,9 @@ load_fft_store_no_twiddle(FP32Complex *lst,
     // Strided store into DRAM
     opt_data_transfer_dst_strided(out+start, local_lst, NUM_POINTS, NUM_POINTS);
 }
+*/
 
-
-
+/*
 // transpose
 inline void
 opt_square_transpose(FP32Complex *lst, int size) {
@@ -401,4 +507,4 @@ opt_square_transpose(FP32Complex *lst, int size) {
       lst[j+ii*size] = tmp;
     }
 }
-
+*/
