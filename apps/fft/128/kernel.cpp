@@ -14,9 +14,9 @@ static void warmup(FP32Complex *in, FP32Complex *out, FP32Complex *tw, int N)
       asm volatile ("lw x0, %[p]" :: [p] "m" (in[i]));
       //asm volatile ("sw x0, %[p]" :: [p] "m" (out[i]));
   }
-  for (int i = __bsg_id*CACHE_LINE_COMPLEX; i < N; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_COMPLEX) {
-      asm volatile ("lw x0, %[p]" :: [p] "m" (tw[i]));
-  }
+  //for (int i = __bsg_id*CACHE_LINE_COMPLEX; i < N; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_COMPLEX) {
+  //    asm volatile ("lw x0, %[p]" :: [p] "m" (tw[i]));
+  //}
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
 }
@@ -24,6 +24,7 @@ static void warmup(FP32Complex *in, FP32Complex *out, FP32Complex *tw, int N)
 
 
 FP32Complex fft_workset[NUM_POINTS];
+FP32Complex local_tw[NUM_POINTS];
 
 extern "C" __attribute__ ((noinline))
 int
@@ -40,6 +41,12 @@ kernel_fft(FP32Complex * bsg_attr_noalias in,
     warmup(in, out, tw, N);
     #endif
 
+    // load twiddle factor to local.
+    load_sequential(local_tw, tw+(__bsg_id*NUM_POINTS));
+    bsg_fence();
+    bsg_barrier_hw_tile_group_sync();
+
+
     // Kernel Start
     bsg_cuda_print_stat_kernel_start();
     
@@ -50,7 +57,7 @@ kernel_fft(FP32Complex * bsg_attr_noalias in,
       // step 1
       load_strided(fft_workset, input_vec);
       fft128_specialized(fft_workset);
-      twiddle_scaling(fft_workset, tw+(__bsg_id*NUM_POINTS));
+      twiddle_scaling(fft_workset, local_tw);
       store_strided(input_vec, fft_workset);
       bsg_fence();
       bsg_barrier_hw_tile_group_sync();
