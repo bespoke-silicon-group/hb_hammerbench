@@ -53,7 +53,9 @@ def aggregate_stall_breakdown(data):
     stall_breakdowns = []
     # mark the tag type (i.e. begin/end)
     data['tag_type']=data['tag'].apply(
-        lambda tag : CudaStatTag(tag).getAction
+        lambda tag : ('Start' if CudaStatTag(tag).isKernelStart else
+                      ('End' if CudaStatTag(tag).isKernelEnd else
+                       'Other'))
     )
     num_x = data['x'].nunique()
     num_y = data['y'].nunique()
