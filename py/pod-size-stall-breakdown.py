@@ -72,7 +72,7 @@ for test_dir in test_dirs:
     }
 
 fmt = " ".join(
-    ["{%s:9}"%stall_type for stall_type in stall_types]
+    ["{%s}"%stall_type for stall_type in stall_types]
 )
 
 for pod_size in order:
