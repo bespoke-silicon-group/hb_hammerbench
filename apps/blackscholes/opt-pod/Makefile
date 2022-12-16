@@ -98,11 +98,13 @@ bs.rvo: RISCV_CXX = $(RISCV_CLANGXX)
 bs.rvo: RISCV_OPT_LEVEL = -O3
 bs.rvo: RISCV_CXXFLAGS += -lm
 
-RISCV_TARGET_OBJECTS += kernel.rvo bs.rvo
+RISCV_TARGET_OBJECTS += kernel.rvo bs_kernel.rvo
 
 # Tile Group Dimensions
 RISCV_DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_DEFINES += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+RISCV_DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X)
+RISCV_DEFINES += -DTILE_GROUP_DIM_Y=$(TILE_GROUP_DIM_Y)
 
 # We put all rodata in scratchpad because otherwise the CLZ lookup
 # tables end up in DRAM. Booo!

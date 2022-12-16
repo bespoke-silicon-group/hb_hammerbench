@@ -60,7 +60,7 @@ float CNDF (float InputX)
     return OutputX;
 } 
 
-void BlkSchlsEqEuroNoDiv( float sptprice,
+void BlkSchlsEqEuroNoDiv_kernel( float sptprice,
                            float strike, float rate, float volatility,
                            float time, float &putPrice, float &callPrice, float timet )
 {
