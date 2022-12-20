@@ -37,6 +37,7 @@
 #include <bsg_manycore.h>
 #include <cstdint>
 #include "bs.hpp"
+#include "option_data.hpp"
 
 #define ALLOC_NAME "default_allocator"
 
@@ -62,66 +63,54 @@ int kernel_bs (int argc, char **argv) {
         // Global Data in PARSEC
         int numOptions;
         OptionData *data;
-        float * puts, *calls;
-        float * _puts, *_calls;
-        int numError = 0;
+        OptionData *dev_data;
 
         //Read input data from file
         file = fopen(inputFile, "r");
-        if(file == NULL) {
-                bsg_pr_test_err("ERROR: Unable to open file `%s'.\n", inputFile);
-                return HB_MC_FAIL;
+        if (file == NULL) {
+          bsg_pr_test_err("ERROR: Unable to open file `%s'.\n", inputFile);
+          return HB_MC_FAIL;
         }
 
         // File format:
         rv = fscanf(file, "%i", &numOptions);
-        if(rv != 1) {
-                bsg_pr_test_err("ERROR: Unable to read from file `%s'.\n", inputFile);
-                fclose(file);
-                return HB_MC_FAIL;
+        if (rv != 1) {
+          bsg_pr_test_err("ERROR: Unable to read from file `%s'.\n", inputFile);
+          fclose(file);
+          return HB_MC_FAIL;
         }
 
         bsg_pr_test_info("Total Number of Options in input file: %d\n", numOptions);
 
-        data = (OptionData*)malloc(numOptions*sizeof(OptionData));
-        float unused;
-        for (int i = 0; i < numOptions; ++ i ){
-                rv = fscanf(file, "%f %f %f %f %f %f %c %f %f", &data[i].s, &data[i].strike, &data[i].r, &data[i].divq, &data[i].v, &data[i].t, &data[i].OptionType, &data[i].divs, &unused);
-                if(rv != 9) {
-                        bsg_pr_test_err("Unable to read from file `%s'.\n", inputFile);
-                        fclose(file);
-                        return HB_MC_FAIL;
-                }
-        }
-
         // number of options to be done by pod.
         numOptions = 32768;
-
+        data = (OptionData*)malloc(numOptions*sizeof(OptionData));
+        dev_data = (OptionData*)malloc(numOptions*sizeof(OptionData));
         printf("Num options per pod = %d\n", numOptions);
 
+        float unused, unused_divq, unused_div;
+        int unused_optiontype;
+        for (int i = 0; i < numOptions; ++i) {
+          rv = fscanf(file, "%f %f %f %f %f %f %c %f %f", &data[i].s, &data[i].strike, &data[i].r, &unused_divq, &data[i].v, &data[i].t, &unused_optiontype, &unused_div, &unused);
+          if (rv != 9) {
+            bsg_pr_test_err("Unable to read from file `%s'.\n", inputFile);
+            fclose(file);
+            return HB_MC_FAIL;
+          }
+          data[i].call   = 0.0f;
+          data[i].put    = 0.0f;
+          data[i].unused = 0.0f;
+        }
+
+
         rv = fclose(file);
-        if(rv != 0) {
-                bsg_pr_test_err("Unable to close file `%s'.\n", inputFile);
-                exit(1);
+        if (rv != 0) {
+          bsg_pr_test_err("Unable to close file `%s'.\n", inputFile);
+          exit(1);
         }
 
-        // Allocate outputs
-        _puts = (float*)malloc(numOptions*sizeof(float));
-        _calls = (float*)malloc(numOptions*sizeof(float));
-        puts = (float*)malloc(numOptions*sizeof(float));
-        calls = (float*)malloc(numOptions*sizeof(float));
-
-        // Copy in data
-        for (int i=0; i<numOptions; i++) {
-                data[i].OptionType      = ((data[i].OptionType & 0xff) == 'P') ? 1 : 0;
-        }
 
         // At this point the data is ready to launch.
-        for (int i=0; i<numOptions; i++) {
-                BlkSchlsEqEuroNoDiv(data[i].s, data[i].strike,
-                                    data[i].r, data[i].v, data[i].t,
-                                    _puts[i], _calls[i], 0);
-        }
 
         /*********************/
         /* Initialize device */
@@ -140,27 +129,15 @@ int kernel_bs (int argc, char **argv) {
                 BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
                 eva_t option_buf_dev;
-                eva_t put_buf_dev;
-                eva_t call_buf_dev;
                 BSG_CUDA_CALL(hb_mc_device_malloc(&device, numOptions * sizeof(OptionData), &option_buf_dev));
-                BSG_CUDA_CALL(hb_mc_device_malloc(&device, numOptions * sizeof(float), &put_buf_dev));
-                BSG_CUDA_CALL(hb_mc_device_malloc(&device, numOptions * sizeof(float), &call_buf_dev));
 
-                void *src, *dst;
-                hb_mc_dma_htod_t htod;
-                hb_mc_dma_dtoh_t dtoh;
 
                 // Copy data host onto device DRAM.
-                dst = (void *) ((intptr_t) option_buf_dev);
-                src = (void *) data;
-
+                hb_mc_dma_htod_t htod;
                 htod.d_addr = option_buf_dev;
-                htod.h_addr = src;
+                htod.h_addr = (void *) data;
                 htod.size   = numOptions * sizeof(OptionData);
-
                 BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, &htod, 1));
-
-                hb_mc_dimension_t dev_dim = hb_mc_config_get_dimension_vcore(hb_mc_manycore_get_config(device.mc));
 
                 // Define tg_dim_x/y: number of tiles in each tile group
                 // Calculate grid_dim_x/y: number of tile groups needed
@@ -173,61 +150,36 @@ int kernel_bs (int argc, char **argv) {
                         return HB_MC_FAIL;
                 }
 
-                uint32_t cuda_argv[4] = {option_buf_dev, put_buf_dev, call_buf_dev, opts_tile};
-
-
-                BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_black_scholes", 4, cuda_argv));
-
-                rc = hb_mc_manycore_get_cycle((device.mc), &cycle_start);
-                if(rc != HB_MC_SUCCESS){
-                        bsg_pr_test_err("Failed to read cycle counter: %s\n",
-                                        hb_mc_strerror(rc));
-                        return HB_MC_FAIL;
-                }
-                bsg_pr_test_info("Current cycle is: %lu\n", cycle_start);
-
+                #define CUDA_ARGC 2
+                uint32_t cuda_argv[CUDA_ARGC] = {option_buf_dev, numOptions};
+                BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_black_scholes", CUDA_ARGC, cuda_argv));
                 BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(&device));
 
-                rc = hb_mc_manycore_get_cycle((device.mc), &cycle_end);
-                if(rc != HB_MC_SUCCESS){
-                        bsg_pr_test_err("Failed to read cycle counter: %s\n",
-                                        hb_mc_strerror(rc));
-                        return HB_MC_FAIL;
-                }
-                bsg_pr_test_info("Current cycle is: %lu. Difference: %lu \n", cycle_end, cycle_end-cycle_start);
-
                 // Copy result back from device DRAM into host memory.
-                src = (void *) ((intptr_t) put_buf_dev);
-                dst = (void *) puts;
-                // BSG_CUDA_CALL(hb_mc_device_memcpy (&device, dst, src, numOptions*sizeof(float), HB_MC_MEMCPY_TO_HOST));
-                dtoh.d_addr = put_buf_dev;
-                dtoh.h_addr = dst;
-                dtoh.size   = numOptions*sizeof(float);
-
+                hb_mc_dma_dtoh_t dtoh;
+                dtoh.d_addr = option_buf_dev;
+                dtoh.h_addr = (void *) dev_data;
+                dtoh.size   = numOptions*sizeof(OptionData);
                 BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, &dtoh, 1));
 
-                src = (void *) ((intptr_t) call_buf_dev);
-                dst = (void *) calls;
-                // BSG_CUDA_CALL(hb_mc_device_memcpy (&device, dst, src, numOptions*sizeof(float), HB_MC_MEMCPY_TO_HOST));
-
-                dtoh.d_addr = call_buf_dev;
-                dtoh.h_addr = dst;
-                dtoh.size   = numOptions*sizeof(float);
-
-                BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, &dtoh, 1));
-
+                // Finish
                 BSG_CUDA_CALL(hb_mc_device_program_finish(&device));
+
+                // validate
+                for (int i=0; i<numOptions; i++) {
+                  BlkSchlsEqEuroNoDiv(&data[i]);
+                }
 
                 float err = 0.0;
                 for(int i = 0 ; i < numOptions; ++i){
-                        bsg_pr_info("PUT: x86: %f, RISC-V: %f\n", _puts[i], puts[i]);
-                        auto diff = (_puts[i] - puts[i]);
+                        bsg_pr_info("PUT: x86: %f, RISC-V: %f\n", data[i].put, dev_data[i].put);
+                        auto diff = (data[i].put - dev_data[i].put);
                         err += diff * diff;
                 }
 
                 for(int i = 0 ; i < numOptions; ++i){
-                        bsg_pr_info("CALL: x86: %f, RISC-V: %f\n", _calls[i], calls[i]);
-                        auto diff = (_calls[i] - calls[i]);
+                        bsg_pr_info("CALL: x86: %f, RISC-V: %f\n", data[i].call, dev_data[i].call);
+                        auto diff = (data[i].call - dev_data[i].call);
                         err += diff * diff;
                 }
 

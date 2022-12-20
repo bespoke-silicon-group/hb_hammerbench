@@ -1,4 +1,5 @@
 #include <math.h>
+#include "option_data.hpp"
 // Cumulative Normal Distribution Function
 // See Hull, Section 11.8, P.243-244
 #define inv_sqrt_2xPI 0.39894228040143270286f
@@ -60,9 +61,7 @@ float CNDF (float InputX)
     return OutputX;
 } 
 
-void BlkSchlsEqEuroNoDiv_kernel( float sptprice,
-                           float strike, float rate, float volatility,
-                           float time, float &putPrice, float &callPrice, float timet )
+void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
 {
 
     // local private working variables for the calculation
@@ -87,16 +86,16 @@ void BlkSchlsEqEuroNoDiv_kernel( float sptprice,
     float NegNofXd1;
     float NegNofXd2;    
     
-    xStockPrice = sptprice;
-    xStrikePrice = strike;
-    xRiskFreeRate = rate;
-    xVolatility = volatility;
+    xStockPrice = option->s;
+    xStrikePrice = option->strike;
+    xRiskFreeRate = option->r;
+    xVolatility = option->v;
 
-    xTime = time;
+    xTime = option->t;
     xSqrtTime = sqrt(xTime);
 
     // DR: Could compute this on the host...
-    logValues = logf( sptprice / strike );
+    logValues = logf( option->s / option->strike );
         
     xLogTerm = logValues;
     
@@ -117,10 +116,9 @@ void BlkSchlsEqEuroNoDiv_kernel( float sptprice,
     NofXd1 = CNDF( d1 );
     NofXd2 = CNDF( d2 );
 
-    FutureValueX = strike * ( expf( -(rate)*(time) ) );        
-    callPrice = (sptprice * NofXd1) - (FutureValueX * NofXd2);
+    FutureValueX = option->strike * ( expf( -(option->r)*(option->t) ) );        
+    option->call = (option->s * NofXd1) - (FutureValueX * NofXd2);
     NegNofXd1 = (1.0f - NofXd1);
     NegNofXd2 = (1.0f - NofXd2);
-    putPrice = (FutureValueX * NegNofXd2) - (sptprice * NegNofXd1);
-    
+    option->put = (FutureValueX * NegNofXd2) - (option->s * NegNofXd1);
 }
