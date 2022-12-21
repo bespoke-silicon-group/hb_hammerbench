@@ -3,12 +3,9 @@
 // Cumulative Normal Distribution Function
 // See Hull, Section 11.8, P.243-244
 #define inv_sqrt_2xPI 0.39894228040143270286f
-float CNDF (float InputX)
+float CNDF (float x)
 {
-    int sign;
-
     float OutputX;
-    float xInput;
     float xNPrimeofX;
     float expValues;
     float xK2;
@@ -17,21 +14,28 @@ float CNDF (float InputX)
     float xLocal, xLocal_1;
     float xLocal_2, xLocal_3;
 
-    // Check for negative value of InputX
-    if (InputX < 0.0f) {
-        InputX = -InputX;
-        sign = 1;
-    } else 
-        sign = 0;
+    // Check for negative value of x
+    float zerof = 0.0f;
+    float x_abs;
+    int sign;
+    asm volatile ("flt.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=r" (sign)
+      : [rs1] "f" (x), [rs2] "f" (zerof));
+    asm volatile ("fsgnj.s %[rd], %[rs1], %[rs2]" \
+      : [rd] "=f" (x_abs) \
+      : [rs1] "f" (x), [rs2] "f" (zerof));
+    //if (x < 0.0f) {
+    //    x = -x;
+    //    sign = 1;
+    //} else 
+    //    sign = 0;
 
-    xInput = InputX;
- 
     // Compute NPrimeX term common to both four & six decimal accuracy calcs
-    expValues = expf(-0.5f * InputX * InputX);
+    expValues = expf(-0.5f * x_abs * x_abs);
     xNPrimeofX = expValues;
     xNPrimeofX = xNPrimeofX * inv_sqrt_2xPI;
 
-    xK2 = 0.2316419f * xInput;
+    xK2 = 0.2316419f * x_abs;
     xK2 = 1.0f + xK2;
     xK2 = 1.0f / xK2;
     xK2_2 = xK2 * xK2;
@@ -95,8 +99,12 @@ void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
     xSqrtTime = sqrt(xTime);
 
     // DR: Could compute this on the host...
-    logValues = logf( option->s / option->strike );
-        
+    if (option->s == option->strike) {
+      logValues = 0.0f;
+    } else {
+      logValues = logf( option->s / option->strike );
+    }
+
     xLogTerm = logValues;
     
     xPowerTerm = xVolatility * xVolatility;
