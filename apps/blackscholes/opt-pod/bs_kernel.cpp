@@ -31,9 +31,7 @@ float CNDF (float x)
     //    sign = 0;
 
     // Compute NPrimeX term common to both four & six decimal accuracy calcs
-    expValues = expf(-0.5f * x_abs * x_abs);
-    xNPrimeofX = expValues;
-    xNPrimeofX = xNPrimeofX * inv_sqrt_2xPI;
+    expValues = expf(-0.5f * x_abs * x_abs) * inv_sqrt_2xPI;
 
     xK2 = 0.2316419f * x_abs;
     xK2 = 1.0f + xK2;
@@ -53,7 +51,7 @@ float CNDF (float x)
     xLocal_2 = xLocal_2 + xLocal_3;
 
     xLocal_1 = xLocal_2 + xLocal_1;
-    xLocal   = xLocal_1 * xNPrimeofX;
+    xLocal   = xLocal_1 * expValues;
     xLocal   = 1.0f - xLocal;
 
     OutputX  = xLocal;
@@ -67,66 +65,44 @@ float CNDF (float x)
 
 void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
 {
+    float s_reg = option->s;
+    float strike_reg = option->strike;
+    float v_reg = option->v;
+    float t_reg = option->t;
+    float r_reg = option->r;
 
-    // local private working variables for the calculation
-    float xStockPrice;
-    float xStrikePrice;
-    float xRiskFreeRate;
-    float xVolatility;
-    float xTime;
-    float xSqrtTime;
-
-    float logValues;
-    float xLogTerm;
     float xD1; 
     float xD2;
-    float xPowerTerm;
     float xDen;
-    float d1;
-    float d2;
     float FutureValueX;
     float NofXd1;
     float NofXd2;
     float NegNofXd1;
     float NegNofXd2;    
     
-    xStockPrice = option->s;
-    xStrikePrice = option->strike;
-    xRiskFreeRate = option->r;
-    xVolatility = option->v;
-
-    xTime = option->t;
-    xSqrtTime = sqrt(xTime);
-
-    // DR: Could compute this on the host...
-    if (option->s == option->strike) {
+    float sqrt_time = sqrt(t_reg);
+    float logValues;
+    if (s_reg == strike_reg) {
       logValues = 0.0f;
     } else {
-      logValues = logf( option->s / option->strike );
+      logValues = logf(s_reg / strike_reg);
     }
 
-    xLogTerm = logValues;
-    
-    xPowerTerm = xVolatility * xVolatility;
-    xPowerTerm = xPowerTerm * 0.5f;
-        
-    xD1 = xRiskFreeRate + xPowerTerm;
-    xD1 = xD1 * xTime;
-    xD1 = xD1 + xLogTerm;
+    xD1 = (v_reg * v_reg * 0.5f) + r_reg;
+    xD1 = xD1 * t_reg;
+    xD1 = xD1 + logValues;
 
-    xDen = xVolatility * xSqrtTime;
+    xDen = v_reg * sqrt_time;
     xD1 = xD1 / xDen;
     xD2 = xD1 -  xDen;
 
-    d1 = xD1;
-    d2 = xD2;
     
-    NofXd1 = CNDF( d1 );
-    NofXd2 = CNDF( d2 );
+    NofXd1 = CNDF( xD1 );
+    NofXd2 = CNDF( xD2 );
 
-    FutureValueX = option->strike * ( expf( -(option->r)*(option->t) ) );        
-    option->call = (option->s * NofXd1) - (FutureValueX * NofXd2);
+    FutureValueX = strike_reg * ( expf( -(r_reg)*(t_reg) ) );
+    option->call = (s_reg * NofXd1) - (FutureValueX * NofXd2);
     NegNofXd1 = (1.0f - NofXd1);
     NegNofXd2 = (1.0f - NofXd2);
-    option->put = (FutureValueX * NegNofXd2) - (option->s * NegNofXd1);
+    option->put = (FutureValueX * NegNofXd2) - (s_reg * NegNofXd1);
 }
