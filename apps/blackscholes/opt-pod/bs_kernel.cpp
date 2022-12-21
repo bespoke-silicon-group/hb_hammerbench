@@ -3,6 +3,16 @@
 // Cumulative Normal Distribution Function
 // See Hull, Section 11.8, P.243-244
 #define inv_sqrt_2xPI 0.39894228040143270286f
+
+#define fmadd_asm(rd_p, rs1_p, rs2_p, rs3_p) \
+    asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (rd_p) \
+      : [rs1] "f" ((rs1_p)), [rs2] "f" ((rs2_p)), [rs3] "f" ((rs3_p)))
+#define fmsub_asm(rd_p, rs1_p, rs2_p, rs3_p) \
+    asm volatile ("fmsub.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (rd_p) \
+      : [rs1] "f" ((rs1_p)), [rs2] "f" ((rs2_p)), [rs3] "f" ((rs3_p)))
+
 float CNDF (float x)
 {
     float OutputX;
@@ -33,8 +43,8 @@ float CNDF (float x)
     // Compute NPrimeX term common to both four & six decimal accuracy calcs
     expValues = expf(-0.5f * x_abs * x_abs) * inv_sqrt_2xPI;
 
-    xK2 = 0.2316419f * x_abs;
-    xK2 = 1.0f + xK2;
+    //xK2 = 1.0f + (0.2316419f * x_abs);
+    fmadd_asm(xK2, 0.2316419f, x_abs, 1.0f);
     xK2 = 1.0f / xK2;
     xK2_2 = xK2 * xK2;
     xK2_3 = xK2_2 * xK2;
@@ -93,17 +103,11 @@ void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
       logValues = logf(s_reg / strike_reg);
     }
 
-    
-    asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
-      : [rd] "=f" (xD1) \
-      : [rs1] "f" (v_reg * v_reg), [rs2] "f" (halff), [rs3] "f" (r_reg));
-    asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
-      : [rd] "=f" (xD1) \
-      : [rs1] "f" (xD1), [rs2] "f" (t_reg), [rs3] "f" (logValues));
-
+    fmadd_asm(xD1, v_reg*v_reg, halff, r_reg);
+    fmadd_asm(xD1, xD1, t_reg, logValues);
     xDen = v_reg * sqrt_time;
     xD1 = xD1 / xDen;
-    xD2 = xD1 -  xDen;
+    xD2 = xD1 - xDen;
 
     
     NofXd1 = CNDF( xD1 );
