@@ -125,3 +125,8 @@ endif
 
 pod-size-summary:
 	python3 $(HB_HAMMERBENCH_PATH)/py/pod-size-summary-spgemm.py $(DOEX16X8)  $(TESTS)
+
+pod-size-stall-breakdown:
+	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/ python3 \
+	$(HB_HAMMERBENCH_PATH)/py/pod-size-stall-breakdown.py \
+	--spgemm $(TESTS)

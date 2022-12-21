@@ -77,4 +77,4 @@ pod-size-summary:
 pod-size-stall-breakdown:
 	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/ python3 \
 	$(HB_HAMMERBENCH_PATH)/py/pod-size-stall-breakdown.py \
-	$(DOEX16X8)  $(TESTS_DIRS)
+	$(TESTS_DIRS)
