@@ -65,11 +65,16 @@ float CNDF (float x)
 
 void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
 {
+    // input reg
     float s_reg = option->s;
     float strike_reg = option->strike;
     float v_reg = option->v;
     float t_reg = option->t;
     float r_reg = option->r;
+    // constant
+    float halff = 0.5f;
+    float onef = 1.0f;
+
 
     float xD1; 
     float xD2;
@@ -88,9 +93,13 @@ void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
       logValues = logf(s_reg / strike_reg);
     }
 
-    xD1 = (v_reg * v_reg * 0.5f) + r_reg;
-    xD1 = xD1 * t_reg;
-    xD1 = xD1 + logValues;
+    
+    asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (xD1) \
+      : [rs1] "f" (v_reg * v_reg), [rs2] "f" (halff), [rs3] "f" (r_reg));
+    asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
+      : [rd] "=f" (xD1) \
+      : [rs1] "f" (xD1), [rs2] "f" (t_reg), [rs3] "f" (logValues));
 
     xDen = v_reg * sqrt_time;
     xD1 = xD1 / xDen;

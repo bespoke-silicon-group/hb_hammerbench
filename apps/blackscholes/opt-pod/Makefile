@@ -93,10 +93,9 @@ include $(EXAMPLES_PATH)/link.mk
 BSG_MANYCORE_KERNELS = kernel.riscv
 
 RISCV_LDFLAGS += -lm
-# For some reason clang works much better for Black Scholes
-bs.rvo: RISCV_CXX = $(RISCV_CLANGXX)
-bs.rvo: RISCV_OPT_LEVEL = -O3
-bs.rvo: RISCV_CXXFLAGS += -lm
+#bs_kernel.rvo: RISCV_CXX = $(RISCV_CLANGXX)
+#bs_kernel.rvo: RISCV_OPT_LEVEL = -O3
+#bs_kernel.rvo: RISCV_CXXFLAGS += -lm 
 
 RISCV_TARGET_OBJECTS += kernel.rvo bs_kernel.rvo
 
