@@ -52,8 +52,10 @@ CUDALITE_SRC_PATH = $(SPMD_SRC_PATH)/bsg_cuda_lite_runtime
 
 # KERNEL_NAME is the name of the CUDA-Lite Kernel
 KERNEL_NAME = bs
-TILE_GROUP_DIM_X = 1
-TILE_GROUP_DIM_Y = 1
+#TILE_GROUP_DIM_X = 1
+#TILE_GROUP_DIM_Y = 1
+TILE_GROUP_DIM_X = 16
+TILE_GROUP_DIM_Y = 8
 
 ###############################################################################
 # Host code compilation flags and flow
