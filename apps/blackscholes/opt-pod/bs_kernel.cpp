@@ -178,7 +178,6 @@ void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
     NofXd1 = CNDF( xD1 );
     NofXd2 = CNDF( xD2 );
 
-    //FutureValueX = strike_reg * ( expf( -(r_reg)*(t_reg) ) );
     FutureValueX = strike_reg * ( expf_0( -(r_reg)*(t_reg) ) );
     option->call = (s_reg * NofXd1) - (FutureValueX * NofXd2);
     NegNofXd1 = (1.0f - NofXd1);
