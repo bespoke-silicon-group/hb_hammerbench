@@ -86,17 +86,9 @@ float fast_expf(float x) {
 
 float CNDF (float x)
 {
-    float OutputX;
-    float xNPrimeofX;
-    float expValues;
-    float xK2_2, xK2_3;
-    float xK2_4, xK2_5;
-    float x1, x2, x3, x4, x5;
-    float xLocal, xLocal_1;
-    float xLocal_2, xLocal_3;
-
     // Check for negative value of x
-    float zerof = 0.0f;
+    const float zerof = 0.0f;
+    const float onef  = 1.0f;
     float x_abs;
     int sign;
     asm volatile ("flt.s %[rd], %[rs1], %[rs2]" \
@@ -107,32 +99,30 @@ float CNDF (float x)
       : [rs1] "f" (x), [rs2] "f" (zerof));
 
     // expValues
-    expValues = fast_expf(-0.5f * x_abs * x_abs) * inv_sqrt_2xPI;
+    float expValues = fast_expf(-0.5f * x_abs * x_abs) * inv_sqrt_2xPI;
 
     // calculate x1
+    float x1;
     fmadd_asm(x1, 0.2316419f, x_abs, 1.0f);
     x1 = 1.0f / x1;
 
-    xK2_2 = x1 * x1;
-    xK2_3 = xK2_2 * x1;
-    xK2_4 = xK2_3 * x1;
-    xK2_5 = xK2_4 * x1;
-    
-    xLocal_1 = x1 * 0.319381530f;
-    xLocal_2 = xK2_2 * (-0.356563782f);
-    xLocal_3 = xK2_3 * 1.781477937f;
-    xLocal_2 = xLocal_2 + xLocal_3;
-    xLocal_3 = xK2_4 * (-1.821255978f);
-    xLocal_2 = xLocal_2 + xLocal_3;
-    xLocal_3 = xK2_5 * 1.330274429f;
-    xLocal_2 = xLocal_2 + xLocal_3;
+    const float c1 =  0.319381530f;
+    const float c2 = -0.356563782f;
+    const float c3 =  1.781477937f;
+    const float c4 = -1.821255978f;
+    const float c5 =  1.330274429f;
+    float fx;
+    fmadd_asm(fx, x1, c5, c4);
+    fmadd_asm(fx, fx, x1, c3);
+    fmadd_asm(fx, fx, x1, c2);
+    fmadd_asm(fx, fx, x1, c1);
+    fx = fx * x1;
 
-    xLocal_1 = xLocal_2 + xLocal_1;
-    //xLocal   = 1.0f - (xLocal_1 * expValues);
-    fnmsub_asm(xLocal, xLocal_1, expValues, 1.0f);
+    float xLocal;
+    fnmsub_asm(xLocal, fx, expValues, onef);
 
     if (sign) {
-        xLocal = 1.0f - xLocal;
+      xLocal = 1.0f - xLocal;
     }
     
     return xLocal;
@@ -155,8 +145,6 @@ void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
     float xD2;
     float xDen;
     float FutureValueX;
-    float NofXd1;
-    float NofXd2;
     float NegNofXd1;
     float NegNofXd2;    
     
@@ -175,8 +163,8 @@ void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
     xD2 = xD1 - xDen;
 
     
-    NofXd1 = CNDF( xD1 );
-    NofXd2 = CNDF( xD2 );
+    float NofXd1 = CNDF( xD1 );
+    float NofXd2 = CNDF( xD2 );
 
     FutureValueX = strike_reg * ( expf_0( -(r_reg)*(t_reg) ) );
     option->call = (s_reg * NofXd1) - (FutureValueX * NofXd2);
