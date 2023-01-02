@@ -17,6 +17,15 @@
       : [rd] "=f" (rd_p) \
       : [rs1] "f" ((rs1_p)), [rs2] "f" ((rs2_p)), [rs3] "f" ((rs3_p)))
 
+#define flt_asm(rd_p, rs1_p, rs2_p) \
+  asm volatile ("flt.s %[rd], %[rs1], %[rs2]" \
+    : [rd] "=r" (rd_p) \
+    : [rs1] "f" (rs1_p), [rs2] "f" (rs2_p))
+#define fsgnj_asm(rd_p, rs1_p, rs2_p) \
+  asm volatile ("fsgnj.s %[rd], %[rs1], %[rs2]" \
+    : [rd] "=f" (rd_p) \
+    : [rs1] "f" (rs1_p), [rs2] "f" (rs2_p))
+
 
 // Using taylor series to approximate ln(x) around x=1
 __attribute__ ((always_inline))
@@ -82,51 +91,70 @@ float fast_expf(float x) {
   // return the combined result;
   return part1 * part2;
 }
+ 
+
+__attribute__ ((always_inline))
+void dual_CNDF(float x1, float x2, float& out1, float& out2) {
+  // constants
+  const float zerof = 0.0f;
+  const float onef  = 1.0f;
   
+  // check for negative values
+  float x1_abs, x2_abs;
+  int sign1, sign2;
+  flt_asm(sign1, x1, zerof);   
+  flt_asm(sign2, x2, zerof);   
+  fsgnj_asm(x1_abs, x1, zerof);
+  fsgnj_asm(x2_abs, x2, zerof);
 
-float CNDF (float x)
-{
-    // Check for negative value of x
-    const float zerof = 0.0f;
-    const float onef  = 1.0f;
-    float x_abs;
-    int sign;
-    asm volatile ("flt.s %[rd], %[rs1], %[rs2]" \
-      : [rd] "=r" (sign)
-      : [rs1] "f" (x), [rs2] "f" (zerof));
-    asm volatile ("fsgnj.s %[rd], %[rs1], %[rs2]" \
-      : [rd] "=f" (x_abs) \
-      : [rs1] "f" (x), [rs2] "f" (zerof));
+  // exp
+  float expf_in1 = -0.5f * x1_abs * x1_abs; 
+  float expf_in2 = -0.5f * x2_abs * x2_abs; 
+  float expVal1, expVal2;
+  expVal1 = fast_expf(expf_in1) * inv_sqrt_2xPI;
+  expVal2 = expf_0(expf_in2) * inv_sqrt_2xPI;
+  
+  // calculate polynomials
+  float x1_1, x2_1;
+  fmadd_asm(x1_1, 0.2316419f, x1_abs, onef);
+  x1_1 = 1.0f / x1_1;
+  fmadd_asm(x2_1, 0.2316419f, x2_abs, onef);
+  x2_1 = 1.0f / x2_1;
 
-    // expValues
-    float expValues = fast_expf(-0.5f * x_abs * x_abs) * inv_sqrt_2xPI;
+  const float c1 =  0.319381530f;
+  const float c2 = -0.356563782f;
+  const float c3 =  1.781477937f;
+  const float c4 = -1.821255978f;
+  const float c5 =  1.330274429f;
 
-    // calculate x1
-    float x1;
-    fmadd_asm(x1, 0.2316419f, x_abs, 1.0f);
-    x1 = 1.0f / x1;
+  float fx1;
+  float fx2;
+  fmadd_asm(fx1, x1_1, c5, c4);
+  fmadd_asm(fx2, x2_1, c5, c4);
+  fmadd_asm(fx1, fx1, x1_1, c3);
+  fmadd_asm(fx2, fx2, x2_1, c3);
+  fmadd_asm(fx1, fx1, x1_1, c2);
+  fmadd_asm(fx2, fx2, x2_1, c2);
+  fmadd_asm(fx1, fx1, x1_1, c1);
+  fmadd_asm(fx2, fx2, x2_1, c1);
+  fx1 = fx1 * x1_1;
+  fx2 = fx2 * x2_1;
+  
+  float temp1, temp2; 
+  fnmsub_asm(temp1, fx1, expVal1, onef);
+  fnmsub_asm(temp2, fx2, expVal2, onef);
 
-    const float c1 =  0.319381530f;
-    const float c2 = -0.356563782f;
-    const float c3 =  1.781477937f;
-    const float c4 = -1.821255978f;
-    const float c5 =  1.330274429f;
-    float fx;
-    fmadd_asm(fx, x1, c5, c4);
-    fmadd_asm(fx, fx, x1, c3);
-    fmadd_asm(fx, fx, x1, c2);
-    fmadd_asm(fx, fx, x1, c1);
-    fx = fx * x1;
+  if (sign1) {
+    temp1 = 1.0f - temp1;
+  }
+  if (sign2) {
+    temp2 = 1.0f - temp2;
+  }
 
-    float xLocal;
-    fnmsub_asm(xLocal, fx, expValues, onef);
+  out1 = temp1;
+  out2 = temp2;
+}
 
-    if (sign) {
-      xLocal = 1.0f - xLocal;
-    }
-    
-    return xLocal;
-} 
 
 void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
 {
@@ -140,14 +168,6 @@ void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
     float halff = 0.5f;
     float onef = 1.0f;
 
-
-    float xD1; 
-    float xD2;
-    float xDen;
-    float FutureValueX;
-    float NegNofXd1;
-    float NegNofXd2;    
-    
     float sqrt_time = sqrt(t_reg);
     float logValues;
     if (s_reg == strike_reg) {
@@ -156,19 +176,19 @@ void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
       logValues = my_logf(s_reg / strike_reg);
     }
 
+    float xD1, xD2; 
     fmadd_asm(xD1, v_reg*v_reg, halff, r_reg);
     fmadd_asm(xD1, xD1, t_reg, logValues);
-    xDen = v_reg * sqrt_time;
+    float xDen = v_reg * sqrt_time;
     xD1 = xD1 / xDen;
     xD2 = xD1 - xDen;
 
-    
-    float NofXd1 = CNDF( xD1 );
-    float NofXd2 = CNDF( xD2 );
+    float cndf1, cndf2;
+    dual_CNDF(xD1, xD2, cndf1, cndf2);
 
-    FutureValueX = strike_reg * ( expf_0( -(r_reg)*(t_reg) ) );
-    option->call = (s_reg * NofXd1) - (FutureValueX * NofXd2);
-    NegNofXd1 = (1.0f - NofXd1);
-    NegNofXd2 = (1.0f - NofXd2);
-    option->put = (FutureValueX * NegNofXd2) - (s_reg * NegNofXd1);
+    float FutureValueX = strike_reg * ( expf_0( -(r_reg)*(t_reg) ) );
+    option->call = (s_reg * cndf1) - (FutureValueX * cndf2);
+    float neg_cndf1 = (1.0f - cndf1);
+    float neg_cndf2 = (1.0f - cndf2);
+    option->put = (FutureValueX * neg_cndf2) - (s_reg * neg_cndf1);
 }
