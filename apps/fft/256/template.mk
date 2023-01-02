@@ -69,8 +69,8 @@ include $(EXAMPLES_PATH)/link.mk
 BSG_MANYCORE_KERNELS = kernel.riscv
 
 
-kernel.rvo: $(APP_PATH)/../common/fft.hpp
-kernel.rvo: RISCV_INCLUDES += -I$(APP_PATH)/../common
+kernel.rvo: $(APP_PATH)/fft256.hpp
+kernel.rvo: RISCV_INCLUDES += -I$(APP_PATH)/../common -I$(APP_PATH)/
 kernel.rvo: RISCV_CXX=$(RISCV_CLANGXX)
 
 kernel.riscv: kernel.rvo
