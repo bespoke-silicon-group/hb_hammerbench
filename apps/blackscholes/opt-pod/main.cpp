@@ -83,8 +83,8 @@ int kernel_bs (int argc, char **argv) {
         bsg_pr_test_info("Total Number of Options in input file: %d\n", numOptions);
 
         // number of options to be done by pod.
-        //numOptions = 32768;
-        numOptions = 4;
+        numOptions = 32768;
+        //numOptions = 4;
         data = (OptionData*)malloc(numOptions*sizeof(OptionData));
         dev_data = (OptionData*)malloc(numOptions*sizeof(OptionData));
         printf("Num options per pod = %d\n", numOptions);

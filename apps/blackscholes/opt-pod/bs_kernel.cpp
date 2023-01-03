@@ -98,7 +98,8 @@ void dual_CNDF(float x1, float x2, float& out1, float& out2) {
   // constants
   const float zerof = 0.0f;
   const float onef  = 1.0f;
-  
+  const float minus_halff = -0.5f;
+
   // check for negative values
   float x1_abs, x2_abs;
   int sign1, sign2;
@@ -108,18 +109,19 @@ void dual_CNDF(float x1, float x2, float& out1, float& out2) {
   fsgnj_asm(x2_abs, x2, zerof);
 
   // exp
-  float expf_in1 = -0.5f * x1_abs * x1_abs; 
-  float expf_in2 = -0.5f * x2_abs * x2_abs; 
+  float expf_in1 = minus_halff * x1_abs * x1_abs; 
+  float expf_in2 = minus_halff * x2_abs * x2_abs; 
   float expVal1, expVal2;
   expVal1 = fast_expf(expf_in1) * inv_sqrt_2xPI;
-  expVal2 = expf_0(expf_in2) * inv_sqrt_2xPI;
+  //expVal2 = expf_0(expf_in2) * inv_sqrt_2xPI;
+  expVal2 = fast_expf(expf_in2) * inv_sqrt_2xPI;
   
   // calculate polynomials
   float x1_1, x2_1;
   fmadd_asm(x1_1, 0.2316419f, x1_abs, onef);
-  x1_1 = 1.0f / x1_1;
+  x1_1 = onef / x1_1;
   fmadd_asm(x2_1, 0.2316419f, x2_abs, onef);
-  x2_1 = 1.0f / x2_1;
+  x2_1 = onef / x2_1;
 
   const float c1 =  0.319381530f;
   const float c2 = -0.356563782f;
@@ -165,8 +167,8 @@ void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
     float t_reg = option->t;
     float r_reg = option->r;
     // constant
-    float halff = 0.5f;
-    float onef = 1.0f;
+    const float halff = 0.5f;
+    const float onef = 1.0f;
 
     float sqrt_time = sqrt(t_reg);
     float logValues;
