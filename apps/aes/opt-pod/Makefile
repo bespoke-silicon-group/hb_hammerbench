@@ -55,8 +55,12 @@ VPATH = ../tiny-AES-c
 ###############################################################################
 # Host code compilation flags and flow
 ###############################################################################
-TILE_GROUP_DIM_X = 16
-TILE_GROUP_DIM_Y = 8
+#TILE_GROUP_DIM_X = 16
+#TILE_GROUP_DIM_Y = 8
+#NUM_ITER = 4
+TILE_GROUP_DIM_X = 1
+TILE_GROUP_DIM_Y = 1
+NUM_ITER = 1
 
 # TEST_SOURCES is a list of source files that need to be compiled
 TEST_SOURCES = main.cpp
@@ -67,6 +71,7 @@ aes.o: CFLAGS += -DHOST_CODE
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE -DECB=0 -DCTR=0
 DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X)
 DEFINES += -DTILE_GROUP_DIM_Y=$(TILE_GROUP_DIM_Y)
+DEFINES += -DNUM_ITER=$(NUM_ITER)
 CDEFINES += 
 CXXDEFINES += 
 
@@ -98,15 +103,15 @@ BSG_MANYCORE_KERNELS = kernel.riscv
 # the default. To view the disassembly, type `make kernel.dis`
 
 #tiny-AES-c/aes.rvo: RISCV_CXX = $(RISCV_CLANG)
-aes.rvo: RISCV_OPT_LEVEL = -O3
-aes.rvo: RISCV_DEFINES += -DECB=0 -DCTR=0
-aes.rvo: RISCV_DEFINES += -DBSG_MANYCORE
-aes.rvo: RISCV_DEFINES += -DBSG_MANYCORE_OPTIMIZED
-aes.rvo: RISCV_DEFINES += -DBSG_MANYCORE_SBOX_LOCAL
-aes.rvo: RISCV_DEFINES += -DBSG_MANYCORE_NODECRYPT
-kernel.rvo: RISCV_INCLUDES += -I../tiny-AES-c
+aes_kernel.rvo: RISCV_OPT_LEVEL = -O3
+aes_kernel.rvo: RISCV_DEFINES += -DECB=0 -DCTR=0
+aes_kernel.rvo: RISCV_DEFINES += -DBSG_MANYCORE
+aes_kernel.rvo: RISCV_DEFINES += -DBSG_MANYCORE_OPTIMIZED
+aes_kernel.rvo: RISCV_DEFINES += -DBSG_MANYCORE_SBOX_LOCAL
+aes_kernel.rvo: RISCV_DEFINES += -DBSG_MANYCORE_NODECRYPT
+kernel.rvo: RISCV_INCLUDES += -I.
 
-kernel.riscv: kernel.rvo aes.rvo
+kernel.riscv: kernel.rvo aes_kernel.rvo
 
 # Tile Group Dimensions
 RISCV_DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
@@ -142,4 +147,6 @@ regression: exec.log
 
 clean:
 	rm -rf aes.rvo
+	rm -rf stats
+	rm -rf vanilla_core_pc_hist.csv
 

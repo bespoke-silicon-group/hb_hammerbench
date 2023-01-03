@@ -3,7 +3,7 @@
 #include <aes.hpp>
 
 extern "C" void aes_singlegrid(struct AES_ctx *ctx, uint8_t* buf, size_t length, int niters){
-	int tg_idx = (bsg_tiles_X * __bsg_y + __bsg_x);
+	      int tg_idx = (bsg_tiles_X * __bsg_y + __bsg_x);
         bsg_barrier_hw_tile_group_init();
         bsg_barrier_hw_tile_group_sync();
         bsg_cuda_print_stat_kernel_start();

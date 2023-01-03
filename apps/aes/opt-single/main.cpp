@@ -76,7 +76,7 @@ int kernel_aes (int argc, char **argv) {
                 // Calculate grid_dim_x/y: number of tile groups needed
                 hb_mc_dimension_t tg = { .x = TILE_GROUP_DIM_X, .y = TILE_GROUP_DIM_Y};
                 hb_mc_dimension_t grid = { .x = 1, .y = 1};
-                int niters = 4;
+                int niters = NUM_ITER;
                 uint8_t buf[tg.x * tg.y * MSG_LEN * niters];
                 uint8_t host_buf[MSG_LEN];
                 for(int tidx = 0; tidx < (tg.x * tg.y); tidx++){
@@ -109,6 +109,8 @@ int kernel_aes (int argc, char **argv) {
                 AES_CBC_encrypt_buffer(&host_ctx, host_buf, MSG_LEN);
 
                 // Allocate memory on device
+                printf("sizeof(ctx)=%d\n", sizeof(ctx));
+                printf("sizeof(buf)=%d\n", sizeof(buf));
                 eva_t ctx_device, buf_device;
                 BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(ctx), &ctx_device));
                 BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(buf), &buf_device));
@@ -134,10 +136,10 @@ int kernel_aes (int argc, char **argv) {
 
                 BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, &htod, 1));
 
+                #define CUDA_ARGC 4
+                uint32_t cuda_argv[CUDA_ARGC] = {ctx_device, buf_device, MSG_LEN, niters};
 
-                uint32_t cuda_argv[4] = {ctx_device, buf_device, MSG_LEN, niters};
-
-                BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid, tg, "aes_singlegrid", 4, cuda_argv));
+                BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid, tg, "aes_singlegrid", CUDA_ARGC, cuda_argv));
 
                 rc = hb_mc_manycore_get_cycle((device.mc), &cycle_start);
                 if(rc != HB_MC_SUCCESS){
