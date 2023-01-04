@@ -81,7 +81,7 @@ typedef uint8_t state_t[4][4];
 // The numbers below can be computed dynamically trading ROM for RAM - 
 // This can be useful in (embedded) bootloader applications, where ROM is often limited.
 //#ifdef BSG_MANYCORE_SBOX_LOCAL
-static const uint8_t sbox[256] __attribute__((section(".dmem")))= {
+const uint8_t sbox[256] __attribute__((section(".dmem")))= {
 //#else
 //static const uint8_t sbox[256] = {
 //#endif
@@ -119,6 +119,7 @@ static uint8_t getSBoxValue(uint8_t num)
 
 // This function adds the round key to state.
 // The round key is added to the state by an XOR function.
+__attribute__ ((always_inline))
 static void AddRoundKey(uint8_t round, state_t* state, const uint8_t* RoundKey)
 {
 /*
@@ -141,7 +142,8 @@ static void AddRoundKey(uint8_t round, state_t* state, const uint8_t* RoundKey)
 
 // The SubBytes Function Substitutes the values in the
 // state matrix with values in an S-box.
-static void SubBytes(state_t* state)
+__attribute__ ((always_inline))
+void SubBytes(state_t* state)
 {
   uint8_t i, j;
   for (i = 0; i < 4; ++i)
@@ -156,41 +158,57 @@ static void SubBytes(state_t* state)
 // The ShiftRows() function shifts the rows in the state to the left.
 // Each row is shifted with different offset.
 // Offset = Row number. So the first row is not shifted.
-static void ShiftRows(state_t* state)
+__attribute__ ((always_inline))
+static void ShiftRows(uint8_t* state)
 {
-  uint8_t temp;
+  uint8_t t1, t2, t3, t4;
 
   // Rotate first row 1 columns to left  
-  temp           = (*state)[0][1];
-  (*state)[0][1] = (*state)[1][1];
-  (*state)[1][1] = (*state)[2][1];
-  (*state)[2][1] = (*state)[3][1];
-  (*state)[3][1] = temp;
+  t1 = state[1];
+  t2 = state[5];
+  t3 = state[9];
+  t4 = state[13];
+  asm volatile("" ::: "memory");
+  state[1] = t2;
+  state[5] = t3;
+  state[9] = t4;
+  state[13] = t1;
+  asm volatile("" ::: "memory");
 
   // Rotate second row 2 columns to left  
-  temp           = (*state)[0][2];
-  (*state)[0][2] = (*state)[2][2];
-  (*state)[2][2] = temp;
-
-  temp           = (*state)[1][2];
-  (*state)[1][2] = (*state)[3][2];
-  (*state)[3][2] = temp;
+  t1 = state[2];
+  t2 = state[6];
+  t3 = state[10];
+  t4 = state[14];
+  asm volatile("" ::: "memory");
+  state[2] = t3;
+  state[6] = t4;
+  state[10] = t1;
+  state[14] = t2;
+  asm volatile("" ::: "memory");
 
   // Rotate third row 3 columns to left
-  temp           = (*state)[0][3];
-  (*state)[0][3] = (*state)[3][3];
-  (*state)[3][3] = (*state)[2][3];
-  (*state)[2][3] = (*state)[1][3];
-  (*state)[1][3] = temp;
+  t1 = state[3];
+  t2 = state[7];
+  t3 = state[11];
+  t4 = state[15];
+  asm volatile("" ::: "memory");
+  state[3] = t4;
+  state[7] = t1;
+  state[11] = t2;
+  state[15] = t3;
+  asm volatile("" ::: "memory");
 }
 
-static uint8_t xtime(uint8_t x)
+__attribute__ ((always_inline))
+uint8_t xtime(uint8_t x)
 {
   return ((x<<1) ^ (((x>>7) & 1) * 0x1b));
 }
 
 // MixColumns function mixes the columns of the state matrix
-static void MixColumns(state_t* state)
+__attribute__ ((always_inline))
+void MixColumns(state_t* state)
 {
   uint8_t i;
   uint8_t Tmp, Tm, t;
@@ -208,7 +226,7 @@ static void MixColumns(state_t* state)
 
 
 // Cipher is the main function that encrypts the PlainText.
-static void Cipher(state_t* state, const uint8_t* RoundKey)
+void Cipher(state_t* state, const uint8_t* RoundKey)
 {
   uint8_t round = 0;
 
@@ -219,10 +237,11 @@ static void Cipher(state_t* state, const uint8_t* RoundKey)
   // The first Nr-1 rounds are identical.
   // These Nr rounds are executed in the loop below.
   // Last one without MixColumns()
+  //bsg_unroll(1)
   for (round = 1; ; ++round)
   {
     SubBytes(state);
-    ShiftRows(state);
+    ShiftRows((uint8_t *) state);
     if (round == Nr) {
       break;
     }

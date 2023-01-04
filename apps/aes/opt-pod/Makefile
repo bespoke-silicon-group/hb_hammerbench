@@ -103,7 +103,7 @@ BSG_MANYCORE_KERNELS = kernel.riscv
 # the default. To view the disassembly, type `make kernel.dis`
 
 #tiny-AES-c/aes.rvo: RISCV_CXX = $(RISCV_CLANG)
-aes_kernel.rvo: RISCV_OPT_LEVEL = -O3
+#aes_kernel.rvo: RISCV_OPT_LEVEL = -O3
 aes_kernel.rvo: RISCV_DEFINES += -DECB=0 -DCTR=0
 aes_kernel.rvo: RISCV_DEFINES += -DBSG_MANYCORE
 aes_kernel.rvo: RISCV_DEFINES += -DBSG_MANYCORE_OPTIMIZED
