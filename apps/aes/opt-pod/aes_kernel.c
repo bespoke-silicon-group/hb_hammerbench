@@ -80,11 +80,11 @@ typedef uint8_t state_t[4][4];
 // The lookup-tables are marked const so they can be placed in read-only storage instead of RAM
 // The numbers below can be computed dynamically trading ROM for RAM - 
 // This can be useful in (embedded) bootloader applications, where ROM is often limited.
-#ifdef BSG_MANYCORE_SBOX_LOCAL
+//#ifdef BSG_MANYCORE_SBOX_LOCAL
 static const uint8_t sbox[256] __attribute__((section(".dmem")))= {
-#else
-static const uint8_t sbox[256] = {
-#endif
+//#else
+//static const uint8_t sbox[256] = {
+//#endif
   //0     1    2      3     4    5     6     7      8    9     A      B    C     D     E     F
   0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
   0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
@@ -121,6 +121,7 @@ static uint8_t getSBoxValue(uint8_t num)
 // The round key is added to the state by an XOR function.
 static void AddRoundKey(uint8_t round, state_t* state, const uint8_t* RoundKey)
 {
+/*
   uint8_t i,j;
   for (i = 0; i < 4; ++i)
   {
@@ -128,6 +129,13 @@ static void AddRoundKey(uint8_t round, state_t* state, const uint8_t* RoundKey)
     {
       (*state)[i][j] ^= RoundKey[(round * Nb * 4) + (i * Nb) + j];
     }
+  }
+*/
+  uint32_t * state32 = (uint32_t *) state;
+  uint32_t * RoundKey32 = (uint32_t *) RoundKey;
+  for (int i = 0; i < 4; ++i)
+  {
+    state32[i] ^= RoundKey32[(round * Nb) + i];
   }
 }
 
@@ -245,6 +253,7 @@ static void XorWithIv(uint8_t* buf, const uint8_t* Iv)
 }
 
 
+
 #ifdef BSG_MANYCORE_OPTIMIZED
 void inline alignmemcpy(uint32_t * restrict dest, uint32_t * restrict src, size_t len){
         const unsigned int unroll = 4;
@@ -259,12 +268,17 @@ void inline alignmemcpy(uint32_t * restrict dest, uint32_t * restrict src, size_
         }
 }
 
+
+uint32_t localbuf0[AES_BLOCKLEN/sizeof(uint32_t)];
+uint32_t localbuf1[AES_BLOCKLEN/sizeof(uint32_t)];
+uint32_t localRoundKey[AES_keyExpSize/sizeof(uint32_t)];
+
 void AES_CBC_encrypt_buffer(struct AES_ctx *ctx, uint8_t * restrict buf, size_t length)
 {
-  size_t i;
-  uint32_t localbuf[2*AES_BLOCKLEN/sizeof(uint32_t)];
-  uint32_t localRoundKey[AES_keyExpSize/sizeof(uint32_t)];
-  uint8_t *pbuf = &localbuf[0], *pIv = pbuf + AES_BLOCKLEN, *temp;
+  uint32_t *dbuf = (uint32_t *) &buf[0];
+  uint32_t *pbuf = &localbuf0[0];
+  uint32_t *pIv  = &localbuf1[0];
+  uint32_t *temp;
 
   //bsg_lw_prefetch(ctx->RoundKey);
   //bsg_lw_prefetch(ctx->Iv);
@@ -273,25 +287,89 @@ void AES_CBC_encrypt_buffer(struct AES_ctx *ctx, uint8_t * restrict buf, size_t 
   //bsg_lw_prefetch((ctx->Iv + AES_BLOCKLEN * 3));
 
   //bsg_fence();
+  
+  //memcpy(localRoundKey, ctx->RoundKey, AES_keyExpSize);
+  //memcpy(pIv, ctx->Iv, AES_BLOCKLEN);
 
-  memcpy(localRoundKey, ctx->RoundKey, AES_keyExpSize);
-  memcpy(pIv, ctx->Iv, AES_BLOCKLEN);
+  // load roundkey
+  uint32_t *dramRoundKey = (uint32_t *) &ctx->RoundKey[0];
+  for (int i = 0; i < AES_keyExpSize/sizeof(uint32_t); i+=8) {
+    uint32_t r0 = dramRoundKey[i+0];
+    uint32_t r1 = dramRoundKey[i+1];
+    uint32_t r2 = dramRoundKey[i+2];
+    uint32_t r3 = dramRoundKey[i+3];
+    uint32_t r4 = dramRoundKey[i+4];
+    uint32_t r5 = dramRoundKey[i+5];
+    uint32_t r6 = dramRoundKey[i+6];
+    uint32_t r7 = dramRoundKey[i+7];
+    asm volatile("" ::: "memory");
+    localRoundKey[i+0] = r0;
+    localRoundKey[i+1] = r1;
+    localRoundKey[i+2] = r2;
+    localRoundKey[i+3] = r3;
+    localRoundKey[i+4] = r4;
+    localRoundKey[i+5] = r5;
+    localRoundKey[i+6] = r6;
+    localRoundKey[i+7] = r7;
+  }
 
-  for (i = 0; i < length; i += AES_BLOCKLEN)
+  // load Iv
+  uint32_t *dramIv = (uint32_t *) &ctx->Iv[0];
+  uint32_t Iv0 = dramIv[0];
+  uint32_t Iv1 = dramIv[1];
+  uint32_t Iv2 = dramIv[2];
+  uint32_t Iv3 = dramIv[3];
+  asm volatile("" ::: "memory");
+  pIv[0] = Iv0;
+  pIv[1] = Iv1;
+  pIv[2] = Iv2;
+  pIv[3] = Iv3;
+
+  for (size_t i = 0; i < length; i += AES_BLOCKLEN)
   {
-    alignmemcpy(pbuf, buf, AES_BLOCKLEN);
+    // Load and XorWithIv
+    uint32_t w0 = dbuf[0];
+    uint32_t w1 = dbuf[1];
+    uint32_t w2 = dbuf[2];
+    uint32_t w3 = dbuf[3];
+    pbuf[0] = w0 ^ pIv[0];
+    pbuf[1] = w1 ^ pIv[1];
+    pbuf[2] = w2 ^ pIv[2];
+    pbuf[3] = w3 ^ pIv[3];
+    //alignmemcpy(pbuf, buf, AES_BLOCKLEN);
     //bsg_lw_prefetch((buf + AES_BLOCKLEN));
-    XorWithIv(pbuf, pIv);
-    Cipher((state_t*)pbuf, localRoundKey);
-    alignmemcpy(buf, pbuf, AES_BLOCKLEN);
+    //XorWithIv(pbuf, pIv);
+
+    // cipher
+    Cipher((state_t*)pbuf, (const uint8_t *) localRoundKey);
+
+    // copy encrypted result to dram.
+    dbuf[0] = pbuf[0]; 
+    dbuf[1] = pbuf[1]; 
+    dbuf[2] = pbuf[2]; 
+    dbuf[3] = pbuf[3]; 
+    //alignmemcpy(buf, pbuf, AES_BLOCKLEN);
+
+    // swap pointers
     temp = pIv;
     pIv = pbuf;
     pbuf = temp;
-    buf += AES_BLOCKLEN;
+
+    // Increment block
+    dbuf += AES_BLOCKLEN/sizeof(uint32_t);
   }
   /* store Iv in ctx for next call */
-  memcpy(ctx->Iv, pIv, AES_BLOCKLEN);
-  memcpy(ctx->RoundKey, localRoundKey, AES_keyExpSize);
+  Iv0 = pIv[0];
+  Iv1 = pIv[1];
+  Iv2 = pIv[2];
+  Iv3 = pIv[3];
+  asm volatile("" ::: "memory");
+  dramIv[0] = Iv0;
+  dramIv[1] = Iv1;
+  dramIv[2] = Iv2;
+  dramIv[3] = Iv3;
+  //memcpy(ctx->Iv, pIv, AES_BLOCKLEN);
+  //memcpy(ctx->RoundKey, localRoundKey, AES_keyExpSize);
 }
 #else
 void AES_CBC_encrypt_buffer(struct AES_ctx *ctx, uint8_t* buf, size_t length)
