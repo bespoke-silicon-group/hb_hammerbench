@@ -199,10 +199,10 @@ static void ShiftRows(uint8_t* state)
   t3 = state[9];
   t4 = state[13];
   asm volatile("" ::: "memory");
+  state[13] = t1;
   state[1] = t2;
   state[5] = t3;
   state[9] = t4;
-  state[13] = t1;
   asm volatile("" ::: "memory");
 
   // Rotate second row 2 columns to left  
@@ -211,10 +211,10 @@ static void ShiftRows(uint8_t* state)
   t3 = state[10];
   t4 = state[14];
   asm volatile("" ::: "memory");
-  state[2] = t3;
-  state[6] = t4;
   state[10] = t1;
   state[14] = t2;
+  state[2] = t3;
+  state[6] = t4;
   asm volatile("" ::: "memory");
 
   // Rotate third row 3 columns to left
@@ -223,10 +223,10 @@ static void ShiftRows(uint8_t* state)
   t3 = state[11];
   t4 = state[15];
   asm volatile("" ::: "memory");
-  state[3] = t4;
   state[7] = t1;
   state[11] = t2;
   state[15] = t3;
+  state[3] = t4;
   asm volatile("" ::: "memory");
 }
 
@@ -238,6 +238,7 @@ static void MixColumns(uint8_t * state)
 {
   uint8_t t0, t1, t2, t3;
   uint8_t tmp1, tmp2, tmp3;
+  bsg_unroll(1)
   for (int i = 0; i < 4; i++) {
     t0 = state[(4*i)+0];
     t1 = state[(4*i)+1];
