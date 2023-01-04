@@ -242,7 +242,7 @@ static void Cipher(state_t* state, const uint8_t* RoundKey)
 
 #if defined(CBC) && (CBC == 1)
 
-
+/*
 static void XorWithIv(uint8_t* buf, const uint8_t* Iv)
 {
   uint8_t i;
@@ -251,10 +251,11 @@ static void XorWithIv(uint8_t* buf, const uint8_t* Iv)
     buf[i] ^= Iv[i];
   }
 }
-
+*/
 
 
 #ifdef BSG_MANYCORE_OPTIMIZED
+/*
 void inline alignmemcpy(uint32_t * restrict dest, uint32_t * restrict src, size_t len){
         const unsigned int unroll = 4;
         uint32_t * tail = (src + (len/sizeof(src[0])));
@@ -267,7 +268,7 @@ void inline alignmemcpy(uint32_t * restrict dest, uint32_t * restrict src, size_
                 dest += unroll;
         }
 }
-
+*/
 
 uint32_t localbuf0[AES_BLOCKLEN/sizeof(uint32_t)];
 uint32_t localbuf1[AES_BLOCKLEN/sizeof(uint32_t)];
@@ -293,6 +294,7 @@ void AES_CBC_encrypt_buffer(struct AES_ctx *ctx, uint8_t * restrict buf, size_t 
 
   // load roundkey
   uint32_t *dramRoundKey = (uint32_t *) &ctx->RoundKey[0];
+  bsg_unroll(1)
   for (int i = 0; i < AES_keyExpSize/sizeof(uint32_t); i+=8) {
     uint32_t r0 = dramRoundKey[i+0];
     uint32_t r1 = dramRoundKey[i+1];
@@ -325,6 +327,7 @@ void AES_CBC_encrypt_buffer(struct AES_ctx *ctx, uint8_t * restrict buf, size_t 
   pIv[2] = Iv2;
   pIv[3] = Iv3;
 
+  bsg_unroll(1)
   for (size_t i = 0; i < length; i += AES_BLOCKLEN)
   {
     // Load and XorWithIv
