@@ -133,12 +133,29 @@ static void AddRoundKey(uint8_t round, state_t* state, const uint8_t* RoundKey)
   }
 */
   uint32_t * state32 = (uint32_t *) state;
-  uint32_t * RoundKey32 = (uint32_t *) RoundKey;
+  uint32_t * RoundKey32 = (uint32_t *) (&RoundKey[round * Nb * 4]);
+  uint32_t t0 = state32[0];
+  uint32_t t1 = state32[1];
+  uint32_t t2 = state32[2];
+  uint32_t t3 = state32[3];
+  uint32_t r0 = RoundKey32[0];
+  uint32_t r1 = RoundKey32[1];
+  uint32_t r2 = RoundKey32[2];
+  uint32_t r3 = RoundKey32[3];
+  asm volatile("" ::: "memory");
+  state32[0] = t0 ^ r0;  
+  state32[1] = t1 ^ r1;  
+  state32[2] = t2 ^ r2;  
+  state32[3] = t3 ^ r3;  
+  asm volatile("" ::: "memory");
+
   //bsg_unroll(1)
+/*
   for (int i = 0; i < 4; ++i)
   {
     state32[i] ^= RoundKey32[(round * Nb) + i];
   }
+*/
 }
 
 // The SubBytes Function Substitutes the values in the
@@ -249,17 +266,45 @@ static void ShiftRows(uint8_t* state)
   state[15] = t3;
   asm volatile("" ::: "memory");
 }
-
+/*
 __attribute__ ((always_inline))
 uint8_t xtime(uint8_t x)
 {
-  return ((x<<1) ^ (((x>>7) & 1) * 0x1b));
+  //return ((x<<1) ^ (((x>>7) & 1) * 0x1b));
+  return ((x<<1) ^ (((x>>7) ) * 0x1b));
 }
+*/
+#define xtime(x) ((x<<1) ^ (((x>>7) ) * 0x1b))
 
 // MixColumns function mixes the columns of the state matrix
 __attribute__ ((always_inline))
-void MixColumns(state_t* state)
+void MixColumns(uint8_t * state)
 {
+  uint8_t t0, t1, t2, t3;
+  uint8_t tmp1, tmp2, tmp3;
+  for (int i = 0; i < 4; i++) {
+    t0 = state[(4*i)+0];
+    t1 = state[(4*i)+1];
+    t2 = state[(4*i)+2];
+    t3 = state[(4*i)+3];
+    asm volatile("" ::: "memory");
+    tmp1 = t0 ^ t1 ^ t2 ^ t3;
+    tmp3 = t0 ^ t1;
+    tmp2 = xtime(tmp3);
+    state[(4*i)+0] = t0 ^ tmp1 ^ tmp2;
+    tmp3 = t1 ^ t2;
+    tmp2 = xtime(tmp3);
+    state[(4*i)+1] = t1 ^ tmp1 ^ tmp2;
+    tmp3 = t2 ^ t3;
+    tmp2 = xtime(tmp3);
+    state[(4*i)+2] = t2 ^ tmp1 ^ tmp2;
+    tmp3 = t3 ^ t0;
+    tmp2 = xtime(tmp3);
+    state[(4*i)+3] = t3 ^ tmp1 ^ tmp2;
+    asm volatile("" ::: "memory");
+  }
+  /////////////////////////////////////////
+/*
   uint8_t i;
   uint8_t Tmp, Tm, t;
   for (i = 0; i < 4; ++i)
@@ -271,6 +316,7 @@ void MixColumns(state_t* state)
     Tm  = (*state)[i][2] ^ (*state)[i][3] ; Tm = xtime(Tm);  (*state)[i][2] ^= Tm ^ Tmp ;
     Tm  = (*state)[i][3] ^ t ;              Tm = xtime(Tm);  (*state)[i][3] ^= Tm ^ Tmp ;
   }
+*/
 }
 
 
@@ -295,7 +341,7 @@ void Cipher(state_t* state, const uint8_t* RoundKey)
     if (round == Nr) {
       break;
     }
-    MixColumns(state);
+    MixColumns((uint8_t *) state);
     AddRoundKey(round, state, RoundKey);
   }
   // Add round key to last round
