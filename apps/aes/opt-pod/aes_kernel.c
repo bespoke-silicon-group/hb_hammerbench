@@ -339,19 +339,53 @@ void AES_CBC_encrypt_buffer(struct AES_ctx *ctx, uint8_t * restrict buf, size_t 
   pIv[1] = Iv1;
   pIv[2] = Iv2;
   pIv[3] = Iv3;
+  asm volatile("" ::: "memory");
+
+  // Load the first blk in regfile;
+  register uint32_t w0 = dbuf[0];
+  register uint32_t w1 = dbuf[1];
+  register uint32_t w2 = dbuf[2];
+  register uint32_t w3 = dbuf[3];
+  asm volatile("" ::: "memory");
+  pbuf[0] = w0;
+  pbuf[1] = w1;
+  pbuf[2] = w2;
+  pbuf[3] = w3;
+  asm volatile("" ::: "memory");
+
+  // FP registers for pre-loading;
+  register float f0;
+  register float f1;
+  register float f2;
+  register float f3;
 
   bsg_unroll(1)
   for (size_t i = 0; i < length; i += AES_BLOCKLEN)
   {
     // Load and XorWithIv
-    uint32_t w0 = dbuf[0];
-    uint32_t w1 = dbuf[1];
-    uint32_t w2 = dbuf[2];
-    uint32_t w3 = dbuf[3];
-    pbuf[0] = w0 ^ pIv[0];
-    pbuf[1] = w1 ^ pIv[1];
-    pbuf[2] = w2 ^ pIv[2];
-    pbuf[3] = w3 ^ pIv[3];
+    w0 = pbuf[0];
+    w1 = pbuf[1];
+    w2 = pbuf[2];
+    w3 = pbuf[3];
+    Iv0 = pIv[0];
+    Iv1 = pIv[1];
+    Iv2 = pIv[2];
+    Iv3 = pIv[3];
+    asm volatile("" ::: "memory");
+    pbuf[0] = w0 ^ Iv0;
+    pbuf[1] = w1 ^ Iv1;
+    pbuf[2] = w2 ^ Iv2;
+    pbuf[3] = w3 ^ Iv3;
+    asm volatile("" ::: "memory");
+
+    // pre-load the next blk in FP regfile
+    if (i != length - AES_BLOCKLEN) {
+      asm volatile ("flw %[rd], %[p]" : [rd] "=f" (f0) : [p] "m" (dbuf[4]));
+      asm volatile ("flw %[rd], %[p]" : [rd] "=f" (f1) : [p] "m" (dbuf[5]));
+      asm volatile ("flw %[rd], %[p]" : [rd] "=f" (f2) : [p] "m" (dbuf[6]));
+      asm volatile ("flw %[rd], %[p]" : [rd] "=f" (f3) : [p] "m" (dbuf[7]));
+      asm volatile("" ::: "memory");
+    }
 
     // cipher
     Cipher((state_t*)pbuf);
@@ -361,6 +395,17 @@ void AES_CBC_encrypt_buffer(struct AES_ctx *ctx, uint8_t * restrict buf, size_t 
     dbuf[1] = pbuf[1]; 
     dbuf[2] = pbuf[2]; 
     dbuf[3] = pbuf[3]; 
+    asm volatile("" ::: "memory");
+
+    // write the pre-loaded blk
+    if (i != length - AES_BLOCKLEN) {
+      asm volatile ("fsw %[rs], %[p]" :: [rs] "f" (f0),  [p] "m" (pIv[0]));
+      asm volatile ("fsw %[rs], %[p]" :: [rs] "f" (f1),  [p] "m" (pIv[1]));
+      asm volatile ("fsw %[rs], %[p]" :: [rs] "f" (f2),  [p] "m" (pIv[2]));
+      asm volatile ("fsw %[rs], %[p]" :: [rs] "f" (f3),  [p] "m" (pIv[3]));
+      asm volatile("" ::: "memory");
+    }
+
 
     // swap pointers
     temp = pIv;
