@@ -134,6 +134,7 @@ static void AddRoundKey(uint8_t round, state_t* state, const uint8_t* RoundKey)
 */
   uint32_t * state32 = (uint32_t *) state;
   uint32_t * RoundKey32 = (uint32_t *) RoundKey;
+  //bsg_unroll(1)
   for (int i = 0; i < 4; ++i)
   {
     state32[i] ^= RoundKey32[(round * Nb) + i];
@@ -143,16 +144,65 @@ static void AddRoundKey(uint8_t round, state_t* state, const uint8_t* RoundKey)
 // The SubBytes Function Substitutes the values in the
 // state matrix with values in an S-box.
 __attribute__ ((always_inline))
-void SubBytes(state_t* state)
+void SubBytes(uint8_t * state)
 {
-  uint8_t i, j;
-  for (i = 0; i < 4; ++i)
-  {
-    for (j = 0; j < 4; ++j)
-    {
-      (*state)[j][i] = getSBoxValue((*state)[j][i]);
-    }
-  }
+  // first two rows
+  uint8_t t0 = state[0];
+  uint8_t t1 = state[1];
+  uint8_t t2 = state[2];
+  uint8_t t3 = state[3];
+  uint8_t t4 = state[4];
+  uint8_t t5 = state[5];
+  uint8_t t6 = state[6];
+  uint8_t t7 = state[7];
+  asm volatile("" ::: "memory");
+  uint8_t s0 = sbox[t0];
+  uint8_t s1 = sbox[t1];
+  uint8_t s2 = sbox[t2];
+  uint8_t s3 = sbox[t3];
+  uint8_t s4 = sbox[t4];
+  uint8_t s5 = sbox[t5];
+  uint8_t s6 = sbox[t6];
+  uint8_t s7 = sbox[t7];
+  asm volatile("" ::: "memory");
+  state[0] = s0;
+  state[1] = s1;
+  state[2] = s2;
+  state[3] = s3;
+  state[4] = s4;
+  state[5] = s5;
+  state[6] = s6;
+  state[7] = s7;
+  asm volatile("" ::: "memory");
+
+  // next two rows
+  t0 = state[8];
+  t1 = state[9];
+  t2 = state[10];
+  t3 = state[11];
+  t4 = state[12];
+  t5 = state[13];
+  t6 = state[14];
+  t7 = state[15];
+  asm volatile("" ::: "memory");
+  s0 = sbox[t0];
+  s1 = sbox[t1];
+  s2 = sbox[t2];
+  s3 = sbox[t3];
+  s4 = sbox[t4];
+  s5 = sbox[t5];
+  s6 = sbox[t6];
+  s7 = sbox[t7];
+  asm volatile("" ::: "memory");
+  state[8] = s0;
+  state[9] = s1;
+  state[10] = s2;
+  state[11] = s3;
+  state[12] = s4;
+  state[13] = s5;
+  state[14] = s6;
+  state[15] = s7;
+  asm volatile("" ::: "memory");
 }
 
 // The ShiftRows() function shifts the rows in the state to the left.
@@ -240,7 +290,7 @@ void Cipher(state_t* state, const uint8_t* RoundKey)
   //bsg_unroll(1)
   for (round = 1; ; ++round)
   {
-    SubBytes(state);
+    SubBytes((uint8_t *) state);
     ShiftRows((uint8_t *) state);
     if (round == Nr) {
       break;
