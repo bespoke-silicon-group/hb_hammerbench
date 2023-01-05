@@ -24,12 +24,12 @@ VPATH = ../tiny-AES-c
 ###############################################################################
 # Host code compilation flags and flow
 ###############################################################################
-#TILE_GROUP_DIM_X = 16
-#TILE_GROUP_DIM_Y = 8
-#NUM_ITER = 4
-TILE_GROUP_DIM_X = 1
-TILE_GROUP_DIM_Y = 1
-NUM_ITER = 1
+TILE_GROUP_DIM_X = 16
+TILE_GROUP_DIM_Y = 8
+NUM_ITER = 4
+#TILE_GROUP_DIM_X = 1
+#TILE_GROUP_DIM_Y = 1
+#NUM_ITER = 1
 
 # TEST_SOURCES is a list of source files that need to be compiled
 TEST_SOURCES = main.cpp
