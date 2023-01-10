@@ -139,5 +139,5 @@ regression: exec.log
 .PHONY: clean
 
 clean:
-	rm -rf aes.rvo
+	rm -rf stats vanilla_core_pc_hist.csv simple_stats.csv 
 
