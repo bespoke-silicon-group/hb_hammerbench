@@ -52,6 +52,8 @@ CUDALITE_SRC_PATH = $(SPMD_SRC_PATH)/bsg_cuda_lite_runtime
 
 # KERNEL_NAME is the name of the CUDA-Lite Kernel
 KERNEL_NAME = bs
+#TILE_GROUP_DIM_X = 1
+#TILE_GROUP_DIM_Y = 1
 TILE_GROUP_DIM_X = 16
 TILE_GROUP_DIM_Y = 8
 
@@ -93,16 +95,17 @@ include $(EXAMPLES_PATH)/link.mk
 BSG_MANYCORE_KERNELS = kernel.riscv
 
 RISCV_LDFLAGS += -lm
-# For some reason clang works much better for Black Scholes
-bs.rvo: RISCV_CXX = $(RISCV_CLANGXX)
-bs.rvo: RISCV_OPT_LEVEL = -O3
-bs.rvo: RISCV_CXXFLAGS += -lm
+#bs_kernel.rvo: RISCV_CXX = $(RISCV_CLANGXX)
+#bs_kernel.rvo: RISCV_OPT_LEVEL = -O3
+#bs_kernel.rvo: RISCV_CXXFLAGS += -lm 
 
-RISCV_TARGET_OBJECTS += kernel.rvo bs.rvo
+RISCV_TARGET_OBJECTS += kernel.rvo bs_kernel.rvo
 
 # Tile Group Dimensions
 RISCV_DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_DEFINES += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+RISCV_DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X)
+RISCV_DEFINES += -DTILE_GROUP_DIM_Y=$(TILE_GROUP_DIM_Y)
 
 # We put all rodata in scratchpad because otherwise the CLZ lookup
 # tables end up in DRAM. Booo!
@@ -136,5 +139,5 @@ regression: exec.log
 .PHONY: clean
 
 clean:
-	rm -rf aes.rvo
+	rm -rf stats vanilla_core_pc_hist.csv simple_stats.csv 
 
