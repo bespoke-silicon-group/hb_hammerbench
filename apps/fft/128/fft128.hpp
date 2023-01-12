@@ -136,16 +136,19 @@ load_strided(FP32Complex *dst, const FP32Complex *src) {
 
 inline void
 load_sequential(FP32Complex *dst, const FP32Complex *src) {
+    int idx = (__bsg_id % (NUM_POINTS/4)) * 4;
     for (int i = 0; i < NUM_POINTS; i += 4) {
-        FP32Complex tmp0 = src[i  ];
-        FP32Complex tmp1 = src[i+1];
-        FP32Complex tmp2 = src[i+2];
-        FP32Complex tmp3 = src[i+3];
+        FP32Complex tmp0 = src[idx  ];
+        FP32Complex tmp1 = src[idx+1];
+        FP32Complex tmp2 = src[idx+2];
+        FP32Complex tmp3 = src[idx+3];
         asm volatile("": : :"memory");
-        dst[i  ] = tmp0;
-        dst[i+1] = tmp1;
-        dst[i+2] = tmp2;
-        dst[i+3] = tmp3;
+        dst[idx  ] = tmp0;
+        dst[idx+1] = tmp1;
+        dst[idx+2] = tmp2;
+        dst[idx+3] = tmp3;
+        asm volatile("": : :"memory");
+        idx = (idx + 4) % NUM_POINTS;
     }
 }
 
@@ -165,6 +168,7 @@ store_strided(FP32Complex *dst, const FP32Complex *src) {
         dst[strided_i + NUM_POINTS*3] = tmp3;
     }
 }
+
 
 inline void
 opt_bit_reverse(FP32Complex *list) {
