@@ -8,9 +8,9 @@
 #ifdef WARM_CACHE
 #define CACHE_LINE_COMPLEX 8
 __attribute__ ((noinline))
-static void warmup(FP32Complex *in, FP32Complex *out, FP32Complex *tw, int N)
+static void warmup(FP32Complex *in, int N, int num_iter)
 {
-  for (int i = __bsg_id*CACHE_LINE_COMPLEX; i < N; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_COMPLEX) {
+  for (int i = __bsg_id*CACHE_LINE_COMPLEX; i < N*num_iter; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_COMPLEX) {
       asm volatile ("lw x0, %[p]" :: [p] "m" (in[i]));
       //asm volatile ("sw x0, %[p]" :: [p] "m" (out[i]));
   }
@@ -29,7 +29,7 @@ FP32Complex local_tw[NUM_POINTS];
 extern "C" __attribute__ ((noinline))
 int
 kernel_fft(FP32Complex * bsg_attr_noalias in,
-           FP32Complex * bsg_attr_noalias out,
+//           FP32Complex * bsg_attr_noalias out,
            FP32Complex * bsg_attr_noalias tw,
            int N,
            int num_iter) 
@@ -38,7 +38,7 @@ kernel_fft(FP32Complex * bsg_attr_noalias in,
     bsg_fence();
 
     #ifdef WARM_CACHE
-    warmup(in, out, tw, N);
+    warmup(in, N, num_iter);
     #endif
 
     // load twiddle factor to local.
@@ -68,9 +68,11 @@ kernel_fft(FP32Complex * bsg_attr_noalias in,
 
       // step 3
       input_vec = input_sq + (__bsg_id * NUM_POINTS);
-      FP32Complex *output_sq = &out[i*N];
+      FP32Complex *output_sq = &in[i*N];
       FP32Complex *output_vec = output_sq + __bsg_id;
       load_sequential(fft_workset, input_vec);
+      bsg_fence();
+      bsg_barrier_hw_tile_group_sync();
       fft128_specialized(fft_workset);
       store_strided(output_vec, fft_workset);
       bsg_fence();
