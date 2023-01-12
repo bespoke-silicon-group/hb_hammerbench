@@ -28,15 +28,15 @@ Graph edges_cpu;
 //int* __restrict new_rank_hb;
 int* __restrict contrib_hb;
 //int  * __restrict inneighbor_hb;
-int  * __restrict c2sr_index_hb;
+int* __restrict c2sr_index_hb;
 int* __restrict old_rank_hb;
-int  * __restrict out_degree_hb;
+int* __restrict out_degree_hb;
 int* __restrict old_rank_cpu;
 int* __restrict new_rank_cpu;
-int  * __restrict out_degree_cpu;
+int* __restrict out_degree_cpu;
 int* __restrict contrib_cpu;
 int* __restrict error_cpu;
-int  * __restrict generated_tmp_vector_cpu;
+int* __restrict generated_tmp_vector_cpu;
 int damp_cpu;
 int beta_score_cpu;
 
@@ -276,7 +276,7 @@ int launch(int argc, char * argv[]){
 
         std::cout << "Current Pod: " << CURRENT_POD << std::endl;
         std::cout << "Num Pods: " << NUM_PODS << std::endl;
-        std::cout << "Technique: Pull" << std::endl;
+        std::cout << "Technique: Push" << std::endl;
         std::cout << "Graph: " << graph_f << std::endl;
         std::cout << "Total Nodes: " << nodes << std::endl;
         std::cout << "Local Nodes: " << rows_in_pod << std::endl;

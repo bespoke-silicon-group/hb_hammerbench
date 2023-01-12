@@ -3,7 +3,7 @@
 #define bsg_tiles_X BSG_TILE_GROUP_X_DIM
 #define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
 
-#define GRANULARITY_PULL 10
+#define GRANULARITY_PUSH 10
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.hpp>
 #include <atomic>
@@ -30,7 +30,7 @@ __attribute__((section(".dram"))) int beta_score;
 __attribute__((section(".dram"))) std::atomic<int> workq;
 
 extern "C"
-int __attribute__ ((noinline)) pagerank_pull(int bsg_attr_remote * bsg_attr_noalias in_indices,
+int __attribute__ ((noinline)) pagerank_push(int bsg_attr_remote * bsg_attr_noalias in_indices,
                                              int bsg_attr_remote * bsg_attr_noalias in_neighbors,
                                              int bsg_attr_remote * bsg_attr_noalias out_degree,
                                              int bsg_attr_remote * bsg_attr_noalias old_rank,
@@ -44,8 +44,8 @@ int __attribute__ ((noinline)) pagerank_pull(int bsg_attr_remote * bsg_attr_noal
   int start = 0;
   int end = V;
   int length = end - start;
-  for(int id = workq.fetch_add(GRANULARITY_PULL, std::memory_order_relaxed); id < length; id = workq.fetch_add(GRANULARITY_PULL, std::memory_order_relaxed)) {
-    int stop = (id + GRANULARITY_PULL) > length ? length : (id + GRANULARITY_PULL);
+  for(int id = workq.fetch_add(GRANULARITY_PUSH, std::memory_order_relaxed); id < length; id = workq.fetch_add(GRANULARITY_PUSH, std::memory_order_relaxed)) {
+    int stop = (id + GRANULARITY_PUSH) > length ? length : (id + GRANULARITY_PUSH);
     for (int d = start + id; d < start + stop; d++) {
       register int temp_new = 0.0;
       register int temp_old = old_rank[d];
@@ -75,7 +75,7 @@ int __attribute__ ((noinline)) pagerank_pull(int bsg_attr_remote * bsg_attr_noal
 
 
 extern "C"
-int __attribute__ ((noinline)) pagerank_pull_u8(int bsg_attr_remote * bsg_attr_noalias in_indices,
+int __attribute__ ((noinline)) pagerank_push_u8(int bsg_attr_remote * bsg_attr_noalias in_indices,
                                                 int bsg_attr_remote * bsg_attr_noalias in_neighbors,
                                                 int bsg_attr_remote * bsg_attr_noalias out_degree,
                                                 int bsg_attr_remote * bsg_attr_noalias old_rank,
@@ -89,8 +89,8 @@ int __attribute__ ((noinline)) pagerank_pull_u8(int bsg_attr_remote * bsg_attr_n
   int start = 0;
   int end = V;
   int length = end - start;
-  for(int id = workq.fetch_add(GRANULARITY_PULL, std::memory_order_relaxed); id < length; id = workq.fetch_add(GRANULARITY_PULL, std::memory_order_relaxed)) {
-    int stop = (id + GRANULARITY_PULL) > length ? length : (id + GRANULARITY_PULL);
+  for(int id = workq.fetch_add(GRANULARITY_PUSH, std::memory_order_relaxed); id < length; id = workq.fetch_add(GRANULARITY_PUSH, std::memory_order_relaxed)) {
+    int stop = (id + GRANULARITY_PUSH) > length ? length : (id + GRANULARITY_PUSH);
     for (int d = start + id; d < start + stop; d++) {
       register int temp_new = 0.0f;
       register int temp_old = old_rank[d];
