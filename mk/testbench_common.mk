@@ -78,3 +78,7 @@ pod-size-stall-breakdown:
 	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/ python3 \
 	$(HB_HAMMERBENCH_PATH)/py/pod-size-stall-breakdown.py \
 	$(TESTS_DIRS)
+	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/ python3 \
+	$(HB_HAMMERBENCH_PATH)/py/pod-size-vcache-stall-breakdown.py \
+	$(TESTS_DIRS)
+
