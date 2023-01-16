@@ -19,6 +19,7 @@ if arguments.exclude_16x8:
 test_dirs = arguments.test_dirs
 
 stall_types = [
+    "not_stall",
     "stall_idle",    
     "stall_miss",
     "stall_rsp",
@@ -56,6 +57,7 @@ def aggregate_stall_breakdown(data):
                       ('End' if CudaStatTag(tag).isKernelEnd else
                        'Other'))
     )
+    data['not_stall']=(data['global_ctr']-(data['stall_idle']+data['stall_miss']+data['stall_rsp']))
     vcaches = data['vcache'].unique()
     for vc in vcaches:
         stall_breakdowns.append(stall_breakdown(vc, data))
