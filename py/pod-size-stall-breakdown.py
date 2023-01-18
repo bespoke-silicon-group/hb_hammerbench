@@ -19,6 +19,10 @@ if arguments.exclude_16x8:
 test_dirs = arguments.test_dirs
 
 stall_types = [
+    "instr_total",
+    "bubble_branch_miss",
+    "bubble_jalr_miss",
+    "bubble_icache_miss",
     "stall_depend_dram_load",
     "stall_depend_group_load",
     "stall_depend_global_load",
@@ -56,6 +60,13 @@ def stall_breakdown(x,y,data):
         stalls_end[idx]   = int(  end[stall_type])
     return stalls_end-stalls_start
 
+def cycles(x,y,data):
+    data = data[data['x']==x]
+    data = data[data['y']==y]
+    start = data[data['tag_type']=='Start']
+    end   = data[data['tag_type']=='End']
+    return int(end['cycle'].sum()-start['cycle'].sum())
+
 def aggregate_stall_breakdown(data):
     stall_breakdowns = []
     # mark the tag type (i.e. begin/end)
@@ -67,11 +78,17 @@ def aggregate_stall_breakdown(data):
     num_x = data['x'].nunique()
     num_y = data['y'].nunique()
     for (x,y) in product(range(num_x),range(num_y)):
-        stall_breakdowns.append(stall_breakdown(x,y,data))
+        sb = stall_breakdown(x,y,data)
+        cyc = cycles(x,y,data)
+        print("sum(breakdown)={}, cycles={}, equal={}".format(
+            sum(sb), cyc, sum(sb)==cyc
+        ))
+        stall_breakdowns.append(sb)
     return sum(stall_breakdowns)
 
 for test_dir in test_dirs:
     data = pandas.read_csv(test_dir + '/vanilla_stats.csv')
+    #print('\n'.join(data.columns.to_list()))
     stalls = aggregate_stall_breakdown(data)
     if arguments.spgemm:
         x = re.search(r'(\d+)_tiles-x', test_dir).group(1)
