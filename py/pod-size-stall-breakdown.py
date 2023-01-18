@@ -47,6 +47,8 @@ stall_types = [
 ]
 
 r = {}
+total_cycles={ s : 0 for s in order }
+remote_lds = { s : 0 for s in order }
 
 def stall_breakdown(x,y,data):
     data = data[data['x']==x]
@@ -67,6 +69,13 @@ def cycles(x,y,data):
     end   = data[data['tag_type']=='End']
     return int(end['cycle'].sum()-start['cycle'].sum())
 
+def remote_loads(x,y,data):
+    data = data[data['x']==x]
+    data = data[data['y']==y]
+    start = data[data['tag_type']=='Start']
+    end   = data[data['tag_type']=='End']
+    return int(end['instr_remote_ld_dram'].sum()-start['instr_remote_ld_dram'].sum())
+
 def aggregate_stall_breakdown(data):
     stall_breakdowns = []
     # mark the tag type (i.e. begin/end)
@@ -80,6 +89,8 @@ def aggregate_stall_breakdown(data):
     for (x,y) in product(range(num_x),range(num_y)):
         sb = stall_breakdown(x,y,data)
         cyc = cycles(x,y,data)
+        total_cycles['%dx%d'%(num_x,num_y)] += cyc
+        remote_lds['%dx%d'%(num_x,num_y)] += remote_loads(x,y,data)
         print("sum(breakdown)={}, cycles={}, equal={}".format(
             sum(sb), cyc, sum(sb)==cyc
         ))
@@ -105,6 +116,32 @@ fmt = " ".join(
     ["{%s}"%stall_type for stall_type in stall_types]
 )
 
-for pod_size in order:
-    stall_breakdown = r[pod_size]
-    print(fmt.format(**stall_breakdown))
+hdr = " ".join(
+    ["{}" for stall_type in stall_types]
+)
+
+# print(hdr.format(*stall_types))
+# for pod_size in order:
+#     stall_breakdown = r[pod_size]
+#     print(fmt.format(**stall_breakdown))
+
+fmt = "{:25} " + " ".join(["{:10}"]*len(order))
+hdr = "{:25} " + " ".join(["{:>10}"]*len(order))
+print(hdr.format("TYPE", *order))
+for stall_type in stall_types:
+    sbd = [0]*len(order)
+    for idx,pod_size in enumerate(order):
+        stall_breakdown = r[pod_size]
+        sbd[idx] = stall_breakdown[stall_type]
+    #print(sbd)
+    print(fmt.format(stall_type, *sbd))
+
+breakdown_total = np.array([sum([stall_breakdown[stall_type] for stall_type in stall_types]) for stall_breakdown in [r[s] for s in order]])
+cycles_total    = np.array([total_cycles[s] for s in order])
+remote_loads_total    = np.array([remote_lds[s] for s in order])
+
+print(fmt.format("TOTAL BREAKDOWN", *breakdown_total))
+print(fmt.format("TOTAL CYCLES", *cycles_total))
+print(fmt.format("DIFF", *(cycles_total-breakdown_total)))
+print(fmt.format("REMOTE LOADS", *remote_loads_total))
+    #print(("{}" + " ".join("{}"*len(order))).format(pod_size, *sbd))
