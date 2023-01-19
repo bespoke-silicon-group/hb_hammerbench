@@ -176,6 +176,7 @@ int launch(int argc, char * argv[]){
         };
 
 
+
         // Execute CPU Pagerank
         for ( int j = 0; j < 1 ; j++ ) {
                 parallel_for (int vertexsetapply_iter = 0; vertexsetapply_iter < builtin_getVertices(edges_cpu) ; vertexsetapply_iter++) {
@@ -287,6 +288,12 @@ int launch(int argc, char * argv[]){
 #endif
         string kernel_function = KERNEL_FUNCTION;
         std::cout << "Function: " << kernel_function << std::endl;
+
+
+        std::vector<int32_t> in_degrees = edges.get_in_degrees();
+        for (int i =  0; i < in_degrees.size(); i++) {
+          std::cout << "in_degrees[" << i << "] = " << in_degrees[i] << "\n";
+        }
 
         switch(version) {
         case 0:
