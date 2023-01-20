@@ -100,7 +100,7 @@ int SpGEMM(int argc, char *argv[])
     auto & Bp = *partitioner.EigenB(cl.partition_i(), cl.partition_j());
     eigen_sparse_matrix::write_matrix(Ap, "Ap.txt");
     eigen_sparse_matrix::write_matrix(Bp, "Bp.txt");
-    auto AxA   = CSR((Ap * Bp).pruned());
+    auto AxA   = CSR((Ap * Bp));
     eigen_sparse_matrix::write_matrix(AxA, "AxAp.txt");
     eigen_sparse_matrix::write_matrix(*C_ptr, "Cp.txt");
     std::cout << "checking result" << std::endl;
