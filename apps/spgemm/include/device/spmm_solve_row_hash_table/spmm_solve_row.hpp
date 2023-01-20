@@ -30,7 +30,7 @@ static void spmm_scalar_row_product(
     int nz = 0;
 #if defined(SPMM_PREFETCH)
 #define PREFETCH 4
-    for (; nz + PREFETCH < nnz; nz += PREFETCH) {
+    for (; nz + PREFETCH <= nnz; nz += PREFETCH) {
         float Bij [PREFETCH];
         int   Bj  [PREFETCH];
         // prefetch data

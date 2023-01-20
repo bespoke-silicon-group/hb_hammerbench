@@ -500,7 +500,7 @@ static void spmm_solve_row(
     partial_buffer_init(&Cv, 0);
     int nz = 0;
 #ifdef SPMM_PREFETCH
-    for (; nz + PREFETCH < nnz; nz += PREFETCH) {
+    for (; nz + PREFETCH <= nnz; nz += PREFETCH) {
         int    Bi[PREFETCH];
         float Aij[PREFETCH];
         bsg_unroll(8)

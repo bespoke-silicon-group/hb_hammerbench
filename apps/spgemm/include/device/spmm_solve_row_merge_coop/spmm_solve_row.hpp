@@ -266,7 +266,7 @@ namespace solve_row_merge
 
         int nz = 0;
 #if defined(SPMM_PREFETCH)
-        for (; nz + PREFETCH < nnz; nz += PREFETCH) {
+        for (; nz + PREFETCH <= nnz; nz += PREFETCH) {
             partial_t *part[PREFETCH];
             for (int pre = 0; pre < PREFETCH; pre++) {
                 part[pre] = new_partial();
@@ -344,7 +344,7 @@ static void spmm_solve_row(
 
     int nz = 0;
 #ifdef SPMM_PREFETCH
-    for (; nz + PREFETCH < nnz; nz += PREFETCH) {
+    for (; nz + PREFETCH <= nnz; nz += PREFETCH) {
         int    Bi[PREFETCH];
         float Aij[PREFETCH];
         bsg_unroll(4)

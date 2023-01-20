@@ -50,7 +50,7 @@ static void spmm_scalar_row_product(float Aij, int Bi)
 #ifndef PREFETCH
 #define PREFETCH 4
 #endif
-    for (; nz + PREFETCH < nnz; nz += PREFETCH) {
+    for (; nz + PREFETCH <= nnz; nz += PREFETCH) {
         float Bij [PREFETCH];
         int   Bj  [PREFETCH];
         bsg_unroll(8)

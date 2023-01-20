@@ -70,7 +70,7 @@ extern "C" int kernel_spmm(
         int Ci_stop = std::min(Ci_base+SPMM_WORK_GRANULARITY, row_stop);
         int Ci = Ci_base;
 #ifdef SPMM_PREFETCH
-        for (; Ci + PREFETCH < Ci_stop; Ci += PREFETCH) {
+        for (; Ci + PREFETCH <= Ci_stop; Ci += PREFETCH) {
             int Ci_nnz[PREFETCH];
             int Ci_off[PREFETCH];
             bsg_unroll(8)
@@ -147,7 +147,7 @@ extern "C" int kernel_spmm(
         int Ci = Ci_base;
         int Ci_stop = std::min(Ci_base+SPMM_WORK_GRANULARITY, row_stop);
 #ifdef SPMM_PREFETCH
-        for (; Ci + PREFETCH < Ci_stop; Ci += PREFETCH) {
+        for (; Ci + PREFETCH <= Ci_stop; Ci += PREFETCH) {
             int Ci_off[PREFETCH];
             int Ci_nnz[PREFETCH];
             bsg_unroll(8)
