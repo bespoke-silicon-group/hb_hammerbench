@@ -13,8 +13,21 @@ __attribute__((section(".dram")))
 static std::atomic<int> nnz_sum_tree[2*THREADS];
 
 #define LEVELS                                  \
-    (LOG2_THREADS)
+    (tree_levels(THREADS))
 
+static inline int ceil_log2(int x)
+{
+    int j = 0;
+    while (x > (1<<j)) {
+        j = j+1;
+    }
+    return j;
+}
+
+static inline int tree_levels(int leafs)
+{
+    return ceil_log2(leafs)+1;
+}
 
 static int sum_tree_rchild(int root)
 {
@@ -29,7 +42,8 @@ static void sum_tree_update(int sum)
 {
     int r = 0;
     int m = THREADS;
-    for (int l = 0; l < LEVELS; l++) {
+    int L = LEVELS;
+    for (int l = 0; l < L; l++) {
         // pr_dbg("%d: updating tree[%d] += %d\n"
         //             , __bsg_id
         //             , r
@@ -46,7 +60,7 @@ static void sum_tree_update(int sum)
     //             , __bsg_id
     //             , r
     //             , sum);
-    nnz_sum_tree[r].fetch_add(sum, std::memory_order_relaxed);
+    //nnz_sum_tree[r].fetch_add(sum, std::memory_order_relaxed);
 }
 
 static int sum_tree_accumulate()
@@ -54,7 +68,8 @@ static int sum_tree_accumulate()
     int s = 0;
     int r = 0;
     int m = THREADS;
-    for (int l = 0; l < LEVELS; l++) {
+    int L = LEVELS;
+    for (int l = 0; l < L; l++) {
         m >>= 1;
         // pr_dbg("%d: __bsg_id & 0x%08x = %d\n"
         //            , __bsg_id
@@ -94,6 +109,11 @@ static void spmm_compute_offsets()
                , start
                , end);
     }
+    // zero-out the sum tree
+    for (int i = __bsg_id; i < ARRAY_SIZE(nnz_sum_tree); i += bsg_tiles_X*bsg_tiles_Y) {
+        nnz_sum_tree[i].store(0, std::memory_order_relaxed);
+    }
+    barrier::spmm_barrier();
 
     // pr_dbg("%s: %d: start = %d, end = %d\n"
     //             , __func__
