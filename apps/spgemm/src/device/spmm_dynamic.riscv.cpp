@@ -157,7 +157,7 @@ extern "C" int kernel_spmm(
             }
             bsg_compiler_memory_barrier();
             for (int pre = 0; pre < PREFETCH; pre++) {
-                spmm_copy_results(Ci, Ci_off[pre], Ci_nnz[pre]);
+                spmm_copy_results(Ci+pre, Ci_off[pre], Ci_nnz[pre]);
             }
         }
 #endif
