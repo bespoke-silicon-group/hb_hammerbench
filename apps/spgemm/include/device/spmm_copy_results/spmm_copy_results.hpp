@@ -2,7 +2,7 @@
 #include "spmm_copy_results_common.hpp"
 
 template <int UNROLL>
-static  void spmm_update_nonzeros(
+void spmm_update_nonzeros(
     int Ci
     , int nnz
     , bsg_attr_remote int       *__restrict__ idx_ptr
@@ -17,7 +17,7 @@ static  void spmm_update_nonzeros(
            , reinterpret_cast<unsigned>(val_ptr));
            
     int nonzero = 0;
-    for (; nonzero + UNROLL < nnz;) {
+    for (; nonzero + UNROLL <= nnz;) {
         int   idx_tmp[UNROLL];
         float val_tmp[UNROLL];
         for (int i = 0; i < UNROLL; i++) {
@@ -41,7 +41,7 @@ static  void spmm_update_nonzeros(
 }
 
 
-static inline void spmm_copy_results(int Ci, int Ci_off, int Ci_nnz)
+void spmm_copy_results(int Ci, int Ci_off, int Ci_nnz)
 {
     //pr_dbg("copying results for row %3d\n", Ci);
     //int nnz = C_glbl_p->mjr_nnz_ptr[Ci];
@@ -51,6 +51,6 @@ static inline void spmm_copy_results(int Ci, int Ci_off, int Ci_nnz)
     kernel_remote_float_ptr_t val_ptr = &C_glbl_p->val_remote_ptr[off];
 
     spmm_partial_t *parts = reinterpret_cast<spmm_partial_t*>(C_glbl_p->alg_priv_remote_ptr[Ci]);
-    spmm_update_nonzeros<8>(Ci, nnz, idx_ptr, val_ptr, to_remote_ptr(parts));
+    spmm_update_nonzeros<4>(Ci, nnz, idx_ptr, val_ptr, to_remote_ptr(parts));
 }
 

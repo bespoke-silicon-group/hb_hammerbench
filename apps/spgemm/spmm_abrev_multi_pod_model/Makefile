@@ -56,10 +56,11 @@ PARTITIONS=$(call cartesian,$(call range,0,$(PFACTOR)),$(call range,0,$(PFACTOR)
 
 # CHANGE ME: INPUTS
 $(foreach part,$(PARTITIONS),\
-$(eval TESTS += $(call test-name,offshore,$(PFACTOR),$(part),yes,yes))\
-$(eval TESTS += $(call test-name,wiki-vote,$(PFACTOR),$(part),yes,yes))\
-$(eval TESTS += $(call test-name,road-central,$(PFACTOR),$(part),yes,yes))\
-$(eval TESTS += $(call test-name,roadNet-CA,$(PFACTOR),$(part),yes,yes)))
+$(eval TESTS += $(call test-name,roadNet-CA-5000,$(PFACTOR),$(part),yes,yes)))
+
+#$(eval TESTS += $(call test-name,wiki-vote,$(PFACTOR),$(part),yes,yes))\
+#$(eval TESTS += $(call test-name,road-central,$(PFACTOR),$(part),yes,yes))\
+#$(eval TESTS += $(call test-name,roadNet-CA,$(PFACTOR),$(part),yes,yes)))
 
 define get-test-parameters
 $(eval INPUT=$(call get-input,$1))

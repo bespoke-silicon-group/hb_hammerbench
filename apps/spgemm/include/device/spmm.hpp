@@ -112,12 +112,12 @@ static inline void *spmm_malloc(std::size_t size)
 {
     return reinterpret_cast<void*>(spmm_mem_pool->fetch_add(size, std::memory_order_acquire));
 }
-
+/*
 void spmm_init(sparse_matrix_partition_t *__restrict__ A_ptr, // csr
                sparse_matrix_partition_t *__restrict__ B_ptr, // csr
                sparse_matrix_partition_t *__restrict__ C_ptr, // csr
                std::atomic<intptr_t> *mem_pool_arg); // mem pool
-
+*/
 
 #ifdef TAG_ROW_SOLVE
 #undef TAG_ROW_SOLVE

@@ -124,6 +124,33 @@ roadNet-CA__solnnz  = 12908454
 $(roadNet-CA): url=https://suitesparse-collection-website.herokuapp.com/MM/SNAP/roadNet-CA.tar.gz
 $(roadNet-CA): tar=roadNet-CA.tar.gz
 
+##############
+# roadNet-CA-1000 #
+##############
+roadNet-CA-1000 = $(INPUTS_DIR)/roadNet-CA-1000/roadNet-CA-1000.mtx
+roadNet-CA-1000__directed = no
+roadNet-CA-1000__weighted = no
+roadNet-CA-1000__zero-indexed = no
+roadNet-CA-1000__rows = 999
+roadNet-CA-1000__cols = 999
+roadNet-CA-1000__nnz  = 1249
+roadNet-CA-1000__solnnz  =  0
+#$(roadNet-CA): url=https://suitesparse-collection-website.herokuapp.com/MM/SNAP/roadNet-CA.tar.gz
+$(roadNet-CA-1000): $(roadNet-CA-1000)
+
+##############
+# roadNet-CA-5000 #
+##############
+roadNet-CA-5000 = $(INPUTS_DIR)/roadNet-CA-5000/roadNet-CA-5000.mtx
+roadNet-CA-5000__directed = no
+roadNet-CA-5000__weighted = no
+roadNet-CA-5000__zero-indexed = no
+roadNet-CA-5000__rows = 5000
+roadNet-CA-5000__cols = 5000
+roadNet-CA-5000__nnz  = 6963
+roadNet-CA-5000__solnnz  =  0
+$(roadNet-CA-5000): $(roadNet-CA-5000)
+
 ################
 # road_central #
 ################
