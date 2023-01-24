@@ -6,15 +6,13 @@
 #error "CACHE_LINE_WORDS not defined"
 #endif
 __attribute__((noinline))
-static int warmup(int *A, int *B, int N)
+static void warmup(int *A, int *B, int N)
 {
   for (int i = __bsg_id*CACHE_LINE_WORDS; i < N; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_WORDS) {
       asm volatile ("lw x0, %[p]" :: [p] "m" (A[i]));
       asm volatile ("lw x0, %[p]" :: [p] "m" (B[i]));
   }
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
-  return 0;
 }
 #endif
 
@@ -26,12 +24,12 @@ kernel_memcpy(int * A, int * B, int N) {
 #ifdef WARM_CACHE
   warmup(A, B, N);
 #endif
+  bsg_barrier_hw_tile_group_sync();
   bsg_cuda_print_stat_kernel_start();
-
-  bsg_fence();
 
   for (int i = __bsg_id*16; i < N; i += bsg_tiles_X*bsg_tiles_Y*16) {
     register int tmp00 = A[i+0];
+    bsg_fence();
     register int tmp01 = A[i+1];
     register int tmp02 = A[i+2];
     register int tmp03 = A[i+3];
@@ -49,6 +47,7 @@ kernel_memcpy(int * A, int * B, int N) {
     register int tmp15 = A[i+15];
     asm volatile("": : :"memory");
     B[i+0] = tmp00;
+    bsg_fence();
     B[i+1] = tmp01;
     B[i+2] = tmp02;
     B[i+3] = tmp03;
