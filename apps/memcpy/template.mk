@@ -101,5 +101,5 @@ regression: exec.log
 .DEFAULT_GOAL := help
 
 
-dve:
-	dve -full64 -vpd vcdplus.vpd &
+wave:
+	dve -full64 -vpd debug.vpd &
