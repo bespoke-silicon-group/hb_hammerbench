@@ -53,11 +53,32 @@ int kernel_memcpy(int argc, char **argv) {
       A_host[i] = i;
     }
 
+    // Make it pod-cache aligned
+#define POD_CACHE_ALIGNED
+#ifdef POD_CACHE_ALIGNED
+    eva_t temp_device1, temp_device2;
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, CACHE_LINE_WORDS*sizeof(int), &temp_device1));
+    printf("temp Addr: %x\n", temp_device1);
+    int align_size = (32)-1-((temp_device1>>2)%(CACHE_LINE_WORDS*32)/CACHE_LINE_WORDS);
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, align_size*sizeof(int)*CACHE_LINE_WORDS, &temp_device2));
+#endif
+
+    // create offset
+#define CREATE_CACHE_OFFSET
+#ifdef CREATE_CACHE_OFFSET
+    const int cache_offset = 8;
+    eva_t temp_device3;
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, cache_offset*CACHE_LINE_WORDS*sizeof(int), &temp_device3));
+#endif
+
+
     // Allocate a block of memory in device.
     eva_t A_device, B_device;
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, SIZE * sizeof(int), &A_device));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, SIZE * sizeof(int), &B_device));
-  
+
+    printf("A_device Addr: %x\n", A_device);
+    printf("B_device Addr: %x\n", B_device);
  
     // DMA Transfer to device.
     hb_mc_dma_htod_t htod_job [] = {

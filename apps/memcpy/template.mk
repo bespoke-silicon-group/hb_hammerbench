@@ -36,6 +36,7 @@ TEST_SOURCES = main.cpp
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 DEFINES += -DSIZE=$(buffer-size)
 CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+CDEFINES += -DCACHE_LINE_WORDS=$(BSG_MACHINE_VCACHE_LINE_WORDS)
 CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
@@ -100,3 +101,5 @@ regression: exec.log
 .DEFAULT_GOAL := help
 
 
+wave:
+	dve -full64 -vpd debug.vpd &
