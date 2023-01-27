@@ -26,9 +26,9 @@ kernel_tile_gups(int * A, int N) {
     LOCAL_ADDR[i] = (float *) myA[i];
     LOCAL_ADDR[i] = (float *) ((int) LOCAL_ADDR[i] | (int) (&data));
   }
+  bsg_fence();
   bsg_barrier_hw_tile_group_sync();
   bsg_cuda_print_stat_kernel_start();
-  bsg_fence();
 
   // Run tile gups
   #define NUM_ITER 16
