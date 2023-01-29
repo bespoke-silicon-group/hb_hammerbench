@@ -2,7 +2,7 @@
 # CHANGE ME: TESTS				        #
 # TESTS += $(call test-name,[buffer-size],[warm-cache]) #
 #########################################################
-#TESTS += $(call test-name,131072,yes)
+TESTS += $(call test-name,16,8,131072,yes)
 #MSIZE = 8192
 #MSIZE = 522488
 
