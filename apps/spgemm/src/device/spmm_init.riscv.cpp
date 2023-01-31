@@ -1,3 +1,4 @@
+// Moved this to kernel body to avoid stack loading/off-loading.
 /*
 #include "spmm.hpp"
 #include "spmm_barrier.hpp"
