@@ -74,6 +74,9 @@ hi2010.tar.gz:
 delaunay_n15.tar.gz:
 	wget "https://suitesparse-collection-website.herokuapp.com/MM/DIMACS10/delaunay_n15.tar.gz"
 
+offshore.tar.gz:
+	wget "https://suitesparse-collection-website.herokuapp.com/MM/Um/offshore.tar.gz"
+
 %.mtx: %.tar.gz
 	tar -xf $< --strip-components 1 $(basename $@)/$@
 
@@ -81,4 +84,4 @@ delaunay_n15.tar.gz:
 all-graphs: wiki-Vote.el p2p-Gnutella09.el email-Enron.el hollywood-2009.el \
 	road_usa.el road_central.el roadNet-CA.el ljournal-2008.el cit-HepTh.el \
 	rgg_n_2_16_s0.el rgg_n_2_15_s0.el kron_g500-logn16.el hi2010.el delaunay_n15.el \
-	rgg_n_2_20_s0.el
+	rgg_n_2_20_s0.el offshore.el

@@ -9,7 +9,7 @@ all: generate
 #   graph: Filename of a graph (without .el extension)
 #   pod-id: Which pod to simulate
 #   npods: How many pods is work distributed over
-test-name = direction_$(1)__fn_$(2)__graph_$(3)__pod-id_$(4)__npods_$(5)
+test-name = direction_$(1)__fn_$(2)__graph_$(3)__dist_$(4)__pod-id_$(5)__npods_$(6)
 
 get-element = $(lastword $(subst _, ,$(filter $(1)_%,$(subst __, ,$(2)))))
 # call these to get parameters from test name
@@ -19,6 +19,7 @@ get-pod-id = $(call get-element,pod-id,$(1))
 # get-graph and get-function are special because some have underscores in their names
 get-graph = $(lastword $(subst graph_, ,$(filter graph_%,$(subst __, ,$(1)))))
 get-function = $(lastword $(subst fn_, ,$(filter fn_%,$(subst __, ,$(1)))))
+get-distribution = $(lastword $(subst dist_, ,$(filter dist_%,$(subst __, ,$(1)))))
 
 # defines tests
 TESTS =
@@ -42,6 +43,7 @@ $(addsuffix /parameters.mk,$(PULL_TEST_DIRS)): %/parameters.mk:
 	@echo pod-id=$(call get-pod-id,$*) >> $@
 	@echo direction=$(call get-direction,$*) >> $@
 	@echo function=\"$(call get-function,$*)\" >> $@
+	@echo distribution=\"$(call get-distribution,$*)\" >> $@
 
 $(addsuffix /parameters.mk,$(PUSH_TEST_DIRS)): %/parameters.mk:
 	@touch $@
