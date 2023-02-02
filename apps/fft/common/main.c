@@ -234,7 +234,7 @@ int kernel_fft (int argc, char **argv) {
                     }
                   };
 
-                  BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, &dtoh_B_job, 1));
+                  BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, dtoh_B_job, 1));
 
                   int mismatch = verify_fft(B_host, N);
 
