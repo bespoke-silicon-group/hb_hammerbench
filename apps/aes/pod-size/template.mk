@@ -39,10 +39,12 @@ TEST_SOURCES += aes.c
 
 aes.o: CFLAGS += -DHOST_CODE
 
+NUM_ITER=4
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 DEFINES +=  -DECB=0 -DCTR=0
 DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X)
 DEFINES += -DTILE_GROUP_DIM_Y=$(TILE_GROUP_DIM_Y)
+DEFINES += -DNUM_ITER=$(NUM_ITER)
 CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CXXDEFINES +=
 
@@ -82,7 +84,7 @@ aes.rvo: RISCV_DEFINES += -DBSG_MANYCORE
 aes.rvo: RISCV_DEFINES += -DBSG_MANYCORE_OPTIMIZED
 aes.rvo: RISCV_DEFINES += -DBSG_MANYCORE_SBOX_LOCAL
 aes.rvo: RISCV_DEFINES += -DBSG_MANYCORE_NODECRYPT
-kernel.rvo: RISCV_INCLUDES += -I$(APP_PATH)/../tiny-AES-c
+kernel.rvo: RISCV_INCLUDES += -I$(APP_PATH)/../tiny-AES-c -I$(APP_PATH)/../opt-pod/
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 ###############################################################################
