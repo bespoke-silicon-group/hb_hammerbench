@@ -18,7 +18,7 @@ void host_mm_opt(float *result, float *mat1, float *mat2)
     for (int x =0; x < N; x++) {
       float sum = 0.0f;
       for (int z = 0; z < N; z++) {
-        sum += mat1[(N*y)+z]*mat2[(N*z)+y];
+        sum += mat1[(N*y)+z]*mat2[(N*z)+x];
       }
       result[(N*y)+x] = sum;
     }
@@ -27,31 +27,26 @@ void host_mm_opt(float *result, float *mat1, float *mat2)
 
 int kernel_matrix_mul (int argc, char **argv)
 {
-        int rc;
-        char *bin_path, *test_name;
-        struct arguments_path args = {NULL, NULL};
+      int rc;
+      char *bin_path, *test_name;
+      struct arguments_path args = {NULL, NULL};
 
-        argp_parse (&argp_path, argc, argv, 0, 0, &args);
-        bin_path = args.path;
-        test_name = args.name;
+      argp_parse (&argp_path, argc, argv, 0, 0, &args);
+      bin_path = args.path;
+      test_name = args.name;
 
-        //
-        // Define path to binary.
-        // Initialize device, load binary and unfreeze tiles.
-        //
-        hb_mc_device_t device;
-        rc = hb_mc_device_init(&device, test_name, 0);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("Failed to initialize device.\n");
-                return rc;
-        }
+      // Define path to binary.
+      // Initialize device, load binary and unfreeze tiles.
+      hb_mc_device_t device;
+      BSG_CUDA_CALL(hb_mc_device_init(&device, test_name, 0));
 
 
-        rc = hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("Failed to initialize program.\n");
-                return rc;
-        }
+      hb_mc_pod_id_t pod;
+      hb_mc_device_foreach_pod_id(&device, pod)
+      {
+
+        BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
+        BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
         //************************************************************
         // Define tg_dim_x/y: number of tiles in each tile group
@@ -71,10 +66,17 @@ int kernel_matrix_mul (int argc, char **argv)
         host_result = (float*) malloc(N*N*sizeof(float));
         host_expected = (float*) malloc(N*N*sizeof(float));
       
-        for (int i = 0; i < N*N; i++) {
-          host_mat1[i] = i;
-          host_mat2[i] = (N*N)-i;
-          host_result[i] = 0.0f;
+        for (int y = 0; y < N; y++) {
+          for (int x = 0; x < N; x++) {
+            int i = (N*y) + x;
+            host_mat1[i] = i;
+            if (y == x) {
+              host_mat2[i] = 1.0f;
+            } else {
+              host_mat2[i] = 0.0f;
+            }
+            host_result[i] = 0.0f;
+          }
         }
 
         host_mm_opt(host_expected, host_mat1, host_mat2);
@@ -141,28 +143,27 @@ int kernel_matrix_mul (int argc, char **argv)
         //************************************************************
         // Freeze the tiles and memory manager cleanup.
         //************************************************************
-        rc = hb_mc_device_finish(&device);
-        if (rc != HB_MC_SUCCESS) {
-                bsg_pr_err("failed to de-initialize device.\n");
-                return rc;
-        }
+        BSG_CUDA_CALL(hb_mc_device_finish(&device));
 
         // validate
         float sse = 0.0f;
         for(int i = 0; i < N*N; ++i){
           float diff =  (host_result[i] - host_expected[i]);
           sse += diff*diff;
+          if (diff != 0.0f) {
+            printf("[%d] actual=%f, expected=%f\n", i, host_result[i], host_expected[i]);
+          }
         }
         if (sse >= .01) {
           bsg_pr_err(BSG_RED("Matrix Mismatch.(SSE: %f)\n"), sse);
-          BSG_CUDA_CALL(hb_mc_device_program_finish(&device));
           return HB_MC_FAIL;
         }
+
         bsg_pr_test_info(BSG_GREEN("Matrix Match. (SSE: %f)\n"), sse);
 
-        // Freeze tiles.
-        BSG_CUDA_CALL(hb_mc_device_program_finish(&device));
-        return HB_MC_SUCCESS;
+      }
+
+      return HB_MC_SUCCESS;
 }
 
 #ifdef VCS

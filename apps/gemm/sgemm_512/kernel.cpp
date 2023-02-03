@@ -226,7 +226,7 @@ int kernel_mm_opt(float *mat1, float *mat2, float *result)
       reset_out();
 
       // starting block id
-      int curr_id = __logical_bsg_x;
+      int curr_id = __logical_bsg_x % NUM_BLOCK;
 
       // Iterate
       for (int z = 0; z < NUM_BLOCK; z++) {
