@@ -31,7 +31,7 @@ inline void load_block( float* dst,
                         float bsg_attr_remote * bsg_attr_noalias src)
 {
   bsg_unroll(1)
-  for (int y = 0; y < BLOCK_DIM; y++) {
+  for (int y = 0; y < BLOCK_DIM; y+=2) {
     register float tmp00 =  src[(N*y)+0];
     register float tmp01 =  src[(N*y)+1];
     register float tmp02 =  src[(N*y)+2];
@@ -48,6 +48,23 @@ inline void load_block( float* dst,
     register float tmp13 =  src[(N*y)+13];
     register float tmp14 =  src[(N*y)+14];
     register float tmp15 =  src[(N*y)+15];
+
+    register float tmp16 =  src[(N*(y+1))+0];
+    register float tmp17 =  src[(N*(y+1))+1];
+    register float tmp18 =  src[(N*(y+1))+2];
+    register float tmp19 =  src[(N*(y+1))+3];
+    register float tmp20 =  src[(N*(y+1))+4];
+    register float tmp21 =  src[(N*(y+1))+5];
+    register float tmp22 =  src[(N*(y+1))+6];
+    register float tmp23 =  src[(N*(y+1))+7];
+    register float tmp24 =  src[(N*(y+1))+8];
+    register float tmp25 =  src[(N*(y+1))+9];
+    register float tmp26 =  src[(N*(y+1))+10];
+    register float tmp27 =  src[(N*(y+1))+11];
+    register float tmp28 =  src[(N*(y+1))+12];
+    register float tmp29 =  src[(N*(y+1))+13];
+    register float tmp30 =  src[(N*(y+1))+14];
+    register float tmp31 =  src[(N*(y+1))+15];
     asm volatile ("" ::: "memory");
     dst[(BLOCK_DIM*y)+0] = tmp00;
     dst[(BLOCK_DIM*y)+1] = tmp01;
@@ -65,6 +82,23 @@ inline void load_block( float* dst,
     dst[(BLOCK_DIM*y)+13] = tmp13;
     dst[(BLOCK_DIM*y)+14] = tmp14;
     dst[(BLOCK_DIM*y)+15] = tmp15;
+
+    dst[(BLOCK_DIM*(y+1))+0] = tmp16;
+    dst[(BLOCK_DIM*(y+1))+1] = tmp17;
+    dst[(BLOCK_DIM*(y+1))+2] = tmp18;
+    dst[(BLOCK_DIM*(y+1))+3] = tmp19;
+    dst[(BLOCK_DIM*(y+1))+4] = tmp20;
+    dst[(BLOCK_DIM*(y+1))+5] = tmp21;
+    dst[(BLOCK_DIM*(y+1))+6] = tmp22;
+    dst[(BLOCK_DIM*(y+1))+7] = tmp23;
+    dst[(BLOCK_DIM*(y+1))+8] = tmp24;
+    dst[(BLOCK_DIM*(y+1))+9] = tmp25;
+    dst[(BLOCK_DIM*(y+1))+10] = tmp26;
+    dst[(BLOCK_DIM*(y+1))+11] = tmp27;
+    dst[(BLOCK_DIM*(y+1))+12] = tmp28;
+    dst[(BLOCK_DIM*(y+1))+13] = tmp29;
+    dst[(BLOCK_DIM*(y+1))+14] = tmp30;
+    dst[(BLOCK_DIM*(y+1))+15] = tmp31;
   }
 }
 
@@ -72,7 +106,7 @@ inline void load_block( float* dst,
 // Store output to DRAM
 inline void store_block(float* dst) {
   bsg_unroll(1)
-  for (int y = 0; y < BLOCK_DIM; y++) {
+  for (int y = 0; y < BLOCK_DIM; y+=2) {
     register float tp00 =  block_out[(BLOCK_DIM*y)+0];
     register float tp01 =  block_out[(BLOCK_DIM*y)+1];
     register float tp02 =  block_out[(BLOCK_DIM*y)+2];
@@ -89,6 +123,23 @@ inline void store_block(float* dst) {
     register float tp13 =  block_out[(BLOCK_DIM*y)+13];
     register float tp14 =  block_out[(BLOCK_DIM*y)+14];
     register float tp15 =  block_out[(BLOCK_DIM*y)+15];
+
+    register float tp16 =  block_out[(BLOCK_DIM*(y+1))+0];
+    register float tp17 =  block_out[(BLOCK_DIM*(y+1))+1];
+    register float tp18 =  block_out[(BLOCK_DIM*(y+1))+2];
+    register float tp19 =  block_out[(BLOCK_DIM*(y+1))+3];
+    register float tp20 =  block_out[(BLOCK_DIM*(y+1))+4];
+    register float tp21 =  block_out[(BLOCK_DIM*(y+1))+5];
+    register float tp22 =  block_out[(BLOCK_DIM*(y+1))+6];
+    register float tp23 =  block_out[(BLOCK_DIM*(y+1))+7];
+    register float tp24 =  block_out[(BLOCK_DIM*(y+1))+8];
+    register float tp25 =  block_out[(BLOCK_DIM*(y+1))+9];
+    register float tp26 =  block_out[(BLOCK_DIM*(y+1))+10];
+    register float tp27 =  block_out[(BLOCK_DIM*(y+1))+11];
+    register float tp28 =  block_out[(BLOCK_DIM*(y+1))+12];
+    register float tp29 =  block_out[(BLOCK_DIM*(y+1))+13];
+    register float tp30 =  block_out[(BLOCK_DIM*(y+1))+14];
+    register float tp31 =  block_out[(BLOCK_DIM*(y+1))+15];
     asm volatile ("" ::: "memory");
     dst[(N*y)+0] = tp00; 
     dst[(N*y)+1] = tp01; 
@@ -106,6 +157,23 @@ inline void store_block(float* dst) {
     dst[(N*y)+13] = tp13; 
     dst[(N*y)+14] = tp14; 
     dst[(N*y)+15] = tp15; 
+
+    dst[(N*(y+1))+0] = tp16; 
+    dst[(N*(y+1))+1] = tp17; 
+    dst[(N*(y+1))+2] = tp18; 
+    dst[(N*(y+1))+3] = tp19; 
+    dst[(N*(y+1))+4] = tp20; 
+    dst[(N*(y+1))+5] = tp21; 
+    dst[(N*(y+1))+6] = tp22; 
+    dst[(N*(y+1))+7] = tp23; 
+    dst[(N*(y+1))+8] = tp24; 
+    dst[(N*(y+1))+9] = tp25; 
+    dst[(N*(y+1))+10] = tp26; 
+    dst[(N*(y+1))+11] = tp27; 
+    dst[(N*(y+1))+12] = tp28; 
+    dst[(N*(y+1))+13] = tp29; 
+    dst[(N*(y+1))+14] = tp30; 
+    dst[(N*(y+1))+15] = tp31; 
   }
 }
 
