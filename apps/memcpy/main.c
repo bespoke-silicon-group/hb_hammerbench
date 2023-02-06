@@ -66,7 +66,7 @@ int kernel_memcpy(int argc, char **argv) {
     // create offset
 #define CREATE_CACHE_OFFSET
 #ifdef CREATE_CACHE_OFFSET
-    const int cache_offset = 8;
+    const int cache_offset = (bsg_tiles_X/2);
     eva_t temp_device3;
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, cache_offset*CACHE_LINE_WORDS*sizeof(int), &temp_device3));
 #endif
