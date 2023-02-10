@@ -229,6 +229,18 @@ LiveJournal__solnnz  = 0
 $(LiveJournal): url=https://suitesparse-collection-website.herokuapp.com/MM/LAW/ljournal-2008.tar.gz
 $(LiveJournal): tar=ljournal-2008.tar.gz
 
+INPUTS += u12k2
+u12k2 = $(INPUTS_DIR)/u12k2.mtx
+u12k2__directed = yes
+u12k2__weighted = yes
+u12k2__zero-indexed = no
+u12k2__rows = 4096
+u12k2__cols = 4096
+u12k2__nnz  = 16372
+u12k2__solnnz = 0
+$(u12k2): url=https://drive.google.com/file/d/1MYFVdQxPik4l-KHJlI6k4T5ym_M6DkN3/view?usp=share_link
+$(u12k2): tar=u12k2.mtx.tar.gz
+
 # Download and unpack
 $(foreach i,$(INPUTS),$($i)):
 	@echo "Downloading and unpacking $@"
@@ -243,6 +255,14 @@ $(empty1024):
 	@mkdir -p $(dirname $@)
 	@echo "%%MatrixMarket matrix coordinate integer general" > $@
 	@echo "1024 1024 0" >> $@
+
+
+$(u12k2):
+	@echo "Generating $@"
+	@mkdir -p $(INPUTS_DIR)
+	@cd $(INPUTS_DIR) && gdown --fuzzy $(url)
+	@cd $(INPUTS_DIR) && tar zxf $(tar)
+
 
 inputs: $(foreach i,$(INPUTS),$($i))
 inputs: $(empty1024)
