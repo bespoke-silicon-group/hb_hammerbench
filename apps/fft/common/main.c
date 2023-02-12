@@ -129,12 +129,26 @@ int kernel_fft (int argc, char **argv) {
                  * Allocate memory on the device for A and B
                  ******************************************************************************************************************/
 
+                // make it pod cache aligned.
+                #define POD_CACHE_ALIGNED
+                #ifdef POD_CACHE_ALIGNED
+                #define CACHE_LINE_WORDS 16
+                eva_t temp_device1, temp_device2;
+                BSG_CUDA_CALL(hb_mc_device_malloc(&device, CACHE_LINE_WORDS*sizeof(int), &temp_device1));
+                printf("temp Addr: %x\n", temp_device1);
+                int align_size = (32)-1-((temp_device1>>2)%(CACHE_LINE_WORDS*32)/CACHE_LINE_WORDS);
+                BSG_CUDA_CALL(hb_mc_device_malloc(&device, align_size*sizeof(int)*CACHE_LINE_WORDS, &temp_device2));
+                #endif
+
                 uint32_t N = NUM_POINTS;
 
                 eva_t A_device, B_device, TW_device;
                 BSG_CUDA_CALL(hb_mc_device_malloc(&device, N * sizeof(float complex) * NUM_ITER, &A_device)); /* allocate A[N] on the device */
                 BSG_CUDA_CALL(hb_mc_device_malloc(&device, N * sizeof(float complex) * NUM_ITER, &B_device)); /* allocate B[N] on the device */
                 BSG_CUDA_CALL(hb_mc_device_malloc(&device, N * sizeof(float complex), &TW_device)); /* allocate TW[N] on the device */
+                printf("A_device = %x\n", A_device);
+                printf("B_device = %x\n", B_device);
+                printf("TW_device = %x\n", TW_device);
 
                 /*****************************************************************************************************************
                  * Allocate memory on the host for A and initialize with cosine values
