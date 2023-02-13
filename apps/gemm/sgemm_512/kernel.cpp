@@ -273,6 +273,16 @@ int kernel_mm_opt(float *mat1, float *mat2, float *result)
 {
   bsg_barrier_hw_tile_group_init();
 
+#ifdef WARM_CACHE
+#define CACHE_LINE_WORDS 16
+  for (int i = __bsg_id*CACHE_LINE_WORDS; i < N*N; i+=(CACHE_LINE_WORDS*bsg_tiles_X*bsg_tiles_Y)) {
+    asm volatile ("lw x0, %[p]" :: [p] "m" (mat1[i]));
+    asm volatile ("lw x0, %[p]" :: [p] "m" (mat2[i]));
+    asm volatile ("sw x0, %[p]" :: [p] "m" (result[i]));
+  }
+  bsg_fence();
+#endif
+
   // calculate logical pod id;
   uint32_t __logical_dim_x = bsg_tiles_X * UNFOLD;
   uint32_t __logical_dim_y = bsg_tiles_Y / UNFOLD;
