@@ -274,8 +274,8 @@ int kernel_mm_opt(float *mat1, float *mat2, float *result)
   bsg_barrier_hw_tile_group_init();
 
   // calculate logical pod id;
-  uint32_t __logical_dim_x = bsg_tiles_X * 2;
-  uint32_t __logical_dim_y = bsg_tiles_Y / 2;
+  uint32_t __logical_dim_x = bsg_tiles_X * UNFOLD;
+  uint32_t __logical_dim_y = bsg_tiles_Y / UNFOLD;
   uint32_t __logical_bsg_x = __bsg_x + (__bsg_y/__logical_dim_y)*bsg_tiles_X;
   uint32_t __logical_bsg_y = __bsg_y % __logical_dim_y;
 
