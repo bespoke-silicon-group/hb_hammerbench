@@ -26,6 +26,8 @@ include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 TILE_GROUP_DIM_X ?= $(tile-x)
 TILE_GROUP_DIM_Y ?= $(tile-y)
 N ?= 512
+UNFOLD ?= 2
+WARM_CACHE ?= no
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
@@ -75,6 +77,10 @@ RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_DEFINES += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_DEFINES += -DN=$(N)
+RISCV_DEFINES += -DUNFOLD=$(UNFOLD)
+ifeq ($(WARM_CACHE),yes)
+RISCV_DEFINES += -DWARM_CACHE
+endif
 RISCV_LDFLAGS += -flto
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
