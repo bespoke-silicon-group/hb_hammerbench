@@ -109,8 +109,9 @@ extern "C" int bfs(graph_t * bsg_attr_noalias G_csr_ptr,
                 kernel_edge_data_ptr_t neib = src_data->neib;
 
                 // UNROLL by 4
+                int dst_i=0;
                 bsg_unroll(1)
-                for (int dst_i=0; dst_i+3<degree; dst_i+=4){
+                for (; dst_i+3<degree; dst_i+=4){
                   int dst0 = neib[dst_i];
                   int dst1 = neib[dst_i+1];
                   int dst2 = neib[dst_i+2];
@@ -160,7 +161,7 @@ extern "C" int bfs(graph_t * bsg_attr_noalias G_csr_ptr,
                 }
                 // UNROLL by 3
                 bsg_unroll(1)
-                for (int dst_i=0; dst_i+2<degree; dst_i+=3){
+                for (; dst_i+2<degree; dst_i+=3){
                   int dst0 = neib[dst_i];
                   int dst1 = neib[dst_i+1];
                   int dst2 = neib[dst_i+2];
@@ -202,7 +203,7 @@ extern "C" int bfs(graph_t * bsg_attr_noalias G_csr_ptr,
                 }
                 // UNROLL by 2
                 bsg_unroll(1)
-                for (int dst_i=0; dst_i+1<degree; dst_i+=2){
+                for (; dst_i+1<degree; dst_i+=2){
                   int dst0 = neib[dst_i];
                   int dst1 = neib[dst_i+1];
                   asm volatile ("": : :"memory");
@@ -237,7 +238,7 @@ extern "C" int bfs(graph_t * bsg_attr_noalias G_csr_ptr,
 
                 // UNROLL by 1
                 bsg_unroll(1)
-                for (int dst_i=0; dst_i<degree; dst_i+=1){
+                for (; dst_i<degree; dst_i+=1){
                   int dst0 = neib[dst_i];
                   asm volatile ("": : :"memory");
 
