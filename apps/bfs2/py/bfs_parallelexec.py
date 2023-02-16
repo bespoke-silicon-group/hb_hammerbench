@@ -22,11 +22,12 @@ def work(path):
     #v_exists = file_exists(vstats) 
     logstats = path + "stats/manycore_stats.log"
     log_exists = file_exists(logstats)
-    while not log_exists :
-        sp.run(["make", "clean"],cwd=path,stdout=sp.DEVNULL,stderr=sp.STDOUT)
-        sp.run(["make","profile.log"],cwd=path,stdout=sp.DEVNULL,stderr=sp.STDOUT)
-        sp.run(["python","../../../../../bsg_manycore/software/py/vanilla_parser/stats_parser.py", "--stats", "vanilla_stats.csv", "--vcache-stats", "vcache_stats.csv"],check=False,cwd=path)
-        log_exists = file_exists(logstats)
+    #while not log_exists :
+    sp.run(["make", "clean"],cwd=path,stdout=sp.DEVNULL,stderr=sp.STDOUT)
+    sp.run(["make","profile.log"],cwd=path,stdout=sp.DEVNULL,stderr=sp.STDOUT)
+    print("complete:", path)
+        #sp.run(["python","../../../../../bsg_manycore/software/py/vanilla_parser/stats_parser.py", "--stats", "vanilla_stats.csv", "--vcache-stats", "vcache_stats.csv"],check=False,cwd=path)
+    #    log_exists = file_exists(logstats)
     return 0
 
 if __name__ == '__main__':
@@ -45,7 +46,7 @@ if __name__ == '__main__':
     
     #Set up the parallel task pool to use all available processors
     count = mp.cpu_count()
-    count_r = min(count,10)
+    count_r = min(count,32)
     pool = mp.Pool(processes=count_r)
 
     #Run the jobs

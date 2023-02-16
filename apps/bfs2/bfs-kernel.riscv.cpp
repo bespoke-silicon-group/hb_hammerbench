@@ -34,7 +34,6 @@ extern "C" int bfs(graph_t * bsg_attr_noalias G_csr_ptr,
         int bsg_attr_remote * bsg_attr_noalias cachewarm   ){
 
     //bsg_cuda_print_stat_start(*ite);
-    //bsg_cuda_print_stat_kernel_start();
     bsg_barrier_hw_tile_group_init();
     
     //pseduo read to warm up LLC with input frontier for testing road maps
@@ -47,7 +46,8 @@ extern "C" int bfs(graph_t * bsg_attr_noalias G_csr_ptr,
       }
     }
 
-    bsg_cuda_print_stat_start(0);
+    //bsg_cuda_print_stat_start(0);
+    bsg_cuda_print_stat_kernel_start();
     //PULL direction
     if (*direction == 0){
         
@@ -96,19 +96,176 @@ extern "C" int bfs(graph_t * bsg_attr_noalias G_csr_ptr,
         //bsg_cuda_print_stat_start(2);
         graph_t G = *G_csc_ptr;
         int num_nodes = G.V;
+        bsg_unroll(1)
         for (int src_base_i = workq.fetch_add(GRANULARITY_PUSH, std::memory_order_relaxed); src_base_i < frontier_in_sparse->set_size; src_base_i = workq.fetch_add(GRANULARITY_PUSH, std::memory_order_relaxed)) {
         // update all neibs
             int stop = (src_base_i + GRANULARITY_PUSH > frontier_in_sparse->set_size) ? frontier_in_sparse->set_size : src_base_i + GRANULARITY_PUSH;
             
+            bsg_unroll(1)
             for (int src_i = src_base_i; src_i<stop; src_i++){
                 int src = frontier_in_sparse->members[src_i];
                 kernel_vertex_data_ptr_t src_data = &G.vertex_data[src];
                 int degree = src_data->degree;
                 kernel_edge_data_ptr_t neib = src_data->neib;
 
-                bsg_unroll(16)
-                for(int dst_i=0; dst_i<degree; dst_i ++){
-                  int dst = neib[dst_i];
+                // UNROLL by 4
+                bsg_unroll(1)
+                for (int dst_i=0; dst_i+3<degree; dst_i+=4){
+                  int dst0 = neib[dst_i];
+                  int dst1 = neib[dst_i+1];
+                  int dst2 = neib[dst_i+2];
+                  int dst3 = neib[dst_i+3];
+                  asm volatile ("": : :"memory");
+
+                  int bitmask0 = 1<<(dst0%32);
+                  int bitmask1 = 1<<(dst1%32);
+                  int bitmask2 = 1<<(dst2%32);
+                  int bitmask3 = 1<<(dst3%32);
+
+                  int visited_reg[4];
+                  visited_reg[0] = visited[dst0/32]&bitmask0;
+                  visited_reg[1] = visited[dst1/32]&bitmask1;
+                  visited_reg[2] = visited[dst2/32]&bitmask2;
+                  visited_reg[3] = visited[dst3/32]&bitmask3;
+                  asm volatile ("": : :"memory");
+
+                  int result_visit[4];
+                  result_visit[0] = 0xffffffff;
+                  result_visit[1] = 0xffffffff;
+                  result_visit[2] = 0xffffffff;
+                  result_visit[3] = 0xffffffff;
+                  asm volatile ("": : :"memory");
+                  if (!visited_reg[0]) result_visit[0] = bsg_amoor(&visited[dst0/32],bitmask0);
+                  if (!visited_reg[1]) result_visit[1] = bsg_amoor(&visited[dst1/32],bitmask1);
+                  if (!visited_reg[2]) result_visit[2] = bsg_amoor(&visited[dst2/32],bitmask2);
+                  if (!visited_reg[3]) result_visit[3] = bsg_amoor(&visited[dst3/32],bitmask3);
+                  asm volatile ("": : :"memory");
+
+                  bool do_visit[4];
+                  do_visit[0] = !(result_visit[0] & bitmask0);
+                  do_visit[1] = !(result_visit[1] & bitmask1);
+                  do_visit[2] = !(result_visit[2] & bitmask2);
+                  do_visit[3] = !(result_visit[3] & bitmask3);
+
+                  int out_idx[4];
+                  if (do_visit[0]) out_idx[0] = index_wr.fetch_add(1, std::memory_order_relaxed);
+                  if (do_visit[1]) out_idx[1] = index_wr.fetch_add(1, std::memory_order_relaxed);
+                  if (do_visit[2]) out_idx[2] = index_wr.fetch_add(1, std::memory_order_relaxed);
+                  if (do_visit[3]) out_idx[3] = index_wr.fetch_add(1, std::memory_order_relaxed);
+
+                  if (do_visit[0]) frontier_out_sparse[out_idx[0]] = dst0;
+                  if (do_visit[1]) frontier_out_sparse[out_idx[1]] = dst1;
+                  if (do_visit[2]) frontier_out_sparse[out_idx[2]] = dst2;
+                  if (do_visit[3]) frontier_out_sparse[out_idx[3]] = dst3;
+                }
+                // UNROLL by 3
+                bsg_unroll(1)
+                for (int dst_i=0; dst_i+2<degree; dst_i+=3){
+                  int dst0 = neib[dst_i];
+                  int dst1 = neib[dst_i+1];
+                  int dst2 = neib[dst_i+2];
+                  asm volatile ("": : :"memory");
+
+                  int bitmask0 = 1<<(dst0%32);
+                  int bitmask1 = 1<<(dst1%32);
+                  int bitmask2 = 1<<(dst2%32);
+
+                  int visited_reg[3];
+                  visited_reg[0] = visited[dst0/32]&bitmask0;
+                  visited_reg[1] = visited[dst1/32]&bitmask1;
+                  visited_reg[2] = visited[dst2/32]&bitmask2;
+                  asm volatile ("": : :"memory");
+
+                  int result_visit[3];
+                  result_visit[0] = 0xffffffff;
+                  result_visit[1] = 0xffffffff;
+                  result_visit[2] = 0xffffffff;
+                  asm volatile ("": : :"memory");
+                  if (!visited_reg[0]) result_visit[0] = bsg_amoor(&visited[dst0/32],bitmask0);
+                  if (!visited_reg[1]) result_visit[1] = bsg_amoor(&visited[dst1/32],bitmask1);
+                  if (!visited_reg[2]) result_visit[2] = bsg_amoor(&visited[dst2/32],bitmask2);
+                  asm volatile ("": : :"memory");
+
+                  bool do_visit[3];
+                  do_visit[0] = !(result_visit[0] & bitmask0);
+                  do_visit[1] = !(result_visit[1] & bitmask1);
+                  do_visit[2] = !(result_visit[2] & bitmask2);
+
+                  int out_idx[3];
+                  if (do_visit[0]) out_idx[0] = index_wr.fetch_add(1, std::memory_order_relaxed);
+                  if (do_visit[1]) out_idx[1] = index_wr.fetch_add(1, std::memory_order_relaxed);
+                  if (do_visit[2]) out_idx[2] = index_wr.fetch_add(1, std::memory_order_relaxed);
+
+                  if (do_visit[0]) frontier_out_sparse[out_idx[0]] = dst0;
+                  if (do_visit[1]) frontier_out_sparse[out_idx[1]] = dst1;
+                  if (do_visit[2]) frontier_out_sparse[out_idx[2]] = dst2;
+                }
+                // UNROLL by 2
+                bsg_unroll(1)
+                for (int dst_i=0; dst_i+1<degree; dst_i+=2){
+                  int dst0 = neib[dst_i];
+                  int dst1 = neib[dst_i+1];
+                  asm volatile ("": : :"memory");
+
+                  int bitmask0 = 1<<(dst0%32);
+                  int bitmask1 = 1<<(dst1%32);
+
+                  int visited_reg[2];
+                  visited_reg[0] = visited[dst0/32]&bitmask0;
+                  visited_reg[1] = visited[dst1/32]&bitmask1;
+                  asm volatile ("": : :"memory");
+
+                  int result_visit[2];
+                  result_visit[0] = 0xffffffff;
+                  result_visit[1] = 0xffffffff;
+                  asm volatile ("": : :"memory");
+                  if (!visited_reg[0]) result_visit[0] = bsg_amoor(&visited[dst0/32],bitmask0);
+                  if (!visited_reg[1]) result_visit[1] = bsg_amoor(&visited[dst1/32],bitmask1);
+                  asm volatile ("": : :"memory");
+
+                  bool do_visit[2];
+                  do_visit[0] = !(result_visit[0] & bitmask0);
+                  do_visit[1] = !(result_visit[1] & bitmask1);
+
+                  int out_idx[2];
+                  if (do_visit[0]) out_idx[0] = index_wr.fetch_add(1, std::memory_order_relaxed);
+                  if (do_visit[1]) out_idx[1] = index_wr.fetch_add(1, std::memory_order_relaxed);
+
+                  if (do_visit[0]) frontier_out_sparse[out_idx[0]] = dst0;
+                  if (do_visit[1]) frontier_out_sparse[out_idx[1]] = dst1;
+                }
+
+                // UNROLL by 1
+                bsg_unroll(1)
+                for (int dst_i=0; dst_i<degree; dst_i+=1){
+                  int dst0 = neib[dst_i];
+                  asm volatile ("": : :"memory");
+
+                  int bitmask0 = 1<<(dst0%32);
+
+                  int visited_reg[1];
+                  visited_reg[0] = visited[dst0/32]&bitmask0;
+                  asm volatile ("": : :"memory");
+
+                  int result_visit[1];
+                  result_visit[0] = 0xffffffff;
+                  asm volatile ("": : :"memory");
+                  if (!visited_reg[0]) result_visit[0] = bsg_amoor(&visited[dst0/32],bitmask0);
+                  asm volatile ("": : :"memory");
+
+                  bool do_visit[1];
+                  do_visit[0] = !(result_visit[0] & bitmask0);
+
+                  int out_idx[1];
+                  if (do_visit[0]) {
+                    out_idx[0] = index_wr.fetch_add(1, std::memory_order_relaxed);
+                    frontier_out_sparse[out_idx[0]] = dst0;
+                  }
+                }
+
+        
+
+/*
                   if(!(visited[dst/32]&(1<<(dst%32)))){
                     int result_visit = bsg_amoor(&visited[dst/32],1<<(dst%32));  
                     if (! (result_visit & (1<<(dst%32)) ) ){
@@ -117,14 +274,15 @@ extern "C" int bfs(graph_t * bsg_attr_noalias G_csr_ptr,
                     }
                     //int result_frontier = bsg_amoor(&frontier_out_dense[dst/32],1<<(dst%32));
                   }
-                }
+*/
 
 
             }
         }
         //bsg_cuda_print_stat_end(2);   
     }
-    bsg_cuda_print_stat_end(0);
+    //bsg_cuda_print_stat_end(0);
+    bsg_cuda_print_stat_kernel_end();
     // the phase which generates output frontier in sparse set format
     //#############################################################
     bsg_barrier_hw_tile_group_sync();
@@ -162,6 +320,5 @@ extern "C" int bfs(graph_t * bsg_attr_noalias G_csr_ptr,
     bsg_barrier_hw_tile_group_sync();
 
     //bsg_cuda_print_stat_end(1);
-    //bsg_cuda_print_stat_kernel_end();
     return 0;
 }
