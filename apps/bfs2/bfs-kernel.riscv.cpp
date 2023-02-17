@@ -93,9 +93,8 @@ extern "C" int bfs(graph_t * bsg_attr_noalias G_csr_ptr,
 
     }
     else{
-        //bsg_cuda_print_stat_start(2);
+        // PUSH Direction
         graph_t G = *G_csc_ptr;
-        int num_nodes = G.V;
         bsg_unroll(1)
         for (int src_base_i = workq.fetch_add(GRANULARITY_PUSH, std::memory_order_relaxed); src_base_i < frontier_in_sparse->set_size; src_base_i = workq.fetch_add(GRANULARITY_PUSH, std::memory_order_relaxed)) {
         // update all neibs
@@ -263,63 +262,22 @@ extern "C" int bfs(graph_t * bsg_attr_noalias G_csr_ptr,
                     frontier_out_sparse[out_idx[0]] = dst0;
                   }
                 }
-
-        
-
-/*
-                  if(!(visited[dst/32]&(1<<(dst%32)))){
-                    int result_visit = bsg_amoor(&visited[dst/32],1<<(dst%32));  
-                    if (! (result_visit & (1<<(dst%32)) ) ){
-                      int out_idx = index_wr.fetch_add(1, std::memory_order_relaxed);
-                      frontier_out_sparse[out_idx] = dst;  
-                    }
-                    //int result_frontier = bsg_amoor(&frontier_out_dense[dst/32],1<<(dst%32));
-                  }
-*/
-
-
             }
         }
-        //bsg_cuda_print_stat_end(2);   
     }
-    //bsg_cuda_print_stat_end(0);
     bsg_cuda_print_stat_kernel_end();
-    // the phase which generates output frontier in sparse set format
-    //#############################################################
     bsg_barrier_hw_tile_group_sync();
-    //barrier.sync();
-    //#############################################################
-    //bsg_cuda_print_stat_start(1);
-    
-    
-    /*for (int src_base_i = index_rd.fetch_add(GRANULARITY_INDEX, std::memory_order_relaxed); src_base_i < *outlen; src_base_i = index_rd.fetch_add(GRANULARITY_INDEX, std::memory_order_relaxed)) {
-        int stop = (src_base_i + GRANULARITY_INDEX > *outlen) ? *outlen : src_base_i + GRANULARITY_INDEX;
-        for (int src_i = src_base_i; src_i<stop; src_i++){
-            if(frontier_out_dense[src_i/32]&(1<<(src_i%32))){
-                int out_idx = index_wr.fetch_add(1, std::memory_order_relaxed);
-                frontier_out_sparse[out_idx] = src_i;
-                //int result_frontier = bsg_amoor(&frontier_out_dense[src_i/32],1<<(src_i%32));
-                //frontier_out_dense[src_i] = 0;
-                //bsg_printf("========================= output frontier element : %d, src_base_i: %d, tile id: %d=======================================\n",src_i,src_base_i,__bsg_id);
-            }
-        }
-    }
-    */
-    //bsg_cuda_print_stat_end(1);
     //write the output frontier length
     //#############################################################
     bsg_barrier_hw_tile_group_sync();
     //#############################################################
-    //bsg_cuda_print_stat_start(3);
     if(__bsg_id == 0){
         *outlen = index_wr.load();   
     //    bsg_printf("========================= output frontier size : %d, work_q value: %d, rd_idx value: %d=======================================\n",index_wr.load(),workq.load(),index_rd.load());
         *direction = cmp; // write cmp so that the pseduo code is not optimized away
     }
 
-    //bsg_cuda_print_stat_end(1);
     bsg_barrier_hw_tile_group_sync();
 
-    //bsg_cuda_print_stat_end(1);
     return 0;
 }
