@@ -108,6 +108,7 @@ int __attribute__ ((noinline)) pagerank_pull_u8(int bsg_attr_remote * bsg_attr_n
   damp_dmem = damp;
   beta_score_dmem = beta_score;
   bsg_fence();
+  bsg_barrier_hw_tile_group_sync();
   bsg_cuda_print_stat_kernel_start();
 
   int start = 0;
@@ -130,7 +131,7 @@ int __attribute__ ((noinline)) pagerank_pull_u8(int bsg_attr_remote * bsg_attr_n
       asm volatile ("" ::: "memory");
 
       int s = first;
-      for(;s + 8 < last; s += 8) {
+      for(;s + 7 < last; s += 8) {
               int idx0 = in_neighbors[s + 0];
               int idx1 = in_neighbors[s + 1];
               int idx2 = in_neighbors[s + 2];
@@ -159,7 +160,7 @@ int __attribute__ ((noinline)) pagerank_pull_u8(int bsg_attr_remote * bsg_attr_n
               fadd_asm(t0, t0, t2);
               temp_new += t0;
       }
-      for(;s + 4 < last; s += 4) {
+      for(;s + 3 < last; s += 4) {
               int idx0 = in_neighbors[s + 0];
               int idx1 = in_neighbors[s + 1];
               int idx2 = in_neighbors[s + 2];
@@ -176,7 +177,7 @@ int __attribute__ ((noinline)) pagerank_pull_u8(int bsg_attr_remote * bsg_attr_n
               fadd_asm(t0, t0, t1);
               temp_new += t0;
       }
-      for(;s + 3 < last; s += 3) {
+      for(;s + 2 < last; s += 3) {
               int idx0 = in_neighbors[s + 0];
               int idx1 = in_neighbors[s + 1];
               int idx2 = in_neighbors[s + 2];
@@ -187,7 +188,7 @@ int __attribute__ ((noinline)) pagerank_pull_u8(int bsg_attr_remote * bsg_attr_n
               asm volatile ("" ::: "memory");
               temp_new += c0 + c1 + c2;
       }
-      for(;s + 2 < last; s += 2) {
+      for(;s + 1 < last; s += 2) {
               int idx0 = in_neighbors[s + 0];
               int idx1 = in_neighbors[s + 1];
               asm volatile ("" ::: "memory");
