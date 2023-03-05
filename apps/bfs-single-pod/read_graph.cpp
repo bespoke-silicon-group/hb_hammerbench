@@ -26,7 +26,7 @@ int read_graph(const std::string &graph,
     }
 
     if (!mm_is_sparse(banner) ||
-        !(mm_is_real(banner) || mm_is_integer(banner)) ||
+        !(mm_is_real(banner) || mm_is_integer(banner) || mm_is_pattern(banner)) ||
         !mm_is_general(banner)) {
         fclose(f);
         fprintf(stderr, "Unsupported graph input\n");
@@ -50,10 +50,13 @@ int read_graph(const std::string &graph,
         float vd;
         if (mm_is_real(banner)) {
             r = fscanf(f, "%d %d %f", &s, &d, &vd);
+        } else if (mm_is_pattern(banner)) {
+            r = fscanf(f, "%d %d", &s, &d);
         } else {
             r = fscanf(f, "%d %d %d", &s, &d, &vi);            
         }
-        if (r != 3) {
+        
+        if ((r != 3) && (r != 2)) {
             fprintf(stderr, "Error: unexpected end of file for '%s': %m\n", graph.c_str());
             fclose(f);
             return HB_MC_FAIL;
