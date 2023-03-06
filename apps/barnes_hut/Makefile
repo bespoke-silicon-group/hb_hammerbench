@@ -222,7 +222,38 @@ $(foreach x,$(RANGE_PODS_X),\
 $(foreach y,$(RANGE_PODS_Y),\
 $(eval FORCES_TEST_32768 += $(call test-name,forces,$x,$y,32768,8,8))))
 
-go: $(FORCES_TEST_8192) $(FORCES_TEST_16384) $(FORCES_TEST_32768)
+# Forces, 8192 Bodies, 1-64 pods
+$(foreach x,$(call range,0,8), $(foreach y,$(call range,0,8), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,8,8))))
+$(foreach x,$(call range,0,7), $(foreach y,$(call range,0,7), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,7,7))))
+$(foreach x,$(call range,0,6), $(foreach y,$(call range,0,6), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,6,6))))
+$(foreach x,$(call range,0,5), $(foreach y,$(call range,0,5), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,5,5))))
+$(foreach x,$(call range,0,4), $(foreach y,$(call range,0,4), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,4,4))))
+$(foreach x,$(call range,0,3), $(foreach y,$(call range,0,3), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,3,3))))
+$(foreach x,$(call range,0,2), $(foreach y,$(call range,0,2), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,2,2))))
+$(foreach x,$(call range,0,1), $(foreach y,$(call range,0,1), $(eval FORCES_TEST_8192_SWEEP += $(call test-name,forces,$x,$y,8192,1,1))))
+
+# Forces, 16384 Bodies, 1-64 pods
+$(foreach x,$(call range,0,8), $(foreach y,$(call range,0,8), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,8,8))))
+$(foreach x,$(call range,0,7), $(foreach y,$(call range,0,7), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,7,7))))
+$(foreach x,$(call range,0,6), $(foreach y,$(call range,0,6), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,6,6))))
+$(foreach x,$(call range,0,5), $(foreach y,$(call range,0,5), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,5,5))))
+$(foreach x,$(call range,0,4), $(foreach y,$(call range,0,4), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,4,4))))
+$(foreach x,$(call range,0,3), $(foreach y,$(call range,0,3), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,3,3))))
+$(foreach x,$(call range,0,2), $(foreach y,$(call range,0,2), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,2,2))))
+$(foreach x,$(call range,0,1), $(foreach y,$(call range,0,1), $(eval FORCES_TEST_16384_SWEEP += $(call test-name,forces,$x,$y,16384,1,1))))
+
+# Forces, 32768 Bodies, 1-64 pods
+$(foreach x,$(call range,0,8), $(foreach y,$(call range,0,8), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,8,8))))
+$(foreach x,$(call range,0,7), $(foreach y,$(call range,0,7), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,7,7))))
+$(foreach x,$(call range,0,6), $(foreach y,$(call range,0,6), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,6,6))))
+$(foreach x,$(call range,0,5), $(foreach y,$(call range,0,5), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,5,5))))
+$(foreach x,$(call range,0,4), $(foreach y,$(call range,0,4), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,4,4))))
+$(foreach x,$(call range,0,3), $(foreach y,$(call range,0,3), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,3,3))))
+$(foreach x,$(call range,0,2), $(foreach y,$(call range,0,2), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,2,2))))
+$(foreach x,$(call range,0,1), $(foreach y,$(call range,0,1), $(eval FORCES_TEST_32768_SWEEP += $(call test-name,forces,$x,$y,32768,1,1))))
+
+go: $(FORCES_TEST_8192_SWEEP) $(FORCES_TEST_16384_SWEEP) $(FORCES_TEST_32768_SWEEP)
+
 
 %.deploy:
 	mkdir $@
@@ -236,7 +267,8 @@ go: $(FORCES_TEST_8192) $(FORCES_TEST_16384) $(FORCES_TEST_32768)
 	cat Makefile >> $@/Makefile
 	$(MAKE) -C $@ kernel.dis > $@/kernel.dis
 	$(MAKE) -C $@ main.so
-	#$(MAKE) -C $@ stats
+	GALOIS_DO_NOT_BIND_THREADS=1 $(MAKE) -C $@ profile.log
+	make -C $@ stats
 
 cleansweep:
 	rm -rf *.deploy
