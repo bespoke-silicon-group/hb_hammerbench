@@ -57,6 +57,9 @@ PARTITIONS=$(call cartesian,$(call range,0,$(PFACTOR)),$(call range,0,$(PFACTOR)
 # CHANGE ME: INPUTS
 $(foreach part,$(PARTITIONS),\
 $(eval TESTS += $(call test-name,offshore,$(PFACTOR),$(part),yes,yes))\
+$(eval TESTS += $(call test-name,u12k2,$(PFACTOR),$(part),yes,yes))\
+$(eval TESTS += $(call test-name,u12k4,$(PFACTOR),$(part),yes,yes))\
+$(eval TESTS += $(call test-name,u12k8,$(PFACTOR),$(part),yes,yes))\
 $(eval TESTS += $(call test-name,wiki-vote,$(PFACTOR),$(part),yes,yes))\
 $(eval TESTS += $(call test-name,road-central,$(PFACTOR),$(part),yes,yes))\
 $(eval TESTS += $(call test-name,roadNet-CA,$(PFACTOR),$(part),yes,yes)))

@@ -3,7 +3,7 @@ repos += hammerblade-helpers
 repos += eigen
 
 graph-tools.url		= git@github.com:mrutt92/graph-tools
-hammerblade-helpers.url = git@github.com:mrutt92/hammerblade-helpers
+hammerblade-helpers.url = git@github.com:bespoke-silicon-group/hammerblade-helpers.git
 eigen.url               = https://gitlab.com/libeigen/eigen.git
 
 graph-tools.commit		= master

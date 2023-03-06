@@ -28,7 +28,8 @@ namespace solve_row_merge
     /**
      * given a list node, produce a pointer to the partial
      */
-    static inline partial_t * partial_from_node(list_node_t *lnode)
+    __attribute__ ((always_inline))
+    static partial_t * partial_from_node(list_node_t *lnode)
     {
         return
             reinterpret_cast<partial_t*>(
@@ -57,7 +58,7 @@ namespace solve_row_merge
     /**
      * allocate a new partial
      */
-    static partial_t *new_partial() {
+    partial_t *new_partial() {
         // prioritize tile group memory
         list_node_t *tmp;
         if (list_empty(&free_tg)) {
@@ -65,6 +66,7 @@ namespace solve_row_merge
             if (list_empty(&free_offchip)) {                
                 // use malloc to allocate a new chunk
                 partial_t *parts = (partial_t*)spmm_malloc(sizeof(partial_t) * VCACHE_STRIPE_WORDS);
+                bsg_unroll(1)
                 for (int i = 0; i < VCACHE_STRIPE_WORDS; i++) {
                     list_append(&free_offchip, &parts[i].tbl);
                 }
@@ -86,7 +88,7 @@ namespace solve_row_merge
     /**
      * free a partial
      */
-    static void free_partial(partial_t *part) {
+    void free_partial(partial_t *part) {
         if (utils::is_dram(part)) {
             list_append(&free_offchip, &part->tbl);
         } else {
@@ -97,7 +99,7 @@ namespace solve_row_merge
     /**
      * merge two sorted partial lists
      */
-    static void merge(
+    void merge(
         // inputs
         list_t *frst_list
         ,list_t *scnd_list
@@ -160,7 +162,7 @@ namespace solve_row_merge
     /**
      * scalar row product; A[i;j] * B[j;]
      */
-    static void scalar_row_product(float Aij, int Bi)
+    void scalar_row_product(float Aij, int Bi)
     {
         int off = B_lcl.mnr_off_remote_ptr[Bi];
         //int nnz = B_lcl.mjr_nnz_ptr[Bi];
@@ -180,6 +182,7 @@ namespace solve_row_merge
 #if defined(SPMM_PREFETCH)
         for (; nz + PREFETCH <= nnz; nz += PREFETCH) {
             partial_t *part[PREFETCH];
+            bsg_unroll(1)
             for (int pre = 0; pre < PREFETCH; pre++) {
                 part[pre] = new_partial();
             }
@@ -187,7 +190,7 @@ namespace solve_row_merge
             float Bij [PREFETCH];
             int   Bj  [PREFETCH];
             // prefetch data
-            bsg_unroll(8)
+            bsg_unroll(PREFETCH)
             for (int pre = 0; pre < PREFETCH; pre++) {
                 Bij[pre] = vals[nz+pre];
                 Bj [pre] = cols[nz+pre];
@@ -200,7 +203,7 @@ namespace solve_row_merge
             float Cij  [PREFETCH];
 
             // ilp fmul
-            bsg_unroll(8)
+            bsg_unroll(4)
             for (int pre = 0; pre < PREFETCH; pre++) {
 #if defined(SPMM_NO_FLOPS)
                 Cij[pre] = Bij[pre];
@@ -210,7 +213,7 @@ namespace solve_row_merge
                 part[pre]->iv.idx = Bj[pre];
                 part[pre]->iv.val = Cij[pre];
             }
-
+            bsg_unroll(1)
             for (int pre = 0; pre < PREFETCH; pre++)
                 list_append(&to_merge, &part[pre]->tbl);
         }
@@ -242,7 +245,9 @@ namespace solve_row_merge
     }
 }
 
-static inline void spmm_solve_row(
+int    Bi_dmem[PREFETCH];
+float Aij_dmem[PREFETCH];
+void spmm_solve_row(
     int Ci
     ,int Ci_off
     ,int Ci_nnz
@@ -265,15 +270,28 @@ static inline void spmm_solve_row(
     int nz = 0;
 #ifdef SPMM_PREFETCH
     for (; nz + PREFETCH <= nnz; nz += PREFETCH) {
-        int    Bi[PREFETCH];
-        float Aij[PREFETCH];
-        bsg_unroll(4)
+        int    Bi_reg[PREFETCH];
+        float Aij_reg[PREFETCH];
+
+        bsg_unroll(PREFETCH)
         for (int pre = 0; pre < PREFETCH; pre++) {
-            Bi[pre] = cols[nz+pre];
-            Aij[pre] = vals[nz+pre];            
+            Bi_reg[pre] = cols[nz+pre];
         }
+
+        bsg_unroll(PREFETCH)
         for (int pre = 0; pre < PREFETCH; pre++) {
-            scalar_row_product(Aij[pre], Bi[pre]);
+            Aij_reg[pre] = vals[nz+pre];            
+        }
+
+        bsg_unroll(PREFETCH)
+        for (int pre = 0; pre < PREFETCH; pre++) {
+            Bi_dmem[pre] = Bi_reg[pre];
+            Aij_dmem[pre] = Aij_reg[pre];
+        }
+
+        bsg_unroll(1)
+        for (int pre = 0; pre < PREFETCH; pre++) {
+            scalar_row_product(Aij_dmem[pre], Bi_dmem[pre]);
         }
     }
 #endif
@@ -324,6 +342,7 @@ static void spmm_solve_row_init()
     list_init(&free_tg);
     list_init(&free_offchip);
     list_init(&row_partials);
+    bsg_unroll(1)
     for (int i = 0; i < ARRAY_SIZE(__local_partial_pool); i++) {
         list_append(&free_tg, &__local_partial_pool[i].tbl);
     }

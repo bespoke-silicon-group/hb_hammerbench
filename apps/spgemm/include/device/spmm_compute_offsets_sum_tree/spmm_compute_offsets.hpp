@@ -14,8 +14,8 @@ static std::atomic<int> nnz_sum_tree[2*THREADS];
 
 #define LEVELS                                  \
     (tree_levels(THREADS))
-
-static inline int ceil_log2(int x)
+__attribute__ ((always_inline))
+static int ceil_log2(int x)
 {
     int j = 0;
     while (x > (1<<j)) {
@@ -23,26 +23,29 @@ static inline int ceil_log2(int x)
     }
     return j;
 }
-
-static inline int tree_levels(int leafs)
+__attribute__ ((always_inline))
+static int tree_levels(int leafs)
 {
     return ceil_log2(leafs)+1;
 }
-
+__attribute__ ((always_inline))
 static int sum_tree_rchild(int root)
 {
     return 2*root + 2;
 }
+__attribute__ ((always_inline))
 static int sum_tree_lchild(int root)
 {
     return 2*root + 1;
 }
 
+__attribute__ ((always_inline))
 static void sum_tree_update(int sum)
 {
     int r = 0;
     int m = THREADS;
     int L = LEVELS;
+    bsg_unroll(1)
     for (int l = 0; l < L; l++) {
         // pr_dbg("%d: updating tree[%d] += %d\n"
         //             , __bsg_id
@@ -69,6 +72,7 @@ static int sum_tree_accumulate()
     int r = 0;
     int m = THREADS;
     int L = LEVELS;
+    bsg_unroll(1)
     for (int l = 0; l < L; l++) {
         m >>= 1;
         // pr_dbg("%d: __bsg_id & 0x%08x = %d\n"
@@ -90,7 +94,7 @@ static int sum_tree_accumulate()
 }
 
 
-static void spmm_compute_offsets()
+void spmm_compute_offsets()
 {
     // 1. compute offsets of your work region
 #ifdef __PART__
@@ -110,10 +114,14 @@ static void spmm_compute_offsets()
                , end);
     }
     // zero-out the sum tree
+    bsg_unroll(1)
     for (int i = __bsg_id; i < ARRAY_SIZE(nnz_sum_tree); i += bsg_tiles_X*bsg_tiles_Y) {
         nnz_sum_tree[i].store(0, std::memory_order_relaxed);
     }
-    barrier::spmm_barrier();
+    //barrier::spmm_barrier();
+    bsg_fence();
+    bsg_barrier_hw_tile_group_sync();
+
 
     // pr_dbg("%s: %d: start = %d, end = %d\n"
     //             , __func__
@@ -122,6 +130,7 @@ static void spmm_compute_offsets()
     //             , end);
 
     int sum = 0;
+    bsg_unroll(1)
     for (int Ci = start; Ci < end; Ci++) {
         // update offsets
         pr_dbg("%s: preoff[%3d]=%3d\n"
@@ -134,10 +143,13 @@ static void spmm_compute_offsets()
 
     // 2. update the sum tree
     sum_tree_update(sum);
-    barrier::spmm_barrier();
+    //barrier::spmm_barrier();
+    bsg_fence();
+    bsg_barrier_hw_tile_group_sync();
 
     // 3. propogate updates from the sum tree to your work region
     int offset = sum_tree_accumulate();
+    bsg_unroll(1)
     for (int Ci = start; Ci < end; Ci++) {
         std::atomic<int>* nnzp = reinterpret_cast<std::atomic<int>*>(&C_lcl.mnr_off_ptr[Ci]);
         nnzp->fetch_add(offset, std::memory_order_relaxed);

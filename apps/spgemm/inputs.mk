@@ -229,6 +229,36 @@ LiveJournal__solnnz  = 0
 $(LiveJournal): url=https://suitesparse-collection-website.herokuapp.com/MM/LAW/ljournal-2008.tar.gz
 $(LiveJournal): tar=ljournal-2008.tar.gz
 
+u12k2 = $(INPUTS_DIR)/u12k2.mtx
+u12k2__directed = yes
+u12k2__weighted = yes
+u12k2__zero-indexed = no
+u12k2__rows = 4096
+u12k2__cols = 4096
+u12k2__nnz  = 16372
+u12k2__solnnz = 0
+$(u12k2): $(u12k2)
+
+u12k4 = $(INPUTS_DIR)/u12k4.mtx
+u12k4__directed = yes
+u12k4__weighted = yes
+u12k4__zero-indexed = no
+u12k4__rows = 4096
+u12k4__cols = 4096
+u12k4__nnz  = 32730
+u12k4__solnnz = 0
+$(u12k4): $(u12k4)
+
+u12k8 = $(INPUTS_DIR)/u12k8.mtx
+u12k8__directed = yes
+u12k8__weighted = yes
+u12k8__zero-indexed = no
+u12k8__rows = 4096
+u12k8__cols = 4096
+u12k8__nnz  = 65370
+u12k8__solnnz = 0
+$(u12k8): $(u12k8)
+
 # Download and unpack
 $(foreach i,$(INPUTS),$($i)):
 	@echo "Downloading and unpacking $@"
@@ -243,6 +273,7 @@ $(empty1024):
 	@mkdir -p $(dirname $@)
 	@echo "%%MatrixMarket matrix coordinate integer general" > $@
 	@echo "1024 1024 0" >> $@
+
 
 inputs: $(foreach i,$(INPUTS),$($i))
 inputs: $(empty1024)
