@@ -14,7 +14,7 @@
 // and as stated -- lock free.
 
 extern "C" void summarize(HBNode *root, HBBody *bodies, int nBodies, int *idx){
-
+#ifdef KERNEL_SUMMARIZE
         bsg_barrier_hw_tile_group_init();
         bsg_barrier_hw_tile_group_sync();
         bsg_cuda_print_stat_kernel_start();
@@ -122,5 +122,6 @@ extern "C" void summarize(HBNode *root, HBBody *bodies, int nBodies, int *idx){
         bsg_fence();
         bsg_barrier_hw_tile_group_sync();
         return;
+#endif
 }
 

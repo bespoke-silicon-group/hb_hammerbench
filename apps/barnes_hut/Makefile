@@ -117,6 +117,12 @@ $(TEST_OBJECTS): $(TEST_HEADERS)
 
 # BSG_MANYCORE_KERNELS is a list of manycore executables that should
 # be built before executing.
+PHASE    ?= forces
+POD_ID_X ?= 0
+POD_ID_Y ?= 0
+NPODS_X  ?= 1
+NPODS_Y  ?= 1
+NBODIES  ?= 256
 
 update.rvo: RISCV_CXX = $(RISCV_CLANGXX)
 forces.rvo: RISCV_CXX = $(RISCV_GCC)
@@ -135,6 +141,18 @@ RISCV_DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X)
 RISCV_DEFINES += -DTILE_GROUP_DIM_Y=$(TILE_GROUP_DIM_Y) -DRISCV
 RISCV_DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_DEFINES += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+ifeq ($(PHASE),update)
+RISCV_DEFINES += -DKERNEL_UPDATE
+endif
+ifeq ($(PHASE),forces)
+RISCV_DEFINES += -DKERNEL_FORCES
+endif
+ifeq ($(PHASE),summarize)
+RISCV_DEFINES += -DKERNEL_SUMMARIZE
+endif
+ifeq ($(PHASE),build)
+RISCV_DEFINES += -DKERNEL_BUILD
+endif
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 
@@ -147,12 +165,6 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
 
-PHASE    ?= forces
-POD_ID_X ?= 0
-POD_ID_Y ?= 0
-NPODS_X  ?= 1
-NPODS_Y  ?= 1
-NBODIES  ?= 256
 
 C_ARGS   ?= -n $(NBODIES) -steps 1 -t 1 -phase $(PHASE) -px $(POD_ID_X) -py $(POD_ID_Y) -npx $(NPODS_X) -npy $(NPODS_Y)
 

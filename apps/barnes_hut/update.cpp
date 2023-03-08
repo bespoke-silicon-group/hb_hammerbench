@@ -7,7 +7,7 @@
 
 // HBBodies should be attr_remote, but LLVM complains about the address space cast.
 extern "C" void update(Config *pcfg, int nBodies, HBBody *HBBodies){
-
+#ifdef KERNEL_UPDATE
         // Copy frequently used data to local
         Config cfg = *pcfg;
 
@@ -29,4 +29,5 @@ extern "C" void update(Config *pcfg, int nBodies, HBBody *HBBodies){
         bsg_fence();
         bsg_barrier_hw_tile_group_sync();
         return;
+#endif
 }

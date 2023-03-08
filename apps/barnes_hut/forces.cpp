@@ -15,6 +15,7 @@ Point updateForce(Config &cfg, Point delta, float psq, float mass) {
 }
 
 extern "C" void forces(Config *pcfg, HBOctree *proot, HBBody *HBBodies, int nBodies, unsigned int _diam, int *amocur, int body_end){
+#ifdef KERNEL_FORCES
         // We can't pass float arguments (technical issue), just
         // pointers and integer arguments.
         // Copy frequently used data to local
@@ -102,6 +103,6 @@ extern "C" void forces(Config *pcfg, HBOctree *proot, HBBody *HBBodies, int nBod
         bsg_cuda_print_stat_kernel_end();
         bsg_fence();
         bsg_barrier_hw_tile_group_sync();
-
         return;
+#endif
 }
