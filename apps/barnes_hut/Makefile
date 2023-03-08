@@ -150,9 +150,9 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 PHASE    ?= forces
 POD_ID_X ?= 0
 POD_ID_Y ?= 0
-NPODS_X  ?= 8
-NPODS_Y  ?= 8
-NBODIES  ?= 128
+NPODS_X  ?= 1
+NPODS_Y  ?= 1
+NBODIES  ?= 256
 
 C_ARGS   ?= -n $(NBODIES) -steps 1 -t 1 -phase $(PHASE) -px $(POD_ID_X) -py $(POD_ID_Y) -npx $(NPODS_X) -npy $(NPODS_Y)
 
