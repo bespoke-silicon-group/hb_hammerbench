@@ -760,7 +760,7 @@ int hb_mc_manycore_check_host_conversion_bodies(unsigned int nBodies, Body **bod
 
 // nodes[0] is the tree root
 int hb_mc_manycore_host_build_tree(unsigned int nBodies, Body **bodies, HBBody *hbodies, eva_t _hbodies,
-                                   unsigned int nNodes, Octree **nodes, HBOctree *hnodes, eva_t _hnodes){
+                                   unsigned int nNodes, Octree **nodes, HBOctree *hnodes, eva_t _hnodes) {
 
                 // Map of Octree node/body pointer to index
                 std::map<Node*, NodeIdx> nodeIdxMap;
@@ -778,6 +778,7 @@ int hb_mc_manycore_host_build_tree(unsigned int nBodies, Body **bodies, HBBody *
         nodes[0]->convert(_hnodes, hnodes[node_i]);
         nodeIdxMap[nodes[0]] = node_i++;
 
+        int num_internal = 0;
         while(!q.empty()){
                 Octree *cur_p = q.back();
                 q.pop_back();
@@ -786,10 +787,11 @@ int hb_mc_manycore_host_build_tree(unsigned int nBodies, Body **bodies, HBBody *
                 // Get this node's EVA Pointer to set children predecessors
                 eva_t _cur_p;
                 BSG_CUDA_CALL(hb_mc_manycore_eva_translate<HBOctree>(_hnodes, sizeof(HBOctree) * nNodes, cur_i, &_cur_p));
-
+                bool child_exist = false;
                 for (int c_i = 0; c_i < Octree::octants; c_i++) {
                         Node *child = cur_p->child[c_i].getValue();
                         if (child){
+                                child_exist = true;
                                 cur_p->nChildren++; // Will be reset by CoM computation
                                 hnodes[cur_i].nChildren++;
                                 child->pred = cur_p;
@@ -827,7 +829,9 @@ int hb_mc_manycore_host_build_tree(unsigned int nBodies, Body **bodies, HBBody *
                                 }
                         }
                 }
+                if (child_exist) num_internal++;
         }
+        printf("Num internal nodes = %d\n", num_internal);
         BSG_CUDA_CALL(hb_mc_manycore_check_host_conversion_nodes(nNodes, nodes, hnodes, _hnodes));
         BSG_CUDA_CALL(hb_mc_manycore_check_host_conversion_bodies(nBodies, bodies, hbodies, _hbodies, nodes, hnodes, _hnodes));
 
@@ -1103,12 +1107,12 @@ int run(Bodies& bodies, BodyPtrs& pBodies, size_t nbodies) {
                 // Perform in-order octree tree traversal to enumerate all nodes/bodies
                 // Use the node/body pointer to create a map between nodes/bodies and their index
                 // Convert the x86 nodes/bodies to HB equivalents for processing
-
-
+                
+                // number of internal nodes
                 BSG_CUDA_CALL(hb_mc_manycore_host_build_tree(nBodies, BodyPtrs, HostHBBodies, _HostHBBodies,
                                                              nNodes, OctNodePtrs, HostHBOctNodes, _HostHBOctNodes));
                 bsg_pr_info("Host Tree building/conversion successful!\n");
-
+                //return 0;
 
                 bsg_pr_info("Root Position: %2.4f %2.4f %2.4f, Radius: %2.4f \n", DeviceHBOctNodes[0].pos[0], DeviceHBOctNodes[0].pos[1], DeviceHBOctNodes[0].pos[2], box.radius());
                 // Build tree on the device:
