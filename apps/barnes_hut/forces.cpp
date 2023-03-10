@@ -7,12 +7,17 @@
 #include <Body.hpp>
 #include <Config.hpp>
 
-Point updateForce(Config &cfg, Point delta, float psq, float mass) {
+inline Point updateForce(Config &cfg, Point delta, float psq, float mass) {
         // Computing force += delta * mass * (|delta|^2 + eps^2)^{-3/2}
         float idr   = 1.0f / sqrtf((float)(psq + cfg.epssq));
         float scale = mass * idr * idr * idr;
         return delta * scale;
 }
+
+#define MAX_STACK_SIZE 256
+HBOctree* node_stack[MAX_STACK_SIZE];
+float diamsq_stack[MAX_STACK_SIZE];
+HBOctree** max_node_stack_ptr = &node_stack[MAX_STACK_SIZE+1];
 
 extern "C" void forces(Config *pcfg, HBOctree *proot, HBBody *HBBodies, int nBodies, unsigned int _diam, int *amocur, int body_end){
 #ifdef KERNEL_FORCES
@@ -34,64 +39,86 @@ extern "C" void forces(Config *pcfg, HBOctree *proot, HBBody *HBBodies, int nBod
                 HBBody curb = *pcurb;
                 Point prev_acc = curb.acc;
                 curb.acc = Point(0.0f, 0.0f, 0.0f);
-                HBNode *pother = proot; // It is not clear whether copying the other node locally will help.
+
+                // put the root in the stack;
+                node_stack[0] = proot;
+                HBOctree** node_stack_top = &node_stack[1];
+                diamsq_stack[0] = diamsq;
+                float * diamsq_stack_top = &diamsq_stack[1];
+                
+
+                //int octant = 0;
                 Point delta;
                 float distsq;
-                char octant = 0;
-                while (pother != proot || (pother == proot && octant < HBOctree::octants)){
-                        // Leaf status is encoded in the low-order bit of the address.
-                        unsigned int leaf = reinterpret_cast<uintptr_t>(pother) & 1;
-                        pother = reinterpret_cast<HBNode*>(reinterpret_cast<uintptr_t>(pother) & (~1));
-                        HBOctree *node = static_cast<HBOctree *>(pother);
+            
+                while (node_stack_top != node_stack) {
+                  // take one off the stack;
+                  node_stack_top--;
+                  HBOctree *curr_node = *node_stack_top;
+                  diamsq_stack_top--;
+                  float curr_diamsq = *diamsq_stack_top;
+                
+                  // check if it's far away;
+                  delta  = (curb.pos - curr_node->pos);
+                  distsq = delta.dist2();
 
-                        if(leaf){
-                                // Leaf node, compute force
-                                if(pother != static_cast<HBNode *>(pcurb)){
-                                        delta  = (curb.pos - pother->pos);
-                                        distsq = delta.dist2();
-                                        curb.acc += updateForce(cfg, delta, distsq, pother->mass);
-                                }
-                                // Move upward
-                                octant = pother->octant + 1;
-                                pother = pother->pred;
-                                diamsq *= 4.0f;
-                        } else if (octant == 0) {
-                                // Have not visited this node before
-                                delta  = (curb.pos - pother->pos);
-                                distsq = delta.dist2();
-                                if(distsq >= diamsq){
-                                        // Far away, compute summarized force
-                                        curb.acc += updateForce(cfg, delta, distsq, pother->mass);
-                                        // Move upward
-                                        octant = pother->octant + 1;
-                                        pother = pother->pred;
-                                        diamsq *= 4.0f;
-                                } else if(node->child[0] != nullptr){
-                                        // Nearby, downward.
-                                        pother = node->child[0];
-                                        octant = 0;
-                                        diamsq *= .25f;
-                                } else {
-                                        // No leaf/body, try next octant
-                                        octant ++;
-                                }
-                        } else if (octant < HBOctree::octants) {
-                                if(node->child[octant]) {
-                                        // Downward
-                                        pother = node->child[octant];
-                                        octant = 0;
-                                        diamsq *= .25f;
-                                } else {
-                                        // Sideways :p 
-                                        octant ++;
-                                }
+                  if (distsq >= curr_diamsq) {
+                    // Far away, compute summarized force
+                    curb.acc += updateForce(cfg, delta, distsq, curr_node->mass);
+                  } else {
+                    float child_diamsq = curr_diamsq * 0.25f;
+                    // Move down;
+                    // Load all the child pointers;
+                    HBNode* children[8];
+                    HBNode* tmp0 = curr_node->child[0];
+                    HBNode* tmp1 = curr_node->child[1];
+                    HBNode* tmp2 = curr_node->child[2];
+                    HBNode* tmp3 = curr_node->child[3];
+                    HBNode* tmp4 = curr_node->child[4];
+                    HBNode* tmp5 = curr_node->child[5];
+                    HBNode* tmp6 = curr_node->child[6];
+                    HBNode* tmp7 = curr_node->child[7];
+                    asm volatile("": : :"memory");
+                    children[0] = tmp0;
+                    children[1] = tmp1;
+                    children[2] = tmp2;
+                    children[3] = tmp3;
+                    children[4] = tmp4;
+                    children[5] = tmp5;
+                    children[6] = tmp6;
+                    children[7] = tmp7;
+                    asm volatile("": : :"memory");
+
+                    for (int i = 0; i < 8; i++) {
+                      if (children[i] == nullptr) {
+                        // skip null point;
+                        continue;
+                      } else {
+                        unsigned int leaf = reinterpret_cast<uintptr_t>(children[i]) & 1;
+                        if (leaf) {
+                          // child is leaf;
+                          if (children[i] != static_cast<HBNode *>(pcurb)) {
+                            // child is not self;
+                            delta = (curb.pos - children[i]->pos);
+                            distsq = delta.dist2();
+                            curb.acc += updateForce(cfg, delta, distsq, children[i]->mass);
+                          }
                         } else {
-                                // Upward
-                                octant  = pother->octant + 1;
-                                pother  = pother->pred;
-                                diamsq *= 4.0f;
+                          // child is internal node;
+                          // put it on the stack;
+                          *diamsq_stack_top = child_diamsq;
+                          diamsq_stack_top++;
+                          *node_stack_top = static_cast<HBOctree*>(children[i]);
+                          node_stack_top++;
+                          if (node_stack_top == max_node_stack_ptr) {
+                            bsg_print_int(0xdeadbeef);
+                          }
                         }
+                      }
+                    }
+                  }
                 }
+
                 // Finished traversal
                 curb.vel += (curb.acc - prev_acc) * cfg.dthf;
                 HBBodies[cur].vel = curb.vel;
