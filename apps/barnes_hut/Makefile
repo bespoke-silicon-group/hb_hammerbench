@@ -124,13 +124,18 @@ NPODS_X  ?= 1
 NPODS_Y  ?= 1
 NBODIES  ?= 256
 
+BSG_MANYCORE_KERNELS ?= kernel.riscv
+
 update.rvo: RISCV_CXX = $(RISCV_CLANGXX)
-forces.rvo: RISCV_CXX = $(RISCV_GCC)
 build.rvo: RISCV_CXX = $(RISCV_CLANGXX)
 
-BSG_MANYCORE_KERNELS ?= kernel.riscv
-kernel.riscv: update.rvo
+# use comments to switch different implementations
+#forces_dmem_stack.rvo: RISCV_CXX = $(RISCV_GCC)
+#kernel.riscv: forces_dmem_stack.rvo
+forces.rvo: RISCV_CXX = $(RISCV_GCC)
 kernel.riscv: forces.rvo
+
+kernel.riscv: update.rvo
 kernel.riscv: summarize.rvo
 kernel.riscv: build.rvo
 
