@@ -254,7 +254,6 @@ $(foreach x,$(call range,0,1), $(foreach y,$(call range,0,1), $(eval FORCES_TEST
 
 go: $(FORCES_TEST_8192_SWEEP) $(FORCES_TEST_16384_SWEEP) $(FORCES_TEST_32768_SWEEP)
 
-
 %.deploy:
 	mkdir $@
 	echo "PHASE    = $(call phase-from-name,$*)">> $@/Makefile

@@ -66,7 +66,7 @@ ntimesteps("steps", llvm::cl::desc("Number of steps (default value 1)"),
            llvm::cl::init(1));
 static llvm::cl::opt<int> seed("seed",
                                llvm::cl::desc("Random seed (default value 7)"),
-                               llvm::cl::init(7));
+                               llvm::cl::init(42));
 
 static llvm::cl::opt<std::string> kpath("k",
                                llvm::cl::desc("Kernel path (default value: kernel.riscv)"),

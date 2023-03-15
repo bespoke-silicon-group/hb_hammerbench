@@ -15,7 +15,7 @@ do
     mv /tmp/barnes_hut.csv.tmp /tmp/barnes_hut.csv
 done
 echo "function,podx,pody,nbodies,dimx,dimy,Tag ID,Aggr Instructions,Aggr I$ Misses,Aggr Stall Cycles,Aggr Bubble Cycles, Aggr Total Cycles,Abs Total Cycles,IPC,FLOPS/Cycle,% of Kernel Cycles" > barnes_hut.csv
-mv /tmp/barnes_hut.csv >> barnes_hut.csv
+cat /tmp/barnes_hut.csv >> barnes_hut.csv
 python3 parse.py barnes_hut.csv
 
 
