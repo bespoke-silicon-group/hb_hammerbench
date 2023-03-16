@@ -25,7 +25,7 @@
 // instructions
 
 extern "C" void build(Config *pcfg, HBOctree *nodes, int nNodes, int *nidx, HBBody *bodies, int nBodies, int *bidx, unsigned int _radius){
-
+#ifdef KERNEL_BUILD
         Config cfg = *pcfg;
         HBOctreeTraverser<3> t;
         HBOctree *cur;
@@ -237,5 +237,6 @@ extern "C" void build(Config *pcfg, HBOctree *nodes, int nNodes, int *nidx, HBBo
         bsg_fence();
         bsg_barrier_hw_tile_group_sync();
         return;
+#endif
 }
 

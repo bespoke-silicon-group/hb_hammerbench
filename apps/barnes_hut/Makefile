@@ -117,14 +117,25 @@ $(TEST_OBJECTS): $(TEST_HEADERS)
 
 # BSG_MANYCORE_KERNELS is a list of manycore executables that should
 # be built before executing.
-
-update.rvo: RISCV_CXX = $(RISCV_CLANGXX)
-forces.rvo: RISCV_CXX = $(RISCV_GCC)
-build.rvo: RISCV_CXX = $(RISCV_CLANGXX)
+PHASE    ?= forces
+POD_ID_X ?= 0
+POD_ID_Y ?= 0
+NPODS_X  ?= 1
+NPODS_Y  ?= 1
+NBODIES  ?= 256
 
 BSG_MANYCORE_KERNELS ?= kernel.riscv
-kernel.riscv: update.rvo
+
+update.rvo: RISCV_CXX = $(RISCV_CLANGXX)
+build.rvo: RISCV_CXX = $(RISCV_CLANGXX)
+
+# use comments to switch different implementations
+#forces_dmem_stack.rvo: RISCV_CXX = $(RISCV_GCC)
+#kernel.riscv: forces_dmem_stack.rvo
+forces.rvo: RISCV_CXX = $(RISCV_GCC)
 kernel.riscv: forces.rvo
+
+kernel.riscv: update.rvo
 kernel.riscv: summarize.rvo
 kernel.riscv: build.rvo
 
@@ -135,6 +146,18 @@ RISCV_DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X)
 RISCV_DEFINES += -DTILE_GROUP_DIM_Y=$(TILE_GROUP_DIM_Y) -DRISCV
 RISCV_DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_DEFINES += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+ifeq ($(PHASE),update)
+RISCV_DEFINES += -DKERNEL_UPDATE
+endif
+ifeq ($(PHASE),forces)
+RISCV_DEFINES += -DKERNEL_FORCES
+endif
+ifeq ($(PHASE),summarize)
+RISCV_DEFINES += -DKERNEL_SUMMARIZE
+endif
+ifeq ($(PHASE),build)
+RISCV_DEFINES += -DKERNEL_BUILD
+endif
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 
@@ -147,12 +170,6 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
 
-PHASE    ?= forces
-POD_ID_X ?= 0
-POD_ID_Y ?= 0
-NPODS_X  ?= 8
-NPODS_Y  ?= 8
-NBODIES  ?= 128
 
 C_ARGS   ?= -n $(NBODIES) -steps 1 -t 1 -phase $(PHASE) -px $(POD_ID_X) -py $(POD_ID_Y) -npx $(NPODS_X) -npy $(NPODS_Y)
 
