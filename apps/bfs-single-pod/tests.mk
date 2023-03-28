@@ -15,3 +15,5 @@
 TESTS += $(call test-name,g16k16,61526,1,2,1)
 TESTS += $(call test-name,g16k16,61526,1,2,2)
 TESTS += $(call test-name,g16k16,61526,1,2,4)
+
+TESTS += $(call test-name,wiki-Vote,2,1,2,4)
