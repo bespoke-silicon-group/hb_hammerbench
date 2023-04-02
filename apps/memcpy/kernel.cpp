@@ -25,8 +25,13 @@ kernel_memcpy(int * A, int * B, int N) {
   warmup(A, B, N);
 #endif
   bsg_barrier_hw_tile_group_sync();
-  bsg_cuda_print_stat_kernel_start();
+  bsg_cuda_print_stat_kernel_start(); // marks the start of the profiling region.
 
+  // bsg_tiles_X = size of tile group x (= 16)
+  // bsg_tiles_Y = size of tile group y (= 8)
+  // __bsg_id = id of this tile. id = __bsg_x + (bsg_tiles_X*__bsg_y)
+
+  // Inner Loop
   for (int i = __bsg_id*16; i < N; i += bsg_tiles_X*bsg_tiles_Y*16) {
     register int tmp00 = A[i+0];
     bsg_fence();  // this fence makes sure that next packets don't block the network.
@@ -66,7 +71,7 @@ kernel_memcpy(int * A, int * B, int N) {
   }
 
   bsg_fence();
-  bsg_cuda_print_stat_kernel_end();
+  bsg_cuda_print_stat_kernel_end(); // marks the end of the profiling region.
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
 
