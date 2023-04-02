@@ -34,7 +34,6 @@ kernel_memcpy(int * A, int * B, int N) {
   // Inner Loop
   for (int i = __bsg_id*16; i < N; i += bsg_tiles_X*bsg_tiles_Y*16) {
     register int tmp00 = A[i+0];
-    bsg_fence();  // this fence makes sure that next packets don't block the network.
     register int tmp01 = A[i+1];
     register int tmp02 = A[i+2];
     register int tmp03 = A[i+3];
@@ -52,7 +51,6 @@ kernel_memcpy(int * A, int * B, int N) {
     register int tmp15 = A[i+15];
     asm volatile("": : :"memory");
     B[i+0] = tmp00;
-    bsg_fence();  // this fence makes sure that next packets don't block the network.
     B[i+1] = tmp01;
     B[i+2] = tmp02;
     B[i+3] = tmp03;
