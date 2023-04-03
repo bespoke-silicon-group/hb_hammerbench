@@ -82,7 +82,7 @@ class VcacheBloodGraph:
     self.end_cycle = 0
     for i in range(len(tags)):
       tag = tags[i]
-      cycle = cycles[i]
+      cycle = int(cycles[i])
       tag_type = (0xc0000000 & tag) >> 30
       # kernel start
       if tag_type == 2:

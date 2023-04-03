@@ -154,7 +154,7 @@ class CoreBloodGraph:
 
     for i in range(len(tags)):
       tag = tags[i]
-      cycle = cycles[i]
+      cycle = int(cycles[i])
       key = (xs[i], ys[i])
       tag_type = (0xc0000000 & tag) >> 30
     
