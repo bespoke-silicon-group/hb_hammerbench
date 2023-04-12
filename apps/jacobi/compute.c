@@ -2,6 +2,13 @@
 #include "bsg_cuda_lite_barrier.h"
 #include <stdbool.h>
 
+#ifndef HW_BARRIER
+#define BSG_TILE_GROUP_X_DIM bsg_tiles_X
+#define BSG_TILE_GROUP_Y_DIM bsg_tiles_Y
+#include "bsg_tile_group_barrier.h"
+INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier, 0, bsg_tiles_X-1, 0, bsg_tiles_Y-1);
+#endif
+
 __attribute__ ((always_inline)) 
 void copySelf(
   float bsg_attr_remote * bsg_attr_noalias src,
@@ -87,7 +94,11 @@ void compute (
   for (int ii = 0; ii < nz; ii += LOCAL_SIZE) {
 
     copySelf(dram_self, a_self, ii, nz);
+#ifdef HW_BARRIER
     bsg_barrier_hw_tile_group_sync();
+#else
+    bsg_tile_group_barrier(&r_barrier, &c_barrier);
+#endif
 
     // compute 4 at a time
     bsg_unroll(1)
@@ -186,7 +197,11 @@ void compute (
       dram_next[ii+i+3] = next3; 
     }
 
+#ifdef HW_BARRIER
     bsg_barrier_hw_tile_group_sync();
+#else
+    bsg_tile_group_barrier(&r_barrier, &c_barrier);
+#endif
 
   }
 }
