@@ -4,6 +4,14 @@
 #include <bsg_cuda_lite_barrier.h>
 #include "fft128.hpp"
 
+
+#ifndef HW_BARRIER
+#define BSG_TILE_GROUP_X_DIM bsg_tiles_X
+#define BSG_TILE_GROUP_Y_DIM bsg_tiles_Y
+#include "bsg_tile_group_barrier.h"
+INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier, 0, bsg_tiles_X-1, 0, bsg_tiles_Y-1);
+#endif
+
 // Cache warming function
 #ifdef WARM_CACHE
 #define CACHE_LINE_COMPLEX 8
@@ -60,13 +68,13 @@ kernel_fft(FP32Complex * bsg_attr_noalias in,
       twiddle_scaling(fft_workset, local_tw);
       store_strided(input_vec, fft_workset);
       bsg_fence();
+#ifdef HW_BARRIER
       bsg_barrier_hw_tile_group_sync();
+#else
+      bsg_tile_group_barrier(&r_barrier, &c_barrier);
+#endif
 
       // step 2
-      //tg_mem_square_transpose_inp(fft_workset, 128);
-      //bsg_barrier_hw_tile_group_sync();
-
-      // step 3
       input_vec = input_sq + (__bsg_id * NUM_POINTS);
       FP32Complex *output_sq = &out[i*N];
       FP32Complex *output_vec = output_sq + __bsg_id;
@@ -74,7 +82,11 @@ kernel_fft(FP32Complex * bsg_attr_noalias in,
       fft128_specialized(fft_workset);
       store_strided(output_vec, fft_workset);
       bsg_fence();
+#ifdef HW_BARRIER
       bsg_barrier_hw_tile_group_sync();
+#else
+      bsg_tile_group_barrier(&r_barrier, &c_barrier);
+#endif
     }
 
 
