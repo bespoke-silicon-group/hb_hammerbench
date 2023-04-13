@@ -94,6 +94,7 @@ void compute (
   for (int ii = 0; ii < nz; ii += LOCAL_SIZE) {
 
     copySelf(dram_self, a_self, ii, nz);
+    bsg_fence();
 #ifdef HW_BARRIER
     bsg_barrier_hw_tile_group_sync();
 #else
@@ -197,6 +198,7 @@ void compute (
       dram_next[ii+i+3] = next3; 
     }
 
+    bsg_fence();
 #ifdef HW_BARRIER
     bsg_barrier_hw_tile_group_sync();
 #else
