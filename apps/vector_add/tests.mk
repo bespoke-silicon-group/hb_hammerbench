@@ -1,3 +1,3 @@
 # vector-size, warm-cache
-TESTS += $(call test-name,16384,yes)
-TESTS += $(call test-name,16384,no)
+TESTS += $(call test-name,65536,yes)
+TESTS += $(call test-name,65536,no)
