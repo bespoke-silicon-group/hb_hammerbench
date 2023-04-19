@@ -86,4 +86,4 @@ regression: exec.log
 
 
 wave:
-	dve -full64 -vpd debug.vpd &
+	verdi -ssf debug.fsdb &
