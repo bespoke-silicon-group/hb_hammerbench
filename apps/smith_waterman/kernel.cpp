@@ -5,9 +5,7 @@
 #ifdef HB
 #include "bsg_manycore.h"
 #include "bsg_set_tile_x_y.h"
-#include "bsg_tile_group_barrier.hpp"
-
-bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
+#include "bsg_cuda_lite_barrier.h"
 #else
 #include "kernel_smith_waterman.hpp"
 #endif
@@ -60,7 +58,7 @@ inline void profile_end(){
 
 inline void sync(){
 #ifdef HB
-  barrier.sync();
+  bsg_barrier_hw_tile_group_sync();
 #endif
 }
 
@@ -233,7 +231,10 @@ void kernel_smith_waterman(
   const unsigned* sizeb,
   int* score
 ){
-        bsg_nonsynth_saif_start();
+    bsg_nonsynth_saif_start();
+#ifdef HB
+    bsg_barrier_hw_tile_group_init();
+#endif
   profile_start();
   // determine which alignments the tile does
   int tid = get_tid();

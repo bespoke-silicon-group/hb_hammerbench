@@ -55,8 +55,11 @@ int kernel_bs (int argc, char **argv) {
         bsg_pr_test_info("Running the CUDA Black-Scholes Kernel on a grid of %dx%d tile groups.\n\n", TILE_GROUP_DIM_X, TILE_GROUP_DIM_Y);
 
         // TODO: Set values
+#ifdef TWO_DIRS_UP
+        char *inputFile = "../../data/in_10M.txt";
+#else
         char *inputFile = "../data/in_10M.txt";
-
+#endif
         FILE *file;
         int rv;
 

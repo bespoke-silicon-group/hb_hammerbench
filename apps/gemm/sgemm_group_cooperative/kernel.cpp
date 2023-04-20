@@ -657,7 +657,7 @@ __attribute__((no_builtin("memcpy", "memset")))
         // End profiling
         bsg_barrier_hw_tile_group_sync();
         bsg_cuda_print_stat_kernel_end();
-
+        bsg_fence();
         return 0;
 }
 

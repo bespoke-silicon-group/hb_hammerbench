@@ -123,7 +123,7 @@ int kernel_jacobi (int argc, char **argv) {
     * Define tg_dim_x/y: number of tiles in each tile group
     * Calculate grid_dim_x/y: number of tile groups needed based on block_size_x/y
     ******************************************************************************************************************/
-    hb_mc_dimension_t tg_dim = { .x = 16, .y = 8};
+    hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
     hb_mc_dimension_t grid_dim = { .x = 1, .y = 1};
 
     /*****************************************************************************************************************
@@ -136,9 +136,13 @@ int kernel_jacobi (int argc, char **argv) {
     BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_jacobi", CUDA_ARGC, cuda_argv));
 
     // Launch kernel.
+#ifdef TRACE_ENABLE
     hb_mc_manycore_trace_enable((&device)->mc);
+#endif
     BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(&device));
+#ifdef TRACE_ENABLE
     hb_mc_manycore_trace_disable((&device)->mc);
+#endif
 
     // Bring back Anext to host.
     hb_mc_dma_dtoh_t dtoh_job [] = {

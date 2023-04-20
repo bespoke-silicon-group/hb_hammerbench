@@ -170,7 +170,6 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
 
-
 C_ARGS   ?= -n $(NBODIES) -steps 1 -t 1 -phase $(PHASE) -px $(POD_ID_X) -py $(POD_ID_Y) -npx $(NPODS_X) -npy $(NPODS_Y)
 
 SIM_ARGS ?=
@@ -227,17 +226,17 @@ RANGE_PODS_Y := $(call range,0,$(NPODS_Y))
 # Forces, 8192 Bodies, 64 pods
 $(foreach x,$(RANGE_PODS_X),\
 $(foreach y,$(RANGE_PODS_Y),\
-$(eval FORCES_TEST_8192 += $(call test-name,forces,$x,$y,8192,8,8))))
+$(eval FORCES_TEST_8192 += $(call test-name,forces,$x,$y,8192,$(NPODS_X),$(NPODS_Y)))))
 
 # Forces, 16384 Bodies, 64 pods
 $(foreach x,$(RANGE_PODS_X),\
 $(foreach y,$(RANGE_PODS_Y),\
-$(eval FORCES_TEST_16384 += $(call test-name,forces,$x,$y,16384,8,8))))
+$(eval FORCES_TEST_16384 += $(call test-name,forces,$x,$y,16384,$(NPODS_X),$(NPODS_Y)))))
 
 # Forces, 32768 Bodies, 64 pods
 $(foreach x,$(RANGE_PODS_X),\
 $(foreach y,$(RANGE_PODS_Y),\
-$(eval FORCES_TEST_32768 += $(call test-name,forces,$x,$y,32768,8,8))))
+$(eval FORCES_TEST_32768 += $(call test-name,forces,$x,$y,32768,$(NPODS_X),$(NPODS_Y)))))
 
 go: $(FORCES_TEST_8192) $(FORCES_TEST_16384) $(FORCES_TEST_32768)
 

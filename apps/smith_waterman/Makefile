@@ -46,6 +46,9 @@
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
+TILE_GROUP_DIM_X ?= 16
+TILE_GROUP_DIM_Y ?= 8
+
 SPMD_SRC_PATH = $(BSG_MANYCORE_DIR)/software/spmd
 CUDALITE_SRC_PATH = $(SPMD_SRC_PATH)/bsg_cuda_lite_runtime
 
@@ -60,6 +63,8 @@ KERNEL_NAME = smith_waterman
 TEST_SOURCES = main.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
+DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
+DEFINES += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CDEFINES +=
 CXXDEFINES +=
 
@@ -92,8 +97,6 @@ RISCV_CCPPFLAGS += -D__KERNEL__
 
 kernel.riscv: kernel.rvo
 
-TILE_GROUP_DIM_X ?= 16
-TILE_GROUP_DIM_Y ?= 8
 RISCV_DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X)
 RISCV_DEFINES += -DTILE_GROUP_DIM_Y=$(TILE_GROUP_DIM_Y)
 RISCV_DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
@@ -110,6 +113,9 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
 C_ARGS ?= $(BSG_MANYCORE_KERNELS) $(KERNEL_NAME)
+C_ARGS += $(HB_HAMMERBENCH_PATH)/apps/smith_waterman/data/dna-query32.fasta
+C_ARGS += $(HB_HAMMERBENCH_PATH)/apps/smith_waterman/data/dna-reference32.fasta
+C_ARGS += $(HB_HAMMERBENCH_PATH)/apps/smith_waterman/data/output32
 
 SIM_ARGS ?=
 

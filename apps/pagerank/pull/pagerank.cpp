@@ -10,8 +10,14 @@ using hammerblade::Vector;
 using hammerblade::GraphHB;
 using hammerblade::GlobalScalar;
 
-#define X 16
-#define Y 8
+#ifndef bsg_tiles_X
+#error "define bsg_tiles_X"
+#endif
+#ifndef bsg_tiles_Y
+#errror "define bsg_tiles_Y"
+#endif
+#define X bsg_tiles_X
+#define Y bsg_tiles_Y
 
 GraphHB edges;
 Vector<float> old_rank_dev;
@@ -311,9 +317,13 @@ int launch(int argc, char * argv[]){
 
                 device->enqueueJob(kernel_function.c_str(), hb_mc_dimension(X,Y),{edges.getInIndicesAddr(), edges.getInNeighborsAddr(), out_degree_dev.getAddr(), old_rank_dev.getAddr(), new_rank_dev.getAddr(), contrib_dev.getAddr(), contrib_new_dev.getAddr(), rows_in_pod});
                 uint64_t start_cycle = device->getCycle();
+#ifdef TRACE_ENABLE
                 hb_mc_manycore_trace_enable(device->getDevice()->mc);
+#endif
                 device->runJobs();
+#ifdef TRACE_ENABLE
                 hb_mc_manycore_trace_disable(device->getDevice()->mc);
+#endif
                 uint64_t end_cycle = device->getCycle();
                 std::cerr << "Finished. Execution Cycles: " << (end_cycle - start_cycle) << std::endl;
         }

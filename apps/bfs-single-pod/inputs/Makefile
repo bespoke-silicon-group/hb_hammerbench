@@ -4,6 +4,7 @@ u10k8-link  := https://drive.google.com/uc?id=127ZnCdQg4xmgJtrck9uzj5xmQcwDJNx6
 g10k8-link  := https://drive.google.com/uc?id=1iu3uKe-QGHLgHt-PbYfKxQtDjaFidVZk
 u16k16-link := https://drive.google.com/uc?id=10klumtpAqpSRJD43tc3eDivyTw9SlAdm
 g16k16-link := https://drive.google.com/uc?id=1RhNjC2m_m2OEExF7j2BN0YhHJZfJ3U9W
+u15k16-link := https://drive.google.com/uc?id=1ELhY4E_GPSKA-oO_q3F9csO0gBhbjoDN
 %.mtx:
 	gdown $($*-link)
 	tar zxf $*.mtx.tar.gz

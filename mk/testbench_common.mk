@@ -63,3 +63,22 @@ pchistpdf: $(addsuffix .pchistpdf,$(TESTS))
 purge:
 	rm -rf $(TESTS_DIRS)
 
+.PHONY: pod-size-summary
+.PHONY: pod-size-stall-breakdown
+ifeq ($(EX16X8),y)
+DOEX16X8 ?= exclude-16x8
+else
+DOEX16X8 ?= no
+endif
+
+pod-size-summary:
+	python3 $(HB_HAMMERBENCH_PATH)/py/pod-size-summary.py $(DOEX16X8)  $(TESTS_DIRS)
+
+pod-size-stall-breakdown:
+	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/ python3 \
+	$(HB_HAMMERBENCH_PATH)/py/pod-size-stall-breakdown.py \
+	$(TESTS_DIRS)
+	PYTHONPATH=$(BSG_MANYCORE_DIR)/software/py/ python3 \
+	$(HB_HAMMERBENCH_PATH)/py/pod-size-vcache-stall-breakdown.py \
+	$(TESTS_DIRS)
+
