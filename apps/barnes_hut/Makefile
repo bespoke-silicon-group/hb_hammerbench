@@ -95,7 +95,7 @@ INCLUDES += -I$(shell llvm-config-11-64  --includedir) -I$(BARNES_HUT_PATH)/.
 FLAGS     = -O3 -g -Wall -Wno-unused-function -Wno-unused-variable -Wno-strict-aliasing -Wno-deprecated-declarations
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++17 $(FLAGS) 
-LDFLAGS  = -lpthread -Wl,-rpath=$(BARNES_HUT_PATH)/Galois/install/lib64 -L$(BARNES_HUT_PATH)/Galois/install/lib64 -lgalois_shmem -lnuma $(shell llvm-config-11-64 --ldflags --libs)
+LDFLAGS  = -lpthread -Wl,-rpath=$(BARNES_HUT_PATH)/Galois/install/lib64 -L$(BARNES_HUT_PATH)/Galois/install/lib64 -lgalois_shmem  $(shell llvm-config-11-64 --ldflags --libs)
 
 main.so: $(BARNES_HUT_PATH)/Galois/install/lib64/libgalois_shmem.so
 
@@ -130,10 +130,10 @@ update.rvo: RISCV_CXX = $(RISCV_CLANGXX)
 build.rvo: RISCV_CXX = $(RISCV_CLANGXX)
 
 # use comments to switch different implementations
-#forces_dmem_stack.rvo: RISCV_CXX = $(RISCV_GCC)
-#kernel.riscv: forces_dmem_stack.rvo
-forces.rvo: RISCV_CXX = $(RISCV_GCC)
-kernel.riscv: forces.rvo
+forces_dmem_stack.rvo: RISCV_CXX = $(RISCV_GCC)
+kernel.riscv: forces_dmem_stack.rvo
+#forces.rvo: RISCV_CXX = $(RISCV_GCC)
+#kernel.riscv: forces.rvo
 
 kernel.riscv: update.rvo
 kernel.riscv: summarize.rvo
