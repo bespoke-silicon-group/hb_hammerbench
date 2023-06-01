@@ -99,9 +99,12 @@ extern "C" void forces(Config *pcfg, HBOctree *proot, HBBody *HBBodies, int nBod
                           // child is leaf;
                           if (children[i] != static_cast<HBNode *>(pcurb)) {
                             // child is not self;
-                            delta = (curb.pos - children[i]->pos);
+                            Point child_pos = children[i]->pos;
+                            float child_mass = children[i]->mass;
+                            asm volatile("": : :"memory");
+                            delta = (curb.pos - child_pos);
                             distsq = delta.dist2();
-                            curb.acc += updateForce(cfg, delta, distsq, children[i]->mass);
+                            curb.acc += updateForce(cfg, delta, distsq, child_mass);
                           }
                         } else {
                           // child is internal node;
