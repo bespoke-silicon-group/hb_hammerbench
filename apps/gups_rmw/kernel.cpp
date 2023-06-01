@@ -44,7 +44,6 @@ kernel_gups_rmw(int * dram_A, int * dram_X, int num_update) {
   bsg_cuda_print_stat_kernel_start();
   bsg_fence();
 
-  #define NUM_ITER 8
   for (int iter = 0; iter < NUM_ITER; iter++) {
     for (int i = 0; i < num_update; i += CONCURRENCY) {
       int reg_x[CONCURRENCY];
