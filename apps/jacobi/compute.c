@@ -1,6 +1,7 @@
 #include <bsg_manycore.h>
 #include "bsg_cuda_lite_barrier.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 __attribute__ ((always_inline)) 
 void copySelf(
@@ -67,8 +68,67 @@ void copySelf(
   } else {
     dst[LOCAL_SIZE+1] = src[start_idx+LOCAL_SIZE];
   }
-  
 }
+
+
+
+__attribute__ ((always_inline)) 
+void prefetch_dram(
+  float bsg_attr_remote * bsg_attr_noalias a_left,
+  float bsg_attr_remote * bsg_attr_noalias a_right,
+  float bsg_attr_remote * bsg_attr_noalias a_up,
+  float bsg_attr_remote * bsg_attr_noalias a_down,
+  int start_idx
+)
+{
+  if (((uintptr_t) a_left) & 0x80000000) {
+    float bsg_attr_remote * bsg_attr_noalias ptr = &a_left[start_idx];
+    int idx = (__bsg_id % (LOCAL_SIZE/16)) * 16;
+    bsg_unroll(1)
+    for (int i = 0; i < (LOCAL_SIZE/16); i++) {
+      asm volatile ("lw x0, %[p]" :: [p] "m" (ptr[idx]));
+      idx = (idx + 16) % LOCAL_SIZE;
+    }
+  }
+  asm volatile("": : :"memory");
+
+  if (((uintptr_t) a_right) & 0x80000000) {
+    float bsg_attr_remote * bsg_attr_noalias ptr = &a_right[start_idx];
+    int idx = (__bsg_id % (LOCAL_SIZE/16)) * 16;
+    bsg_unroll(1)
+    for (int i = 0; i < (LOCAL_SIZE/16); i++) {
+      asm volatile ("lw x0, %[p]" :: [p] "m" (ptr[idx]));
+      idx = (idx + 16) % LOCAL_SIZE;
+    }
+  }
+  asm volatile("": : :"memory");
+
+  if (((uintptr_t) a_up) & 0x80000000) {
+    float bsg_attr_remote * bsg_attr_noalias ptr = &a_up[start_idx];
+    int idx = (__bsg_id % (LOCAL_SIZE/16)) * 16;
+    bsg_unroll(1)
+    for (int i = 0; i < (LOCAL_SIZE/16); i++) {
+      asm volatile ("lw x0, %[p]" :: [p] "m" (ptr[idx]));
+      idx = (idx + 16) % LOCAL_SIZE;
+    }
+  }
+  asm volatile("": : :"memory");
+
+  if (((uintptr_t) a_down) & 0x80000000) {
+    float bsg_attr_remote * bsg_attr_noalias ptr = &a_down[start_idx];
+    int idx = (__bsg_id % (LOCAL_SIZE/16)) * 16;
+    bsg_unroll(1)
+    for (int i = 0; i < (LOCAL_SIZE/16); i++) {
+      asm volatile ("lw x0, %[p]" :: [p] "m" (ptr[idx]));
+      idx = (idx + 16) % LOCAL_SIZE;
+    }
+  }
+  asm volatile("": : :"memory");
+}
+
+
+
+
 
 void compute (
   int c0, int c1,
@@ -84,9 +144,12 @@ void compute (
 
   float c0f = (float) c0;
   float c1f = (float) c1;
+  bsg_unroll(1)
   for (int ii = 0; ii < nz; ii += LOCAL_SIZE) {
 
     copySelf(dram_self, a_self, ii, nz);
+    prefetch_dram(a_left, a_right, a_up, a_down, ii);
+    bsg_fence();
     bsg_barrier_hw_tile_group_sync();
 
     // compute 4 at a time
@@ -185,7 +248,7 @@ void compute (
       dram_next[ii+i+2] = next2; 
       dram_next[ii+i+3] = next3; 
     }
-
+    bsg_fence();
     bsg_barrier_hw_tile_group_sync();
 
   }

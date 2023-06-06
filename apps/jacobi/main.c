@@ -136,9 +136,9 @@ int kernel_jacobi (int argc, char **argv) {
     BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_jacobi", CUDA_ARGC, cuda_argv));
 
     // Launch kernel.
-    hb_mc_manycore_trace_enable((&device)->mc);
+    //hb_mc_manycore_trace_enable((&device)->mc);
     BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(&device));
-    hb_mc_manycore_trace_disable((&device)->mc);
+    //hb_mc_manycore_trace_disable((&device)->mc);
 
     // Bring back Anext to host.
     hb_mc_dma_dtoh_t dtoh_job [] = {
