@@ -200,74 +200,86 @@ extern "C" int kernel(
     d++;
 
     // Determine direction;
-    if (g_rev_not_fwd) {
-      bsg_barrier_hw_tile_group_sync();
-      // switch rev -> fwd?
-      if (__bsg_id == 0) {
-        g_rev_not_fwd = (g_curr_frontier_size >= V/20);
-        bsg_fence();
-      }
-    } else {
-      // switch fwd -> rev?
-      if (__bsg_id == 0) {
-        g_mf = 0;
-        g_mu = 0;
-        bsg_fence();
-      }
-      bsg_barrier_hw_tile_group_sync();
-
-      // count mf;
-      int l_curr_frontier_size = g_curr_frontier_size;
-      int mf_local = 0;
-      bsg_unroll(1)
-      for (int i = __bsg_id; i < l_curr_frontier_size; i+=bsg_tiles_X*bsg_tiles_Y) {
-        int src = sparse_frontier[i];
-        mf_local += (fwd_offsets[src+1] - fwd_offsets[src]);
-      }
-      bsg_amoadd(&g_mf, mf_local);
-
-      // count mu;
-      int mu_local = 0;
-      bsg_unroll(1)
-      for (int v_start = __bsg_id*BLOCK_SIZE; v_start < V; v_start+=bsg_tiles_X*bsg_tiles_Y*BLOCK_SIZE) {
-        int v = v_start;
-        int stop = std::min(V, v_start+BLOCK_SIZE);
-
-        // unroll by 2
-        #define MU_UNROLL 2
-        for (; v+MU_UNROLL<=stop; v+=MU_UNROLL) {
-          register int l_distance0[MU_UNROLL];
-          register int l_fwd_offsets[MU_UNROLL+1];
-          l_distance0[0] = distance[v];
-          l_distance0[1] = distance[v+1];
-          asm volatile("": : :"memory");
-          l_fwd_offsets[0] = fwd_offsets[v];
-          l_fwd_offsets[1] = fwd_offsets[v+1];
-          l_fwd_offsets[2] = fwd_offsets[v+2];
-          asm volatile("": : :"memory");
-          if (l_distance0[0] == -1) {
-            mu_local += l_fwd_offsets[1]-l_fwd_offsets[0];
-          }     
-          if (l_distance0[1] == -1) {
-            mu_local += l_fwd_offsets[2]-l_fwd_offsets[1];
-          }     
+    if (d != 1) {
+      if (g_rev_not_fwd) {
+        bsg_barrier_hw_tile_group_sync();
+        // switch rev -> fwd?
+        if (__bsg_id == 0) {
+          g_rev_not_fwd = (g_curr_frontier_size >= V/20);
+          bsg_fence();
         }
+      } else {
+        // switch fwd -> rev?
+        if (__bsg_id == 0) {
+          g_mf = 0;
+          g_mu = 0;
+          bsg_fence();
+        }
+        bsg_barrier_hw_tile_group_sync();
+
+        // count mf;
+        int l_curr_frontier_size = g_curr_frontier_size;
+        int mf_local = 0;
+        bsg_unroll(1)
+        for (int i = __bsg_id; i < l_curr_frontier_size; i+=bsg_tiles_X*bsg_tiles_Y) {
+          int src = sparse_frontier[i];
+          mf_local += (fwd_offsets[src+1] - fwd_offsets[src]);
+        }
+        bsg_amoadd(&g_mf, mf_local);
+
+        // count mu;
+        int mu_local = 0;
+        bsg_unroll(1)
+        for (int v_start = __bsg_id*BLOCK_SIZE; v_start < V; v_start+=bsg_tiles_X*bsg_tiles_Y*BLOCK_SIZE) {
+          int v = v_start;
+          int stop = std::min(V, v_start+BLOCK_SIZE);
+
+          // unroll by 2
+          #define MU_UNROLL 4
+          for (; v+MU_UNROLL<=stop; v+=MU_UNROLL) {
+            register int l_distance0[MU_UNROLL];
+            register int l_fwd_offsets[MU_UNROLL+1];
+            l_distance0[0] = distance[v];
+            l_distance0[1] = distance[v+1];
+            l_distance0[2] = distance[v+2];
+            l_distance0[3] = distance[v+3];
+            asm volatile("": : :"memory");
+            l_fwd_offsets[0] = fwd_offsets[v];
+            l_fwd_offsets[1] = fwd_offsets[v+1];
+            l_fwd_offsets[2] = fwd_offsets[v+2];
+            l_fwd_offsets[3] = fwd_offsets[v+3];
+            l_fwd_offsets[4] = fwd_offsets[v+4];
+            asm volatile("": : :"memory");
+            if (l_distance0[0] == -1) {
+              mu_local += l_fwd_offsets[1]-l_fwd_offsets[0];
+            }     
+            if (l_distance0[1] == -1) {
+              mu_local += l_fwd_offsets[2]-l_fwd_offsets[1];
+            }     
+            if (l_distance0[2] == -1) {
+              mu_local += l_fwd_offsets[3]-l_fwd_offsets[2];
+            }     
+            if (l_distance0[3] == -1) {
+              mu_local += l_fwd_offsets[4]-l_fwd_offsets[3];
+            }     
+          }
         
-        // unroll by 1;
-        for (; v < stop; v++) {
-          if (distance[v] == -1) {
-            mu_local += fwd_offsets[v+1]-fwd_offsets[v];
+          // unroll by 1;
+          for (; v < stop; v++) {
+            if (distance[v] == -1) {
+              mu_local += fwd_offsets[v+1]-fwd_offsets[v];
+            }
           }
         }
-      }
 
-      bsg_amoadd(&g_mu, mu_local);
-      bsg_fence();
-      bsg_barrier_hw_tile_group_sync();
-      
-      if (__bsg_id == 0) {
-        g_rev_not_fwd = g_mf > (g_mu/20);
+        bsg_amoadd(&g_mu, mu_local);
         bsg_fence();
+        bsg_barrier_hw_tile_group_sync();
+      
+        if (__bsg_id == 0) {
+          g_rev_not_fwd = g_mf > (g_mu/20);
+          bsg_fence();
+        }
       }
     }
 
@@ -353,8 +365,8 @@ extern "C" int kernel(
             int nz_start = rev_offsets[v];
             int nz_stop = rev_offsets[v+1];
             for (int nz = nz_start; nz < nz_stop; nz++) {
-              int src = rev_nonzeros[nz];
-              if (is_in_dense(src, curr_dense_frontier)) {
+              int src0 = rev_nonzeros[nz];
+              if (is_in_dense(src0, curr_dense_frontier)) {
                 distance[v] = d;
                 insert_into_dense(v, next_dense_frontier);
                 break;
