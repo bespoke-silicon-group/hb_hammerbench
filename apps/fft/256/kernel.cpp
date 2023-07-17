@@ -50,21 +50,23 @@ kernel_fft(FP32Complex * bsg_attr_noalias  in,
 
     bsg_cuda_print_stat_kernel_start();
 
+
     for (int i = 0; i < num_iter; i++) {
       FP32Complex *input_sq  = &in[i*N];
       // Step 1
       for (int iter = 0; iter < (NUM_POINTS/NUM_TILES); iter++) {
-        FP32Complex* input_vec = input_sq + (iter*NUM_TILES) + __bsg_id;
-        // load strided
-        load_strided(fft_workset, input_vec);
+        int c_id = ((iter*NUM_TILES)+__bsg_id);
+        int r_id = c_id*NUM_POINTS;
+        FP32Complex* input_vec = input_sq + r_id;
+        // load sequential
+        load_sequential(fft_workset, input_vec);
         // fft256
         fft256_specialized(fft_workset);
-        // twiddle scaling
-        twiddle_scaling(fft_workset, tw+(((iter*NUM_TILES)+__bsg_id)*NUM_POINTS));
-        // store strided
-        store_strided(input_vec, fft_workset);
+        // store sequential
+        store_sequential(input_vec, fft_workset);
       }
       asm volatile("": : :"memory");
+      bsg_fence();
       bsg_barrier_hw_tile_group_sync();
 
 
@@ -72,15 +74,20 @@ kernel_fft(FP32Complex * bsg_attr_noalias  in,
       // step 2
       FP32Complex *output_sq = &out[i*N];
       for (int iter = 0; iter < (NUM_POINTS/NUM_TILES); iter++) {
-        FP32Complex* input_vec = input_sq + (((iter * NUM_TILES) + __bsg_id) * NUM_POINTS);
-        FP32Complex* output_vec = output_sq + (iter * NUM_TILES) + __bsg_id;
-        // load sequential
-        load_sequential(fft_workset, input_vec);
+        int c_id = ((iter*NUM_TILES)+__bsg_id);
+        int r_id = c_id*NUM_POINTS;
+        FP32Complex* input_vec = input_sq + c_id;
+        FP32Complex* output_vec = output_sq + c_id;
+        // load stride
+        load_strided(fft_workset, input_vec);
         // fft256
         fft256_specialized(fft_workset);
+        // twiddle scaling
+        twiddle_scaling(fft_workset, tw+r_id);
         // store strided
         store_strided(output_vec, fft_workset);
       }
+      bsg_fence();
       bsg_barrier_hw_tile_group_sync();
     }
 

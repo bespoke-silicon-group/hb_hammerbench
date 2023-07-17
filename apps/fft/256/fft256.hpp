@@ -166,6 +166,21 @@ store_strided(FP32Complex *dst, const FP32Complex *src) {
 
 
 inline void
+store_sequential(FP32Complex *dst, const FP32Complex *src) {
+    for (int i = 0; i < NUM_POINTS; i += 4) {
+        FP32Complex tmp0 = src[i    ];
+        FP32Complex tmp1 = src[i + 1];
+        FP32Complex tmp2 = src[i + 2];
+        FP32Complex tmp3 = src[i + 3];
+        asm volatile("": : :"memory");
+        dst[i    ] = tmp0;
+        dst[i + 1] = tmp1;
+        dst[i + 2] = tmp2;
+        dst[i + 3] = tmp3;
+    }
+}
+
+inline void
 opt_bit_reverse(FP32Complex *list) {
   #define REV_UNROLL 2
   for (int i = 0; i < NUM_REVERSE*2; i+=REV_UNROLL*2) {
