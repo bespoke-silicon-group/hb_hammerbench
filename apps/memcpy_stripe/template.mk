@@ -13,6 +13,8 @@
 ###############################################################################
 include parameters.mk
 include app_path.mk
+tile-x=16
+tile-y=8
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel 
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
@@ -34,7 +36,9 @@ vpath %.cpp $(APP_PATH)
 TEST_SOURCES = main.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
-DEFINES += -DSIZE=$(buffer-size)
+DEFINES += -DDEPTH=$(depth)
+DEFINES += -DSTRIPE=$(stripe)
+DEFINES += -DNUM_ITER=$(num-iter)
 CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CDEFINES += -DCACHE_LINE_WORDS=$(BSG_MACHINE_VCACHE_LINE_WORDS)
 CXXDEFINES +=
@@ -65,10 +69,12 @@ include $(EXAMPLES_PATH)/link.mk
 # be built before executing.
 
 RISCV_CCPPFLAGS += -O3 -std=c++14
+RISCV_CCPPFLAGS += -DDEPTH=$(depth)
+RISCV_CCPPFLAGS += -DSTRIPE=$(stripe)
+RISCV_CCPPFLAGS += -DNUM_ITER=$(num-iter)
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_CCPPFLAGS += -DCACHE_LINE_WORDS=$(BSG_MACHINE_VCACHE_LINE_WORDS)
-RISCV_CCPPFLAGS += -DSTRIPE=$(stripe)
 ifeq ($(warm-cache),yes)
 RISCV_CCPPFLAGS += -DWARM_CACHE
 endif

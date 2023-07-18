@@ -4,14 +4,13 @@ HB_HAMMERBENCH_PATH = $(shell git rev-parse --show-toplevel)
 all: generate
 
 # call to generate a test name
-test-name = tile-x_$(1)__tile-y_$(2)__buffer-size_$(3)__warm-cache_$(4)__stripe_$(5)
+test-name = depth_$(1)__stripe_$(2)__num-iter_$(3)__warm-cache_$(4)
 
 # call to get parameter from test name
-get-tile-x = $(lastword $(subst _, ,$(filter tile-x_%,$(subst __, ,$(1)))))
-get-tile-y = $(lastword $(subst _, ,$(filter tile-y_%,$(subst __, ,$(1)))))
-get-buffer-size = $(lastword $(subst _, ,$(filter buffer-size_%,$(subst __, ,$(1)))))
-get-warm-cache = $(lastword $(subst _, ,$(filter warm-cache_%,$(subst __, ,$(1)))))
+get-depth = $(lastword $(subst _, ,$(filter depth_%,$(subst __, ,$(1)))))
 get-stripe = $(lastword $(subst _, ,$(filter stripe_%,$(subst __, ,$(1)))))
+get-num-iter = $(lastword $(subst _, ,$(filter num-iter_%,$(subst __, ,$(1)))))
+get-warm-cache = $(lastword $(subst _, ,$(filter warm-cache_%,$(subst __, ,$(1)))))
 
 # defines tests
 TESTS =
@@ -24,16 +23,10 @@ $(addsuffix /parameters.mk,$(TESTS_DIRS)): %/parameters.mk:
 	@mkdir -p $(dir $@)
 	@touch $@
 	@echo test-name  = $* >> $@
-	@echo tile-x = $(call get-tile-x,$*) >> $@
-	@echo tile-y = $(call get-tile-y,$*) >> $@
-	@echo buffer-size = $(call get-buffer-size,$*) >> $@
-	@echo warm-cache = $(call get-warm-cache,$*) >> $@
+	@echo depth = $(call get-depth,$*) >> $@
 	@echo stripe = $(call get-stripe,$*) >> $@
+	@echo num-iter = $(call get-num-iter,$*) >> $@
+	@echo warm-cache = $(call get-warm-cache,$*) >> $@
 
 include $(HB_HAMMERBENCH_PATH)/mk/testbench_common.mk
-
-# for regression
-EXECUTION_DIRS := $(addprefix $(APP_PATH)/,$(TESTS_DIRS))
-include $(HB_HAMMERBENCH_PATH)/apps/common_complex.mk
-
 

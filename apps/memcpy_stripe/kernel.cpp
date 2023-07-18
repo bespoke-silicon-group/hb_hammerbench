@@ -27,20 +27,27 @@ kernel_memcpy(float * A, float * B, int N) {
   bsg_barrier_hw_tile_group_sync();
   bsg_cuda_print_stat_kernel_start();
 
+  int word_per_iter = N / NUM_ITER;
 
-  for (int i  = __bsg_id*STRIPE; i < N; i += bsg_tiles_X*bsg_tiles_Y*STRIPE) {
-    register float temp[STRIPE];
-    bsg_unroll(STRIPE)
-    for (int j = 0; j < STRIPE; j++) {
-      temp[j] = A[i+j];
-    }
-    asm volatile("": : :"memory");
+  bsg_unroll(1)
+  for (int i = 0; i < NUM_ITER; i++) {
+    float * currA = &A[i*word_per_iter];
+    float * currB = &B[i*word_per_iter];
+    bsg_unroll(1)
+    for (int r = STRIPE*__bsg_id; r < word_per_iter; r+=bsg_tiles_X*bsg_tiles_Y*STRIPE) {
+      register float temp[STRIPE];
+      bsg_unroll(STRIPE)
+      for (int j = 0; j < STRIPE; j++) {
+        temp[j] = currA[r+j];
+      }
+      asm volatile("": : :"memory");
 
-    bsg_unroll(STRIPE)
-    for (int j = 0; j < STRIPE; j++) {
-      B[i+j] = temp[j];
+      bsg_unroll(STRIPE)
+      for (int j = 0; j < STRIPE; j++) {
+        currB[r+j] = temp[j];
+      }
+      asm volatile("": : :"memory");
     }
-    asm volatile("": : :"memory");
   }
 
   bsg_fence();
