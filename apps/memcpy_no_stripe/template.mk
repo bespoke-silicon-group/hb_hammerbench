@@ -13,6 +13,8 @@
 ###############################################################################
 include parameters.mk
 include app_path.mk
+tile-x=16
+tile-y=8
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel 
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
@@ -37,6 +39,8 @@ DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 DEFINES += -DSIZE=$(buffer-size)
 CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CDEFINES += -DCACHE_LINE_WORDS=$(BSG_MACHINE_VCACHE_LINE_WORDS)
+CDEFINES += -DWIDTH=$(width)
+CDEFINES += -DNUM_ITER=$(num-iter)
 CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
@@ -68,6 +72,8 @@ RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_CCPPFLAGS += -DCACHE_LINE_WORDS=$(BSG_MACHINE_VCACHE_LINE_WORDS)
+RISCV_CCPPFLAGS += -DWIDTH=$(width)
+RISCV_CCPPFLAGS += -DNUM_ITER=$(num-iter)
 ifeq ($(warm-cache),yes)
 RISCV_CCPPFLAGS += -DWARM_CACHE
 endif

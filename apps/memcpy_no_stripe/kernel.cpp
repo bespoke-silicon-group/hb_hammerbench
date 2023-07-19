@@ -27,46 +27,32 @@ kernel_memcpy(float * A, float * B, int N) {
   int num_words = N / (bsg_tiles_X*bsg_tiles_Y);
   bsg_barrier_hw_tile_group_sync();
   bsg_cuda_print_stat_kernel_start();
-  
-  # define UNROLL 16
-  int start = __bsg_id * num_words;
-  float * myA = &A[start];
-  float * myB = &B[start];
-  for (int i = 0; i < num_words; i+=UNROLL) {
-    register float tmp00 = myA[i+0];
-    register float tmp01 = myA[i+1];
-    register float tmp02 = myA[i+2];
-    register float tmp03 = myA[i+3];
-    register float tmp04 = myA[i+4];
-    register float tmp05 = myA[i+5];
-    register float tmp06 = myA[i+6];
-    register float tmp07 = myA[i+7];
-    register float tmp08 = myA[i+8];
-    register float tmp09 = myA[i+9];
-    register float tmp10 = myA[i+10];
-    register float tmp11 = myA[i+11];
-    register float tmp12 = myA[i+12];
-    register float tmp13 = myA[i+13];
-    register float tmp14 = myA[i+14];
-    register float tmp15 = myA[i+15];
-    asm volatile("": : :"memory");
-    myB[i+0] = tmp00;
-    myB[i+1] = tmp01;
-    myB[i+2] = tmp02;
-    myB[i+3] = tmp03;
-    myB[i+4] = tmp04;
-    myB[i+5] = tmp05;
-    myB[i+6] = tmp06;
-    myB[i+7] = tmp07;
-    myB[i+8] = tmp08;
-    myB[i+9] = tmp09;
-    myB[i+10] = tmp10;
-    myB[i+11] = tmp11;
-    myB[i+12] = tmp12;
-    myB[i+13] = tmp13;
-    myB[i+14] = tmp14;
-    myB[i+15] = tmp15;
+
+
+  float *myA = &A[__bsg_id*WIDTH];
+  float *myB = &B[__bsg_id*WIDTH];
+
+  bsg_unroll(1)
+  for (int i = 0; i < NUM_ITER; i++) {
+    bsg_unroll(1)
+    for (int j = 0; j < WIDTH; j+=CACHE_LINE_WORDS) {
+      register float temp[CACHE_LINE_WORDS];  
+
+      bsg_unroll(CACHE_LINE_WORDS)
+      for (int t = 0; t < CACHE_LINE_WORDS; t++) {
+        temp[t] = myA[j+t];
+      }
+
+      bsg_unroll(CACHE_LINE_WORDS)
+      for (int t = 0; t < CACHE_LINE_WORDS; t++) {
+        myB[j+t] = temp[t];
+      }
+    }
+    myA += (WIDTH*bsg_tiles_X*bsg_tiles_Y);
+    myB += (WIDTH*bsg_tiles_X*bsg_tiles_Y);
   }
+
+
 
   bsg_fence();
   bsg_cuda_print_stat_kernel_end();

@@ -17,10 +17,7 @@
 
 // How much memcpy to distribute (in # of words)??
 // You can change this value in Makefile.
-#ifndef SIZE
-Please define SIZE in Makefile.
-#endif
-
+#define SIZE (WIDTH*bsg_tiles_X*bsg_tiles_Y*NUM_ITER)
 
 int kernel_memcpy(int argc, char **argv) {
 
@@ -47,10 +44,10 @@ int kernel_memcpy(int argc, char **argv) {
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
     // Allocate a block of memory in host.
-    int A_host[SIZE];
-    int B_host[SIZE];
+    float A_host[SIZE];
+    float B_host[SIZE];
     for (int i = 0; i < SIZE; i++) {
-      A_host[i] = i;
+      A_host[i] = (float) i;
     }
 
     // Make it pod-cache aligned
@@ -119,7 +116,7 @@ int kernel_memcpy(int argc, char **argv) {
     BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, &dtoh_job, 1));
 
     for (int i = 0; i < SIZE; i++) {
-      if (B_host[i] != i) {
+      if (B_host[i] != (float) i) {
         printf("FAIL [%d] = %x\n", i, B_host[i]);
         BSG_CUDA_CALL(hb_mc_device_finish(&device));
         return HB_MC_FAIL;
