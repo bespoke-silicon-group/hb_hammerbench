@@ -27,26 +27,28 @@ kernel_memcpy(float * A, float * B, int N) {
   bsg_barrier_hw_tile_group_sync();
   bsg_cuda_print_stat_kernel_start();
 
-  int word_per_iter = N / NUM_ITER;
-
+  #define STRIDE (bsg_tiles_X*bsg_tiles_Y*STRIPE*NUM_ITER)
   bsg_unroll(1)
   for (int i = 0; i < NUM_ITER; i++) {
-    float * currA = &A[i*word_per_iter];
-    float * currB = &B[i*word_per_iter];
+    int start = ((i*bsg_tiles_X*bsg_tiles_Y)+__bsg_id)*STRIPE;
+    float * currA = &A[start];
+    float * currB = &B[start];
     bsg_unroll(1)
-    for (int r = STRIPE*__bsg_id; r < word_per_iter; r+=bsg_tiles_X*bsg_tiles_Y*STRIPE) {
+    for (int r = 0; r < DEPTH; r++) {
       register float temp[STRIPE];
       bsg_unroll(STRIPE)
       for (int j = 0; j < STRIPE; j++) {
-        temp[j] = currA[r+j];
+        temp[j] = currA[j];
       }
       asm volatile("": : :"memory");
 
       bsg_unroll(STRIPE)
       for (int j = 0; j < STRIPE; j++) {
-        currB[r+j] = temp[j];
+        currB[j] = temp[j];
       }
       asm volatile("": : :"memory");
+      currA += STRIDE;
+      currB += STRIDE;
     }
   }
 
