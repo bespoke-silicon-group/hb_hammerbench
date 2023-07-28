@@ -44,6 +44,9 @@
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+tile-x ?= 16
+tile-y ?= 8
+override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 BARNES_HUT_PATH := $(HB_HAMMERBENCH_PATH)/apps/barnes_hut
@@ -81,8 +84,8 @@ TEST_SOURCES  += BoilerPlate.cpp
 
 TEST_HEADERS = Node.hpp Point.hpp Body.hpp Config.hpp
 
-TILE_GROUP_DIM_X ?= 16
-TILE_GROUP_DIM_Y ?= 8
+TILE_GROUP_DIM_X ?= $(tile-x)
+TILE_GROUP_DIM_Y ?= $(tile-y)
 
 DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X)
 DEFINES += -DTILE_GROUP_DIM_Y=$(TILE_GROUP_DIM_Y)
@@ -95,7 +98,7 @@ INCLUDES += -I$(shell llvm-config-11-64  --includedir) -I$(BARNES_HUT_PATH)/.
 FLAGS     = -O3 -g -Wall -Wno-unused-function -Wno-unused-variable -Wno-strict-aliasing -Wno-deprecated-declarations
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++17 $(FLAGS) 
-LDFLAGS  = -lpthread -Wl,-rpath=$(BARNES_HUT_PATH)/Galois/install/lib64 -L$(BARNES_HUT_PATH)/Galois/install/lib64 -lgalois_shmem -lnuma $(shell llvm-config-11-64 --ldflags --libs)
+LDFLAGS  = -lpthread -Wl,-rpath=$(BARNES_HUT_PATH)/Galois/install/lib64 -L$(BARNES_HUT_PATH)/Galois/install/lib64 -lgalois_shmem  $(shell llvm-config-11-64 --ldflags --libs)
 
 main.so: $(BARNES_HUT_PATH)/Galois/install/lib64/libgalois_shmem.so
 
@@ -130,10 +133,10 @@ update.rvo: RISCV_CXX = $(RISCV_CLANGXX)
 build.rvo: RISCV_CXX = $(RISCV_CLANGXX)
 
 # use comments to switch different implementations
-#forces_dmem_stack.rvo: RISCV_CXX = $(RISCV_GCC)
-#kernel.riscv: forces_dmem_stack.rvo
-forces.rvo: RISCV_CXX = $(RISCV_GCC)
-kernel.riscv: forces.rvo
+forces_dmem_stack.rvo: RISCV_CXX = $(RISCV_GCC)
+kernel.riscv: forces_dmem_stack.rvo
+#forces.rvo: RISCV_CXX = $(RISCV_GCC)
+#kernel.riscv: forces.rvo
 
 kernel.riscv: update.rvo
 kernel.riscv: summarize.rvo
