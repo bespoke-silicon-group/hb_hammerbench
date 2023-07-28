@@ -33,6 +33,7 @@ inline void load_block( float* dst,
   bsg_unroll(1)
   for (int y = 0; y < BLOCK_DIM; y+=2) {
     register float tmp00 =  src[(N*y)+0];
+    bsg_fence();
     register float tmp01 =  src[(N*y)+1];
     register float tmp02 =  src[(N*y)+2];
     register float tmp03 =  src[(N*y)+3];
@@ -50,6 +51,7 @@ inline void load_block( float* dst,
     register float tmp15 =  src[(N*y)+15];
 
     register float tmp16 =  src[(N*(y+1))+0];
+    bsg_fence();
     register float tmp17 =  src[(N*(y+1))+1];
     register float tmp18 =  src[(N*(y+1))+2];
     register float tmp19 =  src[(N*(y+1))+3];
@@ -142,6 +144,7 @@ inline void store_block(float* dst) {
     register float tp31 =  block_out[(BLOCK_DIM*(y+1))+15];
     asm volatile ("" ::: "memory");
     dst[(N*y)+0] = tp00; 
+    bsg_fence();
     dst[(N*y)+1] = tp01; 
     dst[(N*y)+2] = tp02; 
     dst[(N*y)+3] = tp03; 
@@ -159,6 +162,7 @@ inline void store_block(float* dst) {
     dst[(N*y)+15] = tp15; 
 
     dst[(N*(y+1))+0] = tp16; 
+    bsg_fence();
     dst[(N*(y+1))+1] = tp17; 
     dst[(N*(y+1))+2] = tp18; 
     dst[(N*(y+1))+3] = tp19; 
