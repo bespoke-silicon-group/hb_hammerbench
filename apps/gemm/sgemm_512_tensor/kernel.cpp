@@ -178,60 +178,75 @@ inline void store_block(float* dst) {
 }
 
 static inline void compute_block() {
-  // float registers
-  //register float psum[SUB_DIM][SUB_DIM];
-  //register float vec1[SUB_DIM][2];
-  //register float vec2[2][SUB_DIM];
-
   bsg_unroll(1)
   for (int sy = 0; sy < BLOCK_DIM; sy += SUB_DIM) {
+    // sub block_out
+    float *sub_block_out = &block_out[(BLOCK_DIM*sy)];
+    // LD4.f32 (load accum 16x4)
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+      
     bsg_unroll(1)
-    for (int sx = 0; sx < BLOCK_DIM; sx += SUB_DIM) {
-      // sub block_out
-      float *sub_block_out = &block_out[(BLOCK_DIM*sy)+(sx)];
-
-      // load the psum (load accum)
-      asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      
-      bsg_unroll(1)
-      for (int sz = 0; sz < BLOCK_DIM*2; sz+=4) {
-        // load mat1
-        asm volatile ("flw f0, %[p]" :: [p] "m" (block1[(BLOCK_DIM*(sy+0))+sz]));
-        asm volatile ("flw f0, %[p]" :: [p] "m" (block1[(BLOCK_DIM*(sy+0))+sz]));
-        asm volatile ("flw f0, %[p]" :: [p] "m" (block1[(BLOCK_DIM*(sy+0))+sz]));
-        asm volatile ("flw f0, %[p]" :: [p] "m" (block1[(BLOCK_DIM*(sy+0))+sz]));
-        asm volatile ("" ::: "memory");
-        // load mat2
-        asm volatile ("flw f0, %[p]" :: [p] "m" (block2[(BLOCK_DIM*sz)+(sx)+0]));
-        asm volatile ("flw f0, %[p]" :: [p] "m" (block2[(BLOCK_DIM*sz)+(sx)+0]));
-        asm volatile ("flw f0, %[p]" :: [p] "m" (block2[(BLOCK_DIM*sz)+(sx)+0]));
-        asm volatile ("flw f0, %[p]" :: [p] "m" (block2[(BLOCK_DIM*sz)+(sx)+0]));
-        asm volatile ("" ::: "memory");
-        // matrix multiply
-        asm volatile ("nop" ::);
-        //asm volatile ("nop" ::);
-        //asm volatile ("nop" ::);
-        //asm volatile ("nop" ::);
-      }
-
-      // write back sub block;
-      asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
-      
+    for (int sz = 0; sz < BLOCK_DIM*2; sz += SUB_DIM) {
+      // Load mat A (4x4) (LD4.f16)
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block1[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block1[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block1[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block1[0]));
+      // Load mat B (16x4) (LD4.f16) + mmul4.f16
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
+      // mmul4.f16
+      //asm volatile ("nop" ::);
+      //asm volatile ("nop" ::);
+      //asm volatile ("nop" ::);
+      //asm volatile ("nop" ::);
     }
+    // ST4.f32 (store accum 16x4)
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+    asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
   }
 }
 
