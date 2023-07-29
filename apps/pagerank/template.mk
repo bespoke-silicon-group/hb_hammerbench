@@ -12,16 +12,18 @@
 # BASEJUMP_STL_DIR: Path to a clone of BaseJump STL
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
-HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
-include $(HB_HAMMERBENCH_PATH)/apps/pagerank/common.mk
 
 # Meta-Parameters
 -include parameters.mk
-
-TILE_GROUP_DIM_X ?= $(BSG_MACHINE_GLOBAL_X)
-TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_GLOBAL_Y)
-
 include app_path.mk
+tile-x ?= 16
+tile-y ?= 8
+HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
+include $(HB_HAMMERBENCH_PATH)/apps/pagerank/common.mk
+
+TILE_GROUP_DIM_X ?= $(tile-x)
+TILE_GROUP_DIM_Y ?= $(tile-y)
 vpath %.c   $(APP_PATH)/$(direction)
 vpath %.cpp $(APP_PATH)/$(direction)
 
