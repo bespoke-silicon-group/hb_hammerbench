@@ -40,6 +40,8 @@ DEFINES += -DSIM_CURRENT_POD=$(pod-id)
 DEFINES += -DNUM_PODS=$(num-pods)
 DEFINES += -DKERNEL_FUNCTION=\"$(function)\"
 DEFINES += -DCOSIM
+DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
+DEFINES += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CDEFINES +=
 CXXDEFINES +=
 
