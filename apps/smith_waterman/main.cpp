@@ -159,8 +159,8 @@ int kernel_smith_waterman (int argc, char **argv) {
 
                 // == Get data
                 int num_tiles = tg_dim.x * tg_dim.y;
-                const int N_TILE = 4;
-                const int N = N_TILE * num_tiles;
+                const int N = 4*128;
+                const int N_TILE = N/num_tiles;
                 const int SIZEA_MAX = 64;
                 const int SIZEB_MAX = 64;
                 const int SIZEA_MAX_PACKED = (SIZEA_MAX + 15) / 16;
