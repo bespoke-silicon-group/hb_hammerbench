@@ -54,6 +54,8 @@ CUDALITE_SRC_PATH = $(SPMD_SRC_PATH)/bsg_cuda_lite_runtime
 
 # KERNEL_NAME is the name of the CUDA-Lite Kernel
 KERNEL_NAME = smith_waterman
+TILE_GROUP_DIM_X = $(tile-x)
+TILE_GROUP_DIM_Y = $(tile-y)
 
 ###############################################################################
 # Host code compilation flags and flow
@@ -63,6 +65,8 @@ KERNEL_NAME = smith_waterman
 TEST_SOURCES = main.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
+DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X)
+DEFINES += -DTILE_GROUP_DIM_Y=$(TILE_GROUP_DIM_Y)
 CDEFINES +=
 CXXDEFINES +=
 
@@ -95,8 +99,6 @@ RISCV_CCPPFLAGS += -D__KERNEL__
 
 kernel.riscv: kernel.rvo
 
-TILE_GROUP_DIM_X ?= 16
-TILE_GROUP_DIM_Y ?= 8
 RISCV_DEFINES += -DTILE_GROUP_DIM_X=$(TILE_GROUP_DIM_X)
 RISCV_DEFINES += -DTILE_GROUP_DIM_Y=$(TILE_GROUP_DIM_Y)
 RISCV_DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
