@@ -68,18 +68,12 @@ int kernel_matrix_mul (int argc, char **argv)
       
         for (int y = 0; y < N; y++) {
           for (int x = 0; x < N; x++) {
-            int i = (N*y) + x;
-            host_mat1[i] = i;
-            if (y == x) {
-              host_mat2[i] = 1.0f;
-            } else {
-              host_mat2[i] = 0.0f;
-            }
-            host_result[i] = 0.0f;
+            host_mat1[i] = 0.0f;
+            host_mat2[i] = 0.0f;
           }
         }
 
-        host_mm_opt(host_expected, host_mat1, host_mat2);
+        //host_mm_opt(host_expected, host_mat1, host_mat2);
 
         // allocate memory on device
         // Make it pod-cache aligned;

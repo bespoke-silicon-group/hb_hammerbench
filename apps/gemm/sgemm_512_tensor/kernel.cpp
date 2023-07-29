@@ -212,27 +212,22 @@ static inline void compute_block() {
       asm volatile ("flw f0, %[p]" :: [p] "m" (block1[0]));
       asm volatile ("flw f0, %[p]" :: [p] "m" (block1[0]));
       // Load mat B (16x4) (LD4.f16) + mmul4.f16
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      asm volatile ("flw f0, %[p]" :: [p] "m" (block2[0]));
-      // mmul4.f16
-      //asm volatile ("nop" ::);
-      //asm volatile ("nop" ::);
-      //asm volatile ("nop" ::);
-      //asm volatile ("nop" ::);
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
+      asm volatile ("fmadd.s f1, f2, f3, f4");
     }
     // ST4.f32 (store accum 16x4)
     asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
