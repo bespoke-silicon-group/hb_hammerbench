@@ -11,6 +11,9 @@
 ###############################################################################
 
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+tile-x ?= 16
+tile-y ?= 8
+override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 SPMD_SRC_PATH = $(BSG_MANYCORE_DIR)/software/spmd
@@ -24,8 +27,8 @@ VPATH = ../tiny-AES-c
 ###############################################################################
 # Host code compilation flags and flow
 ###############################################################################
-TILE_GROUP_DIM_X = 16
-TILE_GROUP_DIM_Y = 8
+TILE_GROUP_DIM_X = $(tile-x)
+TILE_GROUP_DIM_Y = $(tile-y)
 NUM_ITER = 4
 #TILE_GROUP_DIM_X = 1
 #TILE_GROUP_DIM_Y = 1

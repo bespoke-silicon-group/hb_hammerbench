@@ -44,6 +44,9 @@
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+tile-x ?= 16
+tile-y ?= 8
+override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 SPMD_SRC_PATH = $(BSG_MANYCORE_DIR)/software/spmd
@@ -52,10 +55,8 @@ CUDALITE_SRC_PATH = $(SPMD_SRC_PATH)/bsg_cuda_lite_runtime
 
 # KERNEL_NAME is the name of the CUDA-Lite Kernel
 KERNEL_NAME = bs
-#TILE_GROUP_DIM_X = 1
-#TILE_GROUP_DIM_Y = 1
-TILE_GROUP_DIM_X = 16
-TILE_GROUP_DIM_Y = 8
+TILE_GROUP_DIM_X = $(tile-x)
+TILE_GROUP_DIM_Y = $(tile-y)
 
 ###############################################################################
 # Host code compilation flags and flow
