@@ -10,8 +10,6 @@ using hammerblade::Vector;
 using hammerblade::GraphHB;
 using hammerblade::GlobalScalar;
 
-#define X 16
-#define Y 8
 
 GraphHB edges;
 Vector<float> old_rank_dev;
@@ -309,7 +307,7 @@ int launch(int argc, char * argv[]){
                 out_degree_dev.copyToDevice(out_degree_blocked_hb, rows_in_pod);
                 device->write_dma();
 
-                device->enqueueJob(kernel_function.c_str(), hb_mc_dimension(X,Y),{edges.getInIndicesAddr(), edges.getInNeighborsAddr(), out_degree_dev.getAddr(), old_rank_dev.getAddr(), new_rank_dev.getAddr(), contrib_dev.getAddr(), contrib_new_dev.getAddr(), rows_in_pod});
+                device->enqueueJob(kernel_function.c_str(), hb_mc_dimension(bsg_tiles_X,bsg_tiles_Y),{edges.getInIndicesAddr(), edges.getInNeighborsAddr(), out_degree_dev.getAddr(), old_rank_dev.getAddr(), new_rank_dev.getAddr(), contrib_dev.getAddr(), contrib_new_dev.getAddr(), rows_in_pod});
                 uint64_t start_cycle = device->getCycle();
                 hb_mc_manycore_trace_enable(device->getDevice()->mc);
                 device->runJobs();

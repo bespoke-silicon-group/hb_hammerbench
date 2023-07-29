@@ -1,8 +1,3 @@
-#define BSG_TILE_GROUP_X_DIM 16
-#define BSG_TILE_GROUP_Y_DIM 8
-#define bsg_tiles_X BSG_TILE_GROUP_X_DIM
-#define bsg_tiles_Y BSG_TILE_GROUP_Y_DIM
-
 #define GRANULARITY_PULL 10
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.hpp>
