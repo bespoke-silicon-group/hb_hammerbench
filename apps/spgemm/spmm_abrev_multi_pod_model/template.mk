@@ -40,7 +40,11 @@
 # BASEJUMP_STL_DIR: Path to a clone of BaseJump STL
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
+include parameters.mk
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+tile-x ?= 16
+tile-y ?= 8
+override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 include $(BSG_MACHINE_PATH)/Makefile.machine.include
 
@@ -55,7 +59,6 @@ include $(graphtools-dir)/libgraphtools.mk
 # eigen
 eigen-dir = $(HB_HAMMERBENCH_PATH)/apps/spgemm/imports/eigen
 
-include parameters.mk
 include $(APPLICATION_PATH)/inputs.mk
 
 vpath %.cpp $(APPLICATION_PATH)
