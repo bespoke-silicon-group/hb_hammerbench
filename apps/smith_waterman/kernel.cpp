@@ -5,9 +5,7 @@
 #ifdef HB
 #include "bsg_manycore.h"
 #include "bsg_set_tile_x_y.h"
-#include "bsg_tile_group_barrier.hpp"
-
-bsg_barrier<bsg_tiles_X, bsg_tiles_Y> barrier;
+#include "bsg_cuda_lite_barrier.h"
 #else
 #include "kernel_smith_waterman.hpp"
 #endif
@@ -48,29 +46,25 @@ inline void unpack(const unsigned* packed, const int num_packed, unsigned char* 
 
 inline void profile_start(){
 #ifdef HB
+  bsg_fence();
   bsg_cuda_print_stat_kernel_start();
 #endif
 }
 
 inline void profile_end(){
 #ifdef HB
+  bsg_fence();
   bsg_cuda_print_stat_kernel_end();
+  bsg_fence();
 #endif
 }
 
 inline void sync(){
 #ifdef HB
-  barrier.sync();
+  bsg_barrier_hw_tile_group_sync();
 #endif
 }
 
-inline void debug_printf(int tid, int k, int N, int i, int length){
-#ifdef HB
-#ifdef DEBUG
-  bsg_printf("[Tile %d] Alignment %d/%d, Row %d/%d\n", tid, k, N, i, length);
-#endif
-#endif
-}
 
 // copy num_words words from DRAM via non-blocking loads
 // num_words must be divisible by 16;
@@ -130,23 +124,25 @@ inline void load_spm(const unsigned* seqa, const unsigned* seqb,
   hb_memcpy(seqb, N * num_packed_b, seqb_spm);
 
   // Transfer sequence lengths
-  unsigned sizea_temp0 = sizea[0];
-  unsigned sizea_temp1 = sizea[1];
-  unsigned sizea_temp2 = sizea[2];
-  unsigned sizea_temp3 = sizea[3];
-  unsigned sizeb_temp0 = sizeb[0];
-  unsigned sizeb_temp1 = sizeb[1];
-  unsigned sizeb_temp2 = sizeb[2];
-  unsigned sizeb_temp3 = sizeb[3];
-  asm volatile("": : :"memory");
-  sizea_spm[0] = sizea_temp0;
-  sizea_spm[1] = sizea_temp1;
-  sizea_spm[2] = sizea_temp2;
-  sizea_spm[3] = sizea_temp3;
-  sizeb_spm[0] = sizeb_temp0;
-  sizeb_spm[1] = sizeb_temp1;
-  sizeb_spm[2] = sizeb_temp2;
-  sizeb_spm[3] = sizeb_temp3;
+  for (int i = 0; i < N; i+=4) {
+    unsigned sizea_temp0 = sizea[i+0];
+    unsigned sizea_temp1 = sizea[i+1];
+    unsigned sizea_temp2 = sizea[i+2];
+    unsigned sizea_temp3 = sizea[i+3];
+    unsigned sizeb_temp0 = sizeb[i+0];
+    unsigned sizeb_temp1 = sizeb[i+1];
+    unsigned sizeb_temp2 = sizeb[i+2];
+    unsigned sizeb_temp3 = sizeb[i+3];
+    asm volatile("": : :"memory");
+    sizea_spm[i+0] = sizea_temp0;
+    sizea_spm[i+1] = sizea_temp1;
+    sizea_spm[i+2] = sizea_temp2;
+    sizea_spm[i+3] = sizea_temp3;
+    sizeb_spm[i+0] = sizeb_temp0;
+    sizeb_spm[i+1] = sizeb_temp1;
+    sizeb_spm[i+2] = sizeb_temp2;
+    sizeb_spm[i+3] = sizeb_temp3;
+  }
 #else
   for (int i = 0; i < N * num_packed_a; i++) {
     seqa_spm[i] = seqa[i];
@@ -233,7 +229,10 @@ void kernel_smith_waterman(
   const unsigned* sizeb,
   int* score
 ){
-        bsg_nonsynth_saif_start();
+#ifdef HB
+  bsg_barrier_hw_tile_group_init();
+#endif
+  sync();
   profile_start();
   // determine which alignments the tile does
   int tid = get_tid();
@@ -252,7 +251,6 @@ void kernel_smith_waterman(
   unsigned width[N];
   load_spm(seqa_ptr, seqb_ptr, sizea_ptr, sizeb_ptr, SIZEA_MAX_PACKED, SIZEB_MAX_PACKED, N,
            seqa_packed_spm, seqb_packed_spm, length, width);
-
   // Initialize matrices
   short E_spm[SIZEB_MAX];
   short F_spm[SIZEB_MAX];
@@ -288,6 +286,5 @@ void kernel_smith_waterman(
   }
   profile_end();
   sync();
-        bsg_nonsynth_saif_end();
 }
 
