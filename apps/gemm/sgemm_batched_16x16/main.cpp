@@ -111,7 +111,7 @@ int kernel_matrix_mul (int argc, char **argv)
           {
             .d_addr = device_result,
             .h_addr = (void *) &host_result[0],
-            .size = BLOCK_DIM_X*BLOCK_DIM_Y*BATCH*2 * sizeof(float)
+            .size = 2*BLOCK_DIM_X*BLOCK_DIM_Y*BATCH * sizeof(float)
           }
         };
 

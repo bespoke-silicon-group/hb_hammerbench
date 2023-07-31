@@ -27,7 +27,7 @@ TILE_GROUP_DIM_X ?= $(tile-x)
 TILE_GROUP_DIM_Y ?= $(tile-y)
 BLOCK_DIM_X ?= 8
 BLOCK_DIM_Y ?= 16
-BATCH ?= 2048
+BATCH ?= $(batch)
 UNFOLD ?= 1
 WARM_CACHE ?= no
 

@@ -116,39 +116,39 @@ inline void store_block(float* dst) {
     register float tp30 =  block_out[(BLOCK_DIM_X*2*(y+1))+14];
     register float tp31 =  block_out[(BLOCK_DIM_X*2*(y+1))+15];
     asm volatile ("" ::: "memory");
-    dst[(STRIDE*y)+0] = tp00; 
-    dst[(STRIDE*y)+1] = tp01; 
-    dst[(STRIDE*y)+2] = tp02; 
-    dst[(STRIDE*y)+3] = tp03; 
-    dst[(STRIDE*y)+4] = tp04; 
-    dst[(STRIDE*y)+5] = tp05; 
-    dst[(STRIDE*y)+6] = tp06; 
-    dst[(STRIDE*y)+7] = tp07; 
-    dst[(STRIDE*y)+8] = tp08; 
-    dst[(STRIDE*y)+9] = tp09; 
-    dst[(STRIDE*y)+10] = tp10; 
-    dst[(STRIDE*y)+11] = tp11; 
-    dst[(STRIDE*y)+12] = tp12; 
-    dst[(STRIDE*y)+13] = tp13; 
-    dst[(STRIDE*y)+14] = tp14; 
-    dst[(STRIDE*y)+15] = tp15; 
+    dst[(2*STRIDE*y)+0] = tp00; 
+    dst[(2*STRIDE*y)+1] = tp01; 
+    dst[(2*STRIDE*y)+2] = tp02; 
+    dst[(2*STRIDE*y)+3] = tp03; 
+    dst[(2*STRIDE*y)+4] = tp04; 
+    dst[(2*STRIDE*y)+5] = tp05; 
+    dst[(2*STRIDE*y)+6] = tp06; 
+    dst[(2*STRIDE*y)+7] = tp07; 
+    dst[(2*STRIDE*y)+8] = tp08; 
+    dst[(2*STRIDE*y)+9] = tp09; 
+    dst[(2*STRIDE*y)+10] = tp10; 
+    dst[(2*STRIDE*y)+11] = tp11; 
+    dst[(2*STRIDE*y)+12] = tp12; 
+    dst[(2*STRIDE*y)+13] = tp13; 
+    dst[(2*STRIDE*y)+14] = tp14; 
+    dst[(2*STRIDE*y)+15] = tp15; 
 
-    dst[(STRIDE*(y+1))+0] = tp16; 
-    dst[(STRIDE*(y+1))+1] = tp17; 
-    dst[(STRIDE*(y+1))+2] = tp18; 
-    dst[(STRIDE*(y+1))+3] = tp19; 
-    dst[(STRIDE*(y+1))+4] = tp20; 
-    dst[(STRIDE*(y+1))+5] = tp21; 
-    dst[(STRIDE*(y+1))+6] = tp22; 
-    dst[(STRIDE*(y+1))+7] = tp23; 
-    dst[(STRIDE*(y+1))+8] = tp24; 
-    dst[(STRIDE*(y+1))+9] = tp25; 
-    dst[(STRIDE*(y+1))+10] = tp26; 
-    dst[(STRIDE*(y+1))+11] = tp27; 
-    dst[(STRIDE*(y+1))+12] = tp28; 
-    dst[(STRIDE*(y+1))+13] = tp29; 
-    dst[(STRIDE*(y+1))+14] = tp30; 
-    dst[(STRIDE*(y+1))+15] = tp31; 
+    dst[(2*STRIDE*(y+1))+0] = tp16; 
+    dst[(2*STRIDE*(y+1))+1] = tp17; 
+    dst[(2*STRIDE*(y+1))+2] = tp18; 
+    dst[(2*STRIDE*(y+1))+3] = tp19; 
+    dst[(2*STRIDE*(y+1))+4] = tp20; 
+    dst[(2*STRIDE*(y+1))+5] = tp21; 
+    dst[(2*STRIDE*(y+1))+6] = tp22; 
+    dst[(2*STRIDE*(y+1))+7] = tp23; 
+    dst[(2*STRIDE*(y+1))+8] = tp24; 
+    dst[(2*STRIDE*(y+1))+9] = tp25; 
+    dst[(2*STRIDE*(y+1))+10] = tp26; 
+    dst[(2*STRIDE*(y+1))+11] = tp27; 
+    dst[(2*STRIDE*(y+1))+12] = tp28; 
+    dst[(2*STRIDE*(y+1))+13] = tp29; 
+    dst[(2*STRIDE*(y+1))+14] = tp30; 
+    dst[(2*STRIDE*(y+1))+15] = tp31; 
   }
 }
 
@@ -269,7 +269,7 @@ int kernel_mm_opt(float *mat1, float *mat2, float *result)
 
   bsg_unroll(1)
   for (int i = __bsg_id; i < BATCH; i += (bsg_tiles_X*bsg_tiles_Y)) {
-    load_and_reset(&mat1[(BLOCK_DIM_X)*i], &mat2[(BLOCK_DIM_X)*i]);
+    load_and_reset(&mat1[BLOCK_DIM_X*i], &mat2[BLOCK_DIM_X*i]);
     compute_block();
     store_block(&result[(BLOCK_DIM_X*2)*i]);
   } 
