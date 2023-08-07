@@ -34,22 +34,22 @@ inline void load_block( float* dst,
 {
   bsg_unroll(1)
   for (int y = 0; y < BLOCK_DIM; y+=1) {
-    register float tmp00 =  src[(N*y)+0];
-    register float tmp01 =  src[(N*y)+1];
-    register float tmp02 =  src[(N*y)+2];
-    register float tmp03 =  src[(N*y)+3];
-    register float tmp04 =  src[(N*y)+4];
-    register float tmp05 =  src[(N*y)+5];
-    register float tmp06 =  src[(N*y)+6];
-    register float tmp07 =  src[(N*y)+7];
-    register float tmp08 =  src[(N*y)+8];
-    register float tmp09 =  src[(N*y)+9];
-    register float tmp10 =  src[(N*y)+10];
-    register float tmp11 =  src[(N*y)+11];
-    register float tmp12 =  src[(N*y)+12];
-    register float tmp13 =  src[(N*y)+13];
-    register float tmp14 =  src[(N*y)+14];
-    register float tmp15 =  src[(N*y)+15];
+    register float tmp00 =  src[(Z/2*y)+0];
+    register float tmp01 =  src[(Z/2*y)+1];
+    register float tmp02 =  src[(Z/2*y)+2];
+    register float tmp03 =  src[(Z/2*y)+3];
+    register float tmp04 =  src[(Z/2*y)+4];
+    register float tmp05 =  src[(Z/2*y)+5];
+    register float tmp06 =  src[(Z/2*y)+6];
+    register float tmp07 =  src[(Z/2*y)+7];
+    register float tmp08 =  src[(Z/2*y)+8];
+    register float tmp09 =  src[(Z/2*y)+9];
+    register float tmp10 =  src[(Z/2*y)+10];
+    register float tmp11 =  src[(Z/2*y)+11];
+    register float tmp12 =  src[(Z/2*y)+12];
+    register float tmp13 =  src[(Z/2*y)+13];
+    register float tmp14 =  src[(Z/2*y)+14];
+    register float tmp15 =  src[(Z/2*y)+15];
     asm volatile ("" ::: "memory");
     dst[(BLOCK_DIM*y)+0] = tmp00;
     dst[(BLOCK_DIM*y)+1] = tmp01;
@@ -94,22 +94,22 @@ inline void store_block(float* dst) {
     register float tp14 =  block_out[(BLOCK_DIM*y)+14];
     register float tp15 =  block_out[(BLOCK_DIM*y)+15];
     asm volatile ("" ::: "memory");
-    dst[(N*y)+0] = tp00; 
-    dst[(N*y)+1] = tp01; 
-    dst[(N*y)+2] = tp02; 
-    dst[(N*y)+3] = tp03; 
-    dst[(N*y)+4] = tp04; 
-    dst[(N*y)+5] = tp05; 
-    dst[(N*y)+6] = tp06; 
-    dst[(N*y)+7] = tp07; 
-    dst[(N*y)+8] = tp08; 
-    dst[(N*y)+9] = tp09; 
-    dst[(N*y)+10] = tp10; 
-    dst[(N*y)+11] = tp11; 
-    dst[(N*y)+12] = tp12; 
-    dst[(N*y)+13] = tp13; 
-    dst[(N*y)+14] = tp14; 
-    dst[(N*y)+15] = tp15; 
+    dst[(Z/2*y)+0] = tp00; 
+    dst[(Z/2*y)+1] = tp01; 
+    dst[(Z/2*y)+2] = tp02; 
+    dst[(Z/2*y)+3] = tp03; 
+    dst[(Z/2*y)+4] = tp04; 
+    dst[(Z/2*y)+5] = tp05; 
+    dst[(Z/2*y)+6] = tp06; 
+    dst[(Z/2*y)+7] = tp07; 
+    dst[(Z/2*y)+8] = tp08; 
+    dst[(Z/2*y)+9] = tp09; 
+    dst[(Z/2*y)+10] = tp10; 
+    dst[(Z/2*y)+11] = tp11; 
+    dst[(Z/2*y)+12] = tp12; 
+    dst[(Z/2*y)+13] = tp13; 
+    dst[(Z/2*y)+14] = tp14; 
+    dst[(Z/2*y)+15] = tp15; 
   }
 }
 
@@ -118,8 +118,8 @@ inline void store_block(float* dst) {
 
 static inline void compute_block() {
   bsg_unroll(1)
-  for (int y = 0; y < N; y += SUB_DIM) {
-    float *sub_block_out = &block_out[N*y]; 
+  for (int y = 0; y < BLOCK_DIM; y += SUB_DIM) {
+    float *sub_block_out = &block_out[BLOCK_DIM*y]; 
     // load accum
     asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
     asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
@@ -139,7 +139,7 @@ static inline void compute_block() {
     asm volatile ("flw f0, %[p]" :: [p] "m" (sub_block_out[0]));
   
     bsg_unroll(1)
-    for (int z = 0; z < (BLOCK_DIM*2/SUB_DIM); z+=SUB_DIM) {
+    for (int z = 0; z < (BLOCK_DIM*2/SUB_DIM); z++) {
       asm volatile ("nop"); // LD8.f16 A00[0:1]
       asm volatile ("nop"); // LD8.f16 A00[2:3]
       asm volatile ("nop"); // mmul4.f16 A00, accum0
