@@ -78,80 +78,6 @@ inline void load_and_reset(float *mat1, float *mat2) {
   }
 }
 
-// Store output to DRAM
-inline void store_block(float* dst) {
-  bsg_unroll(1)
-  for (int y = 0; y < BLOCK_DIM_Y; y+=2) {
-    register float tp00 =  block_out[(BLOCK_DIM_X*2*y)+0];
-    register float tp01 =  block_out[(BLOCK_DIM_X*2*y)+1];
-    register float tp02 =  block_out[(BLOCK_DIM_X*2*y)+2];
-    register float tp03 =  block_out[(BLOCK_DIM_X*2*y)+3];
-    register float tp04 =  block_out[(BLOCK_DIM_X*2*y)+4];
-    register float tp05 =  block_out[(BLOCK_DIM_X*2*y)+5];
-    register float tp06 =  block_out[(BLOCK_DIM_X*2*y)+6];
-    register float tp07 =  block_out[(BLOCK_DIM_X*2*y)+7];
-    register float tp08 =  block_out[(BLOCK_DIM_X*2*y)+8];
-    register float tp09 =  block_out[(BLOCK_DIM_X*2*y)+9];
-    register float tp10 =  block_out[(BLOCK_DIM_X*2*y)+10];
-    register float tp11 =  block_out[(BLOCK_DIM_X*2*y)+11];
-    register float tp12 =  block_out[(BLOCK_DIM_X*2*y)+12];
-    register float tp13 =  block_out[(BLOCK_DIM_X*2*y)+13];
-    register float tp14 =  block_out[(BLOCK_DIM_X*2*y)+14];
-    register float tp15 =  block_out[(BLOCK_DIM_X*2*y)+15];
-
-    register float tp16 =  block_out[(BLOCK_DIM_X*2*(y+1))+0];
-    register float tp17 =  block_out[(BLOCK_DIM_X*2*(y+1))+1];
-    register float tp18 =  block_out[(BLOCK_DIM_X*2*(y+1))+2];
-    register float tp19 =  block_out[(BLOCK_DIM_X*2*(y+1))+3];
-    register float tp20 =  block_out[(BLOCK_DIM_X*2*(y+1))+4];
-    register float tp21 =  block_out[(BLOCK_DIM_X*2*(y+1))+5];
-    register float tp22 =  block_out[(BLOCK_DIM_X*2*(y+1))+6];
-    register float tp23 =  block_out[(BLOCK_DIM_X*2*(y+1))+7];
-    register float tp24 =  block_out[(BLOCK_DIM_X*2*(y+1))+8];
-    register float tp25 =  block_out[(BLOCK_DIM_X*2*(y+1))+9];
-    register float tp26 =  block_out[(BLOCK_DIM_X*2*(y+1))+10];
-    register float tp27 =  block_out[(BLOCK_DIM_X*2*(y+1))+11];
-    register float tp28 =  block_out[(BLOCK_DIM_X*2*(y+1))+12];
-    register float tp29 =  block_out[(BLOCK_DIM_X*2*(y+1))+13];
-    register float tp30 =  block_out[(BLOCK_DIM_X*2*(y+1))+14];
-    register float tp31 =  block_out[(BLOCK_DIM_X*2*(y+1))+15];
-    asm volatile ("" ::: "memory");
-    dst[(2*STRIDE*y)+0] = tp00; 
-    dst[(2*STRIDE*y)+1] = tp01; 
-    dst[(2*STRIDE*y)+2] = tp02; 
-    dst[(2*STRIDE*y)+3] = tp03; 
-    dst[(2*STRIDE*y)+4] = tp04; 
-    dst[(2*STRIDE*y)+5] = tp05; 
-    dst[(2*STRIDE*y)+6] = tp06; 
-    dst[(2*STRIDE*y)+7] = tp07; 
-    dst[(2*STRIDE*y)+8] = tp08; 
-    dst[(2*STRIDE*y)+9] = tp09; 
-    dst[(2*STRIDE*y)+10] = tp10; 
-    dst[(2*STRIDE*y)+11] = tp11; 
-    dst[(2*STRIDE*y)+12] = tp12; 
-    dst[(2*STRIDE*y)+13] = tp13; 
-    dst[(2*STRIDE*y)+14] = tp14; 
-    dst[(2*STRIDE*y)+15] = tp15; 
-
-    dst[(2*STRIDE*(y+1))+0] = tp16; 
-    dst[(2*STRIDE*(y+1))+1] = tp17; 
-    dst[(2*STRIDE*(y+1))+2] = tp18; 
-    dst[(2*STRIDE*(y+1))+3] = tp19; 
-    dst[(2*STRIDE*(y+1))+4] = tp20; 
-    dst[(2*STRIDE*(y+1))+5] = tp21; 
-    dst[(2*STRIDE*(y+1))+6] = tp22; 
-    dst[(2*STRIDE*(y+1))+7] = tp23; 
-    dst[(2*STRIDE*(y+1))+8] = tp24; 
-    dst[(2*STRIDE*(y+1))+9] = tp25; 
-    dst[(2*STRIDE*(y+1))+10] = tp26; 
-    dst[(2*STRIDE*(y+1))+11] = tp27; 
-    dst[(2*STRIDE*(y+1))+12] = tp28; 
-    dst[(2*STRIDE*(y+1))+13] = tp29; 
-    dst[(2*STRIDE*(y+1))+14] = tp30; 
-    dst[(2*STRIDE*(y+1))+15] = tp31; 
-  }
-}
-
 
 static inline void compute_block() {
   bsg_unroll(1)
@@ -181,10 +107,10 @@ static inline void compute_block() {
     asm volatile ("nop"); // mmul4.f16 A00, accum0
     asm volatile ("nop"); // mmul4.f16 A00, accum1
     asm volatile ("nop"); // mmul4.f16 A00, accum1
-    asm volatile ("nop"); // mmul4.f16 A00, accum2
-    asm volatile ("nop"); // mmul4.f16 A00, accum2
-    asm volatile ("nop"); // mmul4.f16 A00, accum3
-    asm volatile ("nop"); // mmul4.f16 A00, accum3
+    //asm volatile ("nop"); // mmul4.f16 A00, accum2
+    //asm volatile ("nop"); // mmul4.f16 A00, accum2
+    //asm volatile ("nop"); // mmul4.f16 A00, accum3
+    //asm volatile ("nop"); // mmul4.f16 A00, accum3
 
     asm volatile ("nop"); // LD8.f16 A00[0:1]
     asm volatile ("nop"); // LD8.f16 A00[2:3]
@@ -192,10 +118,10 @@ static inline void compute_block() {
     asm volatile ("nop"); // mmul4.f16 A00, accum0
     asm volatile ("nop"); // mmul4.f16 A00, accum1
     asm volatile ("nop"); // mmul4.f16 A00, accum1
-    asm volatile ("nop"); // mmul4.f16 A00, accum2
-    asm volatile ("nop"); // mmul4.f16 A00, accum2
-    asm volatile ("nop"); // mmul4.f16 A00, accum3
-    asm volatile ("nop"); // mmul4.f16 A00, accum3
+    //asm volatile ("nop"); // mmul4.f16 A00, accum2
+    //asm volatile ("nop"); // mmul4.f16 A00, accum2
+    //asm volatile ("nop"); // mmul4.f16 A00, accum3
+    //asm volatile ("nop"); // mmul4.f16 A00, accum3
 
     asm volatile ("nop"); // LD8.f16 A00[0:1]
     asm volatile ("nop"); // LD8.f16 A00[2:3]
@@ -203,10 +129,10 @@ static inline void compute_block() {
     asm volatile ("nop"); // mmul4.f16 A00, accum0
     asm volatile ("nop"); // mmul4.f16 A00, accum1
     asm volatile ("nop"); // mmul4.f16 A00, accum1
-    asm volatile ("nop"); // mmul4.f16 A00, accum2
-    asm volatile ("nop"); // mmul4.f16 A00, accum2
-    asm volatile ("nop"); // mmul4.f16 A00, accum3
-    asm volatile ("nop"); // mmul4.f16 A00, accum3
+    //asm volatile ("nop"); // mmul4.f16 A00, accum2
+    //asm volatile ("nop"); // mmul4.f16 A00, accum2
+    //asm volatile ("nop"); // mmul4.f16 A00, accum3
+    //asm volatile ("nop"); // mmul4.f16 A00, accum3
 
     asm volatile ("nop"); // LD8.f16 A00[0:1]
     asm volatile ("nop"); // LD8.f16 A00[2:3]
@@ -214,10 +140,10 @@ static inline void compute_block() {
     asm volatile ("nop"); // mmul4.f16 A00, accum0
     asm volatile ("nop"); // mmul4.f16 A00, accum1
     asm volatile ("nop"); // mmul4.f16 A00, accum1
-    asm volatile ("nop"); // mmul4.f16 A00, accum2
-    asm volatile ("nop"); // mmul4.f16 A00, accum2
-    asm volatile ("nop"); // mmul4.f16 A00, accum3
-    asm volatile ("nop"); // mmul4.f16 A00, accum3
+    //asm volatile ("nop"); // mmul4.f16 A00, accum2
+    //asm volatile ("nop"); // mmul4.f16 A00, accum2
+    //asm volatile ("nop"); // mmul4.f16 A00, accum3
+    //asm volatile ("nop"); // mmul4.f16 A00, accum3
 
     // store accum for 16x4
     asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
@@ -236,6 +162,50 @@ static inline void compute_block() {
     asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
     asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
     asm volatile ("fsw f0, %[p]" :: [p] "m" (sub_block_out[0]));
+  }
+}
+
+
+
+// Store output to DRAM
+inline void store_block(float* dst) {
+  bsg_unroll(1)
+  for (int y = 0; y < BLOCK_DIM_Y; y++) {
+    register float tp00 =  block_out[(BLOCK_DIM_X*2*y)+0];
+    register float tp01 =  block_out[(BLOCK_DIM_X*2*y)+1];
+    register float tp02 =  block_out[(BLOCK_DIM_X*2*y)+2];
+    register float tp03 =  block_out[(BLOCK_DIM_X*2*y)+3];
+    register float tp04 =  block_out[(BLOCK_DIM_X*2*y)+4];
+    register float tp05 =  block_out[(BLOCK_DIM_X*2*y)+5];
+    register float tp06 =  block_out[(BLOCK_DIM_X*2*y)+6];
+    register float tp07 =  block_out[(BLOCK_DIM_X*2*y)+7];
+    register float tp08 =  block_out[(BLOCK_DIM_X*2*y)+8];
+    register float tp09 =  block_out[(BLOCK_DIM_X*2*y)+9];
+    register float tp10 =  block_out[(BLOCK_DIM_X*2*y)+10];
+    register float tp11 =  block_out[(BLOCK_DIM_X*2*y)+11];
+    register float tp12 =  block_out[(BLOCK_DIM_X*2*y)+12];
+    register float tp13 =  block_out[(BLOCK_DIM_X*2*y)+13];
+    register float tp14 =  block_out[(BLOCK_DIM_X*2*y)+14];
+    register float tp15 =  block_out[(BLOCK_DIM_X*2*y)+15];
+    asm volatile ("" ::: "memory");
+    dst[(STRIDE*y)+0] = tp00; 
+    dst[(STRIDE*y)+1] = tp01; 
+    dst[(STRIDE*y)+2] = tp02; 
+    dst[(STRIDE*y)+3] = tp03; 
+    dst[(STRIDE*y)+4] = tp04; 
+    dst[(STRIDE*y)+5] = tp05; 
+    dst[(STRIDE*y)+6] = tp06; 
+    dst[(STRIDE*y)+7] = tp07; 
+    bsg_fence();
+    dst[(STRIDE*y)+8] = tp08; 
+    dst[(STRIDE*y)+9] = tp09; 
+    dst[(STRIDE*y)+10] = tp10; 
+    dst[(STRIDE*y)+11] = tp11; 
+    dst[(STRIDE*y)+12] = tp12; 
+    dst[(STRIDE*y)+13] = tp13; 
+    dst[(STRIDE*y)+14] = tp14; 
+    dst[(STRIDE*y)+15] = tp15; 
+    bsg_fence();
   }
 }
 
