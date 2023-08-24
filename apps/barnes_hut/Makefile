@@ -227,26 +227,43 @@ range = $(shell seq -s " " $1 $(shell echo $2 - 1 | bc))
 RANGE_PODS_X := $(call range,0,$(NPODS_X))
 RANGE_PODS_Y := $(call range,0,$(NPODS_Y))
 
-# Forces, 8192 Bodies, 64 pods
-#$(foreach x,$(RANGE_PODS_X),\
-#$(foreach y,$(RANGE_PODS_Y),\
-#$(eval FORCES_TEST_8192 += $(call test-name,forces,$x,$y,128,8,8))))
+# Forces, 512 Bodies, 64 pods (TEST)
+FORCES_TEST_512 += $(call test-name,forces,0,0,512,8,8)
 
 # Forces, 16384 Bodies, 64 pods
-$(foreach x,$(RANGE_PODS_X),\
-$(foreach y,$(RANGE_PODS_Y),\
-$(eval FORCES_TEST_16K += $(call test-name,forces,$x,$y,16384,8,8))))
+FORCES_TEST_16K += $(call test-name,forces,0,2,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,1,4,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,2,5,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,3,3,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,4,0,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,5,6,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,6,1,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,7,7,16384,8,8)
 
 # Forces, 32768 Bodies, 64 pods
-$(foreach x,$(RANGE_PODS_X),\
-$(foreach y,$(RANGE_PODS_Y),\
-$(eval FORCES_TEST_32K += $(call test-name,forces,$x,$y,32768,8,8))))
+FORCES_TEST_32K += $(call test-name,forces,0,2,32768,8,8)
+FORCES_TEST_32K += $(call test-name,forces,1,4,32768,8,8)
+FORCES_TEST_32K += $(call test-name,forces,2,5,32768,8,8)
+FORCES_TEST_32K += $(call test-name,forces,3,3,32768,8,8)
+FORCES_TEST_32K += $(call test-name,forces,4,0,32768,8,8)
+FORCES_TEST_32K += $(call test-name,forces,5,6,32768,8,8)
+FORCES_TEST_32K += $(call test-name,forces,6,1,32768,8,8)
+FORCES_TEST_32K += $(call test-name,forces,7,7,32768,8,8)
 
 # Forces, 65536 Bodies, 64 pods
 $(foreach x,$(RANGE_PODS_X),\
 $(foreach y,$(RANGE_PODS_Y),\
 $(eval FORCES_TEST_64K += $(call test-name,forces,$x,$y,65536,8,8))))
+FORCES_TEST_16K += $(call test-name,forces,0,2,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,1,4,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,2,5,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,3,3,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,4,0,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,5,6,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,6,1,16384,8,8)
+FORCES_TEST_16K += $(call test-name,forces,7,7,16384,8,8)
 
+generate.512: $(addsuffix .dir, $(FORCES_TEST_512))
 generate.16k: $(addsuffix .dir, $(FORCES_TEST_16K))
 generate.32k: $(addsuffix .dir, $(FORCES_TEST_32K))
 generate.64k: $(addsuffix .dir, $(FORCES_TEST_64K))
@@ -262,6 +279,7 @@ generate.64k: $(addsuffix .dir, $(FORCES_TEST_64K))
 	echo "VPATH =.." >> $@/Makefile
 	cat Makefile >> $@/Makefile
 
+run.512: $(addsuffix .run, $(FORCES_TEST_512))
 run.16k: $(addsuffix .run, $(FORCES_TEST_16K))
 run.32k: $(addsuffix .run, $(FORCES_TEST_32K))
 run.64k: $(addsuffix .run, $(FORCES_TEST_64K))
