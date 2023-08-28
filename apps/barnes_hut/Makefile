@@ -46,7 +46,7 @@
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 tile-x ?= 16
 tile-y ?= 8
-override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X2Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
+override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 BARNES_HUT_PATH := $(HB_HAMMERBENCH_PATH)/apps/barnes_hut
@@ -223,42 +223,41 @@ nbodies-from-name     = $(firstword $(subst _, ,$(filter %_nbodies,$(subst __, ,
 
 test-name = $(1)_bh__$(2)x_$(3)y_id__$(4)_nbodies__$(5)x_$(6)y_pods
 
-range = $(shell seq -s " " $1 $(shell echo $2 - 1 | bc))
-RANGE_PODS_X := $(call range,0,$(NPODS_X))
-RANGE_PODS_Y := $(call range,0,$(NPODS_Y))
+POD_X = 8
+POD_Y = 8
 
 # Forces, 512 Bodies, 64 pods (TEST)
-FORCES_TEST_512 += $(call test-name,forces,0,0,512,8,16)
+FORCES_TEST_512 += $(call test-name,forces,0,0,512,$(POD_X),$(POD_Y))
 
 # Forces, 16384 Bodies, 64 pods
-FORCES_TEST_16K += $(call test-name,forces,0,2,16384,8,16)
-FORCES_TEST_16K += $(call test-name,forces,0,4,16384,8,16)
-FORCES_TEST_16K += $(call test-name,forces,2,5,16384,8,16)
-FORCES_TEST_16K += $(call test-name,forces,2,3,16384,8,16)
-FORCES_TEST_16K += $(call test-name,forces,4,0,16384,8,16)
-FORCES_TEST_16K += $(call test-name,forces,4,6,16384,8,16)
-FORCES_TEST_16K += $(call test-name,forces,6,1,16384,8,16)
-FORCES_TEST_16K += $(call test-name,forces,6,7,16384,8,16)
+FORCES_TEST_16K += $(call test-name,forces,0,2,16384,$(POD_X),$(POD_Y))
+FORCES_TEST_16K += $(call test-name,forces,0,4,16384,$(POD_X),$(POD_Y))
+FORCES_TEST_16K += $(call test-name,forces,2,5,16384,$(POD_X),$(POD_Y))
+FORCES_TEST_16K += $(call test-name,forces,2,3,16384,$(POD_X),$(POD_Y))
+FORCES_TEST_16K += $(call test-name,forces,4,0,16384,$(POD_X),$(POD_Y))
+FORCES_TEST_16K += $(call test-name,forces,4,6,16384,$(POD_X),$(POD_Y))
+FORCES_TEST_16K += $(call test-name,forces,6,1,16384,$(POD_X),$(POD_Y))
+FORCES_TEST_16K += $(call test-name,forces,6,7,16384,$(POD_X),$(POD_Y))
 
 # Forces, 32768 Bodies, 64 pods
-FORCES_TEST_32K += $(call test-name,forces,0,2,32768,8,16)
-FORCES_TEST_32K += $(call test-name,forces,0,4,32768,8,16)
-FORCES_TEST_32K += $(call test-name,forces,2,5,32768,8,16)
-FORCES_TEST_32K += $(call test-name,forces,2,3,32768,8,16)
-FORCES_TEST_32K += $(call test-name,forces,4,0,32768,8,16)
-FORCES_TEST_32K += $(call test-name,forces,4,6,32768,8,16)
-FORCES_TEST_32K += $(call test-name,forces,6,1,32768,8,16)
-FORCES_TEST_32K += $(call test-name,forces,6,7,32768,8,16)
+FORCES_TEST_32K += $(call test-name,forces,0,2,32768,$(POD_X),$(POD_Y))
+FORCES_TEST_32K += $(call test-name,forces,0,4,32768,$(POD_X),$(POD_Y))
+FORCES_TEST_32K += $(call test-name,forces,2,5,32768,$(POD_X),$(POD_Y))
+FORCES_TEST_32K += $(call test-name,forces,2,3,32768,$(POD_X),$(POD_Y))
+FORCES_TEST_32K += $(call test-name,forces,4,0,32768,$(POD_X),$(POD_Y))
+FORCES_TEST_32K += $(call test-name,forces,4,6,32768,$(POD_X),$(POD_Y))
+FORCES_TEST_32K += $(call test-name,forces,6,1,32768,$(POD_X),$(POD_Y))
+FORCES_TEST_32K += $(call test-name,forces,6,7,32768,$(POD_X),$(POD_Y))
 
 # Forces, 65536 Bodies, 64 pods
-FORCES_TEST_64K += $(call test-name,forces,0,2,65536,8,16)
-FORCES_TEST_64K += $(call test-name,forces,0,4,65536,8,16)
-FORCES_TEST_64K += $(call test-name,forces,2,5,65536,8,16)
-FORCES_TEST_64K += $(call test-name,forces,2,3,65536,8,16)
-FORCES_TEST_64K += $(call test-name,forces,4,0,65536,8,16)
-FORCES_TEST_64K += $(call test-name,forces,4,6,65536,8,16)
-FORCES_TEST_64K += $(call test-name,forces,6,1,65536,8,16)
-FORCES_TEST_64K += $(call test-name,forces,6,7,65536,8,16)
+FORCES_TEST_64K += $(call test-name,forces,0,2,65536,$(POD_X),$(POD_Y))
+FORCES_TEST_64K += $(call test-name,forces,0,4,65536,$(POD_X),$(POD_Y))
+FORCES_TEST_64K += $(call test-name,forces,2,5,65536,$(POD_X),$(POD_Y))
+FORCES_TEST_64K += $(call test-name,forces,2,3,65536,$(POD_X),$(POD_Y))
+FORCES_TEST_64K += $(call test-name,forces,4,0,65536,$(POD_X),$(POD_Y))
+FORCES_TEST_64K += $(call test-name,forces,4,6,65536,$(POD_X),$(POD_Y))
+FORCES_TEST_64K += $(call test-name,forces,6,1,65536,$(POD_X),$(POD_Y))
+FORCES_TEST_64K += $(call test-name,forces,6,7,65536,$(POD_X),$(POD_Y))
 
 generate.512: $(addsuffix .dir, $(FORCES_TEST_512))
 generate.16k: $(addsuffix .dir, $(FORCES_TEST_16K))
