@@ -892,11 +892,13 @@ int hb_mc_manycore_device_compute_forces(hb_mc_device_t *device, std::map<hb_mc_
 
         // Launch pods;
         //hb_mc_manycore_trace_enable(device->mc);
+        printf("Launching all pods\n");
         BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(device));
         //hb_mc_manycore_trace_disable(device->mc);
 
         // Validate;
         hb_mc_device_foreach_pod_id(device, pod) {
+          printf("Validating pod %d\n", pod);
           BSG_CUDA_CALL(hb_mc_device_set_default_pod(device, pod));
           hb_mc_dma_dtoh_t dtoh = {
                 .d_addr = _hbodies,
@@ -978,7 +980,7 @@ int run(Bodies& bodies, BodyPtrs& pBodies, size_t nbodies) {
         int npods = npods_x * npods_y;
         int pod_id = pod_x + npods_x * py;
         bsg_pr_info("Running Barnes-Hut Phase %s on pod X:%d Y:%d\n", prog_phase.c_str(), pod_x, pod_y);
-        BSG_CUDA_CALL(hb_mc_device_init_custom_dimensions(&device, test_name.c_str(), 0, { .x = TILE_GROUP_DIM_X, .y = TILE_GROUP_DIM_Y}));
+        BSG_CUDA_CALL(hb_mc_device_init(&device, test_name.c_str(), 0));
 
         // Initialize pods;
         hb_mc_pod_id_t pod;
@@ -1050,51 +1052,6 @@ int run(Bodies& bodies, BodyPtrs& pBodies, size_t nbodies) {
                                [&](Body* body) { treeBuilder.insert(body, &top, box.radius()); },
                                galois::loopname("BuildTree"));
                 T_build.stop();
-                /*
-                for (int pod_x_i = 0; pod_x_i < 8; ++ pod_x_i){
-                        Node *pod_top = top.child[pod_x_i].getValue();
-                        for (int pod_y_i = 0; pod_y_i < 8; ++ pod_y_i){
-                                int nfound = 0;
-                                Node *curn;
-                                Octree *curo;
-                                int octant = 0;
-                                if(pod_top && pod_top->Leaf){
-                                        nfound = 1;
-                                } else if(pod_top){
-                                        pod_top = static_cast<Octree*>(pod_top)->child[pod_y_i].getValue();
-                                        curn = pod_top;
-                                        if(curn && curn->Leaf){
-                                                nfound = 1;
-                                                break;
-                                        }
-                                        while(!((curn == pod_top) && (octant == Octree::octants))){
-                                                printf("%d %d, %d\n", curn == pod_top, octant, curn->Leaf);
-                                                if(octant < Octree :: octants) {
-                                                        curo = static_cast<Octree*>(curn);
-                                                        while((curo->child[octant].getValue() == nullptr) && (octant < Octree::octants)){
-                                                                printf("Skip (Octant %d)\n", octant);
-                                                                octant ++;
-                                                        }
-                                                        
-                                                        if(curo->child[octant].getValue() != nullptr && (octant < Octree::octants) && curo->child[octant].getValue()->Leaf){
-                                                                nfound ++;
-                                                                printf("Leaf: %d\n", nfound);
-                                                        } else if((curo->child[octant].getValue() != nullptr) && (octant < Octree::octants)){
-                                                                curn = curo->child[octant].getValue();
-                                                                printf("Down (Octant %d)\n", octant);
-                                                                octant = 0;
-                                                        }
-                                                }
-                                                if(octant == Octree::octants){
-                                                        printf("Up - Node (Octant %d, Leaf %d %d)\n", octant, curn->Leaf, nfound);
-                                                        octant = curn->octant + 1;
-                                                        curn = curn->pred;
-                                                }
-                                        }
-                                }
-                                bsg_pr_info("Found %d bodies for X: %d, Y: %d\n", nfound, pod_x_i, pod_y_i);
-                        }
-                        }*/
 
                 // DR: Convert Bodies, Tree into arrays of Body and Octree
                 unsigned int nBodies = 0, nNodes = 0, i = 0;
@@ -1117,17 +1074,23 @@ int run(Bodies& bodies, BodyPtrs& pBodies, size_t nbodies) {
                 NodeIdx maxNodes = nBodies * std::log2(nBodies) + 128, nHBNodes = maxNodes;
                 HBOctree *DeviceHBOctNodes = new HBOctree[maxNodes]();
                 eva_t _DeviceHBOctNodes = 0, _HostHBOctNodes;
-                BSG_CUDA_CALL(hb_mc_device_malloc(&device, maxNodes * sizeof(HBOctree), &_DeviceHBOctNodes));
-                BSG_CUDA_CALL(hb_mc_device_malloc(&device, nNodes * sizeof(HBOctree), &_HostHBOctNodes));
-                bsg_pr_info("Nodes EVA (size): %x (%lu)\n", _DeviceHBOctNodes, maxNodes *sizeof(HBOctree));
-                bsg_pr_info("Node Size: %lu\n", sizeof(HBNode));
+                hb_mc_device_foreach_pod_id(&device, pod) {
+                  BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
+                  BSG_CUDA_CALL(hb_mc_device_malloc(&device, maxNodes * sizeof(HBOctree), &_DeviceHBOctNodes));
+                  BSG_CUDA_CALL(hb_mc_device_malloc(&device, nNodes * sizeof(HBOctree), &_HostHBOctNodes));
+                  bsg_pr_info("Nodes EVA (size): %x (%lu)\n", _DeviceHBOctNodes, maxNodes *sizeof(HBOctree));
+                  bsg_pr_info("Node Size: %lu\n", sizeof(HBNode));
+                }
 
                 HBBody *DeviceHBBodies = new HBBody[nBodies]();
                 eva_t _HostHBBodies, _DeviceHBBodies;
-                BSG_CUDA_CALL(hb_mc_device_malloc(&device, nBodies * sizeof(HBBody), &_DeviceHBBodies));
-                BSG_CUDA_CALL(hb_mc_device_malloc(&device, nBodies * sizeof(HBBody), &_HostHBBodies));
-                bsg_pr_info("Bodies EVA (size): %x (%lu)\n", _HostHBBodies, nBodies * sizeof(HBBody));
-                bsg_pr_info("Body Size: %lu\n", sizeof(HBBody));
+                hb_mc_device_foreach_pod_id(&device, pod) {
+                  BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
+                  BSG_CUDA_CALL(hb_mc_device_malloc(&device, nBodies * sizeof(HBBody), &_DeviceHBBodies));
+                  BSG_CUDA_CALL(hb_mc_device_malloc(&device, nBodies * sizeof(HBBody), &_HostHBBodies));
+                  bsg_pr_info("Bodies EVA (size): %x (%lu)\n", _HostHBBodies, nBodies * sizeof(HBBody));
+                  bsg_pr_info("Body Size: %lu\n", sizeof(HBBody));
+                }
 
                 // If we use HostHBBodies to construct the array, they
                 // are produced from an in-order traversal of the Host
@@ -1307,8 +1270,8 @@ int run(Bodies& bodies, BodyPtrs& pBodies, size_t nbodies) {
                 std::cout.flags(flags);
                 std::cout << "\n";
 
-                BSG_CUDA_CALL(hb_mc_device_free(&device, _HBBodies));
-                BSG_CUDA_CALL(hb_mc_device_free(&device, _HBOctNodes));
+                //BSG_CUDA_CALL(hb_mc_device_free(&device, _HBBodies));
+                //BSG_CUDA_CALL(hb_mc_device_free(&device, _HBOctNodes));
         }
 
         galois::reportPageAlloc("MeminfoPost");

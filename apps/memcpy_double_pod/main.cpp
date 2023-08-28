@@ -128,7 +128,7 @@ int kernel_memcpy(int argc, char **argv) {
   // Launch on all pods
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
 
-
+  bool failed = 0;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
@@ -147,27 +147,29 @@ int kernel_memcpy(int argc, char **argv) {
 
     BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, &dtoh_job0, 1));
     BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, &dtoh_job1, 1));
-
     for (int i = 0; i < SIZE; i++) {
       if (C_host_map[pod][i] != A_host_map[pod][i]) {
         printf("FAIL: A and C does not match. pod=%d, i=%d, C=%d, A=%d\n", pod, i, C_host_map[pod][i], A_host_map[pod][i]);
-        BSG_CUDA_CALL(hb_mc_device_finish(&device));
-        return HB_MC_FAIL;
+        failed = 1;
       }
     }
+
 
     for (int i = 0; i < SIZE; i++) {
       if (B_host_map[pod][i] != A_host_map[pod][i]) {
         printf("FAIL: A and B does not match. pod=%d, i=%d, B=%d, A=%d\n", pod, i, B_host_map[pod][i], A_host_map[pod][i]);
-        BSG_CUDA_CALL(hb_mc_device_finish(&device));
-        return HB_MC_FAIL;
+        failed = 1;
       }
     }
 
   }
 
   BSG_CUDA_CALL(hb_mc_device_finish(&device));
-  return HB_MC_SUCCESS; 
+  if (failed) {
+    return HB_MC_FAIL;
+  } else {
+    return HB_MC_SUCCESS; 
+  }
 }
 
 

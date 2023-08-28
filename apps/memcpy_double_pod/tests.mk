@@ -15,7 +15,8 @@
 
 #MSIZE = 524288
 #MSIZE = 32768
-MSIZE = 2048
+#MSIZE = 65536
+MSIZE = 261244
 #TESTS += $(call test-name,4,2,$(MSIZE),no)
 #TESTS += $(call test-name,4,4,$(MSIZE),no)
 #TESTS += $(call test-name,8,4,$(MSIZE),no)
