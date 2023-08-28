@@ -281,7 +281,7 @@ run.32k: $(addsuffix .run, $(FORCES_TEST_32K))
 run.64k: $(addsuffix .run, $(FORCES_TEST_64K))
 
 %.run:
-	$(MAKE) -C $(subst run, dir, $@) profile.log
+	$(MAKE) -C $(subst run,dir,$@) profile.log
 
 
 cleansweep:
