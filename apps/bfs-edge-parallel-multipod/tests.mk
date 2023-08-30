@@ -16,6 +16,6 @@ POD_RANGE = $(shell seq -s " " 0 63)
 # Iter 2
 #$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,u16k16,0,2,$(x))))
 # Iter 3
-$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,u16k16,0,3,$(x))))
+#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,u16k16,0,3,$(x))))
 # Iter 4
 #$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,u16k16,0,4,$(x))))
