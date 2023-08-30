@@ -1,4 +1,4 @@
-#include "breadth_first_search_graph.hpp"
+#include "host_bfs.hpp"
 #include <set>
 #include <cstdio>
 

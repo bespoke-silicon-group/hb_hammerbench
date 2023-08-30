@@ -7,6 +7,7 @@ include parameters.mk
 include app_path.mk
 
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+NUMPODS?=64
 tile-x ?= 16
 tile-y ?= 8
 override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
@@ -23,11 +24,15 @@ vpath %.cpp $(APP_PATH)
 TEST_SOURCES := main.cpp
 TEST_SOURCES += read_graph.cpp
 TEST_SOURCES += transpose_graph.cpp
-TEST_SOURCES += breadth_first_search_graph.cpp
 TEST_SOURCES += mmio.c
+TEST_SOURCES += host_bfs.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+DEFINES += -DNUMPODS=$(NUMPODS)
+DEFINES += -DPODID=$(pod-id)
+DEFINES += -DNITER=$(niter)
+DEFINES += -DROOT=$(root)
 CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
@@ -57,6 +62,7 @@ RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_CCPPFLAGS += -DBLOCK_WORDS=$(BSG_MACHINE_VCACHE_BLOCK_SIZE_WORDS)
+RISCV_CCPPFLAGS += -DNUMPODS=$(NUMPODS)
 RISCV_TARGET_OBJECTS = kernel.rvo
 BSG_MANYCORE_KERNELS = main.riscv
 
@@ -69,7 +75,7 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 #
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
-C_ARGS ?= $(BSG_MANYCORE_KERNELS) $(APP_PATH)/inputs/$(input).mtx $(start)
+C_ARGS ?= $(BSG_MANYCORE_KERNELS) $(APP_PATH)/inputs/$(graph).mtx
 
 SIM_ARGS ?=
 

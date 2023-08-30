@@ -47,8 +47,6 @@ extern "C" int kernel(
   bsg_barrier_hw_tile_group_sync();
 
   // local variables;
-  int start;
-  bsg_barrier_hw_tile_group_sync();
 
   // kernel start;
   bsg_cuda_print_stat_kernel_start();
@@ -117,7 +115,7 @@ extern "C" int kernel(
           int nz_stop = rev_offsets[v+1];
           for (int nz = nz_start; nz < nz_stop; nz++) {
             int src0 = rev_nonzeros[nz];
-            if (distance[src] != -1) {
+            if (distance[src0] != -1) {
               insert_into_dense(v, next_dense_frontier);
               break;
             }
@@ -186,4 +184,5 @@ extern "C" int kernel(
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
 
+  return 0;
 }

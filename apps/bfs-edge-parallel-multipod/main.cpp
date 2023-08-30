@@ -62,7 +62,7 @@ int bfs_multipod(int argc, char ** argv)
   std::vector<int> curr_frontier;
   for (int i = 0; i < V; i++) {
     if (distance[i] == niter) {
-      curr_frontier.push_back[i];
+      curr_frontier.push_back(i);
     }
   }
  
@@ -95,6 +95,14 @@ int bfs_multipod(int argc, char ** argv)
   // Pod
   hb_mc_pod_id_t pod;
  
+  hb_mc_eva_t d_fwd_offsets;
+  hb_mc_eva_t d_fwd_nonzeros;
+  hb_mc_eva_t d_rev_offsets;
+  hb_mc_eva_t d_rev_nonzeros;
+  hb_mc_eva_t d_curr_frontier;
+  hb_mc_eva_t d_next_dense_frontier;
+  hb_mc_eva_t d_curr_distance;
+
   hb_mc_device_foreach_pod_id(&device, pod)
   {
     // Loading program;
@@ -103,22 +111,12 @@ int bfs_multipod(int argc, char ** argv)
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
     // Allocate memory on device;
-    hb_mc_eva_t d_fwd_offsets;
-    hb_mc_eva_t d_fwd_nonzeros;
-    hb_mc_eva_t d_rev_offsets;
-    hb_mc_eva_t d_rev_nonzeros;
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, fwd_offsets.size()*sizeof(int), &d_fwd_offsets));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, fwd_nonzeros.size()*sizeof(int), &d_fwd_nonzeros));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, rev_offsets.size()*sizeof(int), &d_rev_offsets));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, rev_nonzeros.size()*sizeof(int), &d_rev_nonzeros));
-
-    hb_mc_eva_t d_curr_frontier;
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, curr_frontier.size()*sizeof(int), &d_curr_frontier));
-
-    hb_mc_eva_t d_next_dense_frontier;
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, num_dense_words*sizeof(int), &d_next_dense_frontier));
-
-    hb_mc_eva_t d_curr_distance;
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, curr_distance.size()*sizeof(int), &d_curr_distance));
 
     // DMA transfer;   
@@ -139,7 +137,7 @@ int bfs_multipod(int argc, char ** argv)
     #define CUDA_ARGC 11
     uint32_t cuda_argv[CUDA_ARGC] = {
       // inputs
-      pod_id+pod,
+      pod_id+(uint32_t)pod,
       V,
       direction[niter],
       d_fwd_offsets,
@@ -148,7 +146,7 @@ int bfs_multipod(int argc, char ** argv)
       d_rev_nonzeros,
       d_curr_distance,
       d_curr_frontier,
-      curr_frontier.size(),
+      (uint32_t) curr_frontier.size(),
       // output
       d_next_dense_frontier
     };
@@ -161,7 +159,7 @@ int bfs_multipod(int argc, char ** argv)
 
   // Launch pods
   printf("Launching all pods\n");
-  BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(device));
+  BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
 
 
   // Read frontier data;
@@ -186,7 +184,7 @@ int bfs_multipod(int argc, char ** argv)
       for (int j = 0; j < 32; j++) {
         int bit = (next_dense_frontier[i] >> j) & 1;
         if (bit) {
-          next_frontier.push_back((32*i)+j);
+          next_frontier.insert((32*i)+j);
         }
       }
     }
@@ -197,13 +195,13 @@ int bfs_multipod(int argc, char ** argv)
 
 
   hb_mc_device_foreach_pod_id(&device, pod) {
-    int curr_pod_id = pod_id+pod;
+    int curr_pod_id = pod_id+(int)pod;
     if (direction[niter]) {
       // REV
       int V_per_pod = (V+numpods-1)/numpods;
       int V_start = std::min(V, curr_pod_id*V_per_pod);
       int V_end = std::min(V, V_start+V_per_pod);
-      printf("Calculating expected next frontier: REV, curr_pod_id=%d, v_start=%d, v_end=%d");
+      printf("Calculating expected next frontier: REV, curr_pod_id=%d, v_start=%d, v_end=%d\n", curr_pod_id, V_start, V_end);
 
       // Iterate through unvisted
       for (int v = V_start; v < V_end; v++) {
@@ -213,7 +211,7 @@ int bfs_multipod(int argc, char ** argv)
           for (int nz = nz_start; nz < nz_end; nz++) {
             int src = rev_nonzeros[nz];
             if (curr_distance[src] != -1) {
-              expected_next_frontier.insert(src);
+              expected_next_frontier.insert(v);
               break;
             }
           }
@@ -223,9 +221,9 @@ int bfs_multipod(int argc, char ** argv)
     } else {
       // FWD
       int frontier_per_pod = (curr_frontier.size()+numpods-1) / numpods;
-      int f_start = std::min(curr_frontier.size(), curr_pod_id*frontier_per_pod);
-      int f_end   = std::min(curr_frontier.size(), f_start+frontier_per_pod);
-      printf("Calculating expected next frontier: FWD, curr_pod_id=%d, f_start=%d, f_end=%d");
+      int f_start = std::min((int) curr_frontier.size(), curr_pod_id*frontier_per_pod);
+      int f_end   = std::min((int) curr_frontier.size(), f_start+frontier_per_pod);
+      printf("Calculating expected next frontier: FWD, curr_pod_id=%d, f_start=%d, f_end=%d\n", curr_pod_id, f_start, f_end);
 
       for (int f = f_start; f < f_end; f++) {
         int src = curr_frontier[f];
@@ -250,7 +248,7 @@ int bfs_multipod(int argc, char ** argv)
   for (it = expected_next_frontier.begin(); it != expected_next_frontier.end(); it++) {
     int val = *it;
     if (next_frontier.find(val) == next_frontier.end()) {
-      printf("FAIL: Frontier %d not in actual.\n");
+      printf("FAIL: Frontier %d not in actual.\n", val);
       fail = true;
     }
   }
@@ -259,7 +257,7 @@ int bfs_multipod(int argc, char ** argv)
   for (it = next_frontier.begin(); it != next_frontier.end(); it++) {
     int val = *it;
     if (expected_next_frontier.find(val) == expected_next_frontier.end()) {
-      printf("FAIL: Frontier %d not in expected.\n");
+      printf("FAIL: Frontier %d not in expected.\n", val);
       fail = true;
     }
   }
@@ -273,3 +271,8 @@ int bfs_multipod(int argc, char ** argv)
     return HB_MC_SUCCESS;
   }
 }
+
+
+
+declare_program_main("bfs-multipod", bfs_multipod);
+
