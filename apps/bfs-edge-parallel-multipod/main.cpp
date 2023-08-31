@@ -9,25 +9,43 @@
 #include <vector>
 #include <algorithm>
 #include <set>
-
-#include "read_graph.hpp"
-#include "transpose_graph.hpp"
+#include <fstream>
 #include "host_bfs.hpp"
 
 #define ALLOC_NAME "default_allocator"
 
+
+void read_graph(int* ptr, std::string filename)
+{
+  // allocate mem;
+  //ptr = (int *) malloc(sizeof(int)*len);
+
+  std::ifstream fh(filename);
+  int idx = 0;
+  int num;
+   
+  while (fh >> num) {
+    //printf("%d\n",num);
+    ptr[idx] = num;
+    idx++;
+  }
+}
 
 int bfs_multipod(int argc, char ** argv)
 {
   int r = 0;
 
   // Command Line arguments;
-  // [1] bin path
-  // [2] graph input
   const char * bin_path = argv[1];
-  std::string graph_input = argv[2];
+  std::string fwd_offsets_file  = argv[2];
+  std::string fwd_nonzeros_file = argv[3];
+  std::string rev_offsets_file  = argv[4];
+  std::string rev_nonzeros_file = argv[5];
   std::cout << "bin_path = " << bin_path << std::endl;
-  std::cout << "graph_input = " << graph_input << std::endl;
+  std::cout << "fwd_offsets_file = "  << fwd_offsets_file << std::endl;
+  std::cout << "fwd_nonzeros_file = " << fwd_nonzeros_file << std::endl;
+  std::cout << "rev_offsets_file = "  << rev_offsets_file << std::endl;
+  std::cout << "rev_nonzeros_file = " << rev_nonzeros_file << std::endl;
 
   // Define Params;
   int root = ROOT;
@@ -41,23 +59,29 @@ int bfs_multipod(int argc, char ** argv)
 
 
   // Read input graph;
-  int V, E;
-  std::vector<int> fwd_offsets, fwd_nonzeros;
-  read_graph(graph_input, &V, &E, fwd_offsets, fwd_nonzeros);
+  int V = VERTEX;
+  int E = EDGE;
   std::cout << "V = " << V << std::endl;
   std::cout << "E = " << E << std::endl;
-
-  // Transpose;
-  std::vector<int> rev_offsets, rev_nonzeros;
-  BSG_CUDA_CALL(transpose_graph(V, E, fwd_offsets, fwd_nonzeros, rev_offsets, rev_nonzeros));
-
+  int * fwd_offsets = (int *) malloc(sizeof(int)*(V+1));
+  int * fwd_nonzeros = (int *) malloc(sizeof(int)*(E));
+  int * rev_offsets = (int *) malloc(sizeof(int)*(V+1));
+  int * rev_nonzeros = (int *) malloc(sizeof(int)*(E));
+  read_graph(fwd_offsets,  fwd_offsets_file);
+  read_graph(fwd_nonzeros,  fwd_nonzeros_file);
+  read_graph(rev_offsets,  rev_offsets_file);
+  read_graph(rev_nonzeros,  rev_nonzeros_file);
+  //std::vector<int> fwd_offsets, fwd_nonzeros;
+  //read_graph(graph_input, &V, &E, fwd_offsets, fwd_nonzeros);
 
   // BFS on host;
   std::vector<int> distance;
   std::vector<int> direction;
   host_bfs(root, V, fwd_offsets, fwd_nonzeros, rev_offsets, rev_nonzeros, distance, direction);
+  return 0;
 
 
+/*
   // frontiers;
   std::vector<int> curr_frontier;
   for (int i = 0; i < V; i++) {
@@ -261,15 +285,15 @@ int bfs_multipod(int argc, char ** argv)
       fail = true;
     }
   }
-
   // Finish;
-  BSG_CUDA_CALL(hb_mc_device_finish(&device));
+  //BSG_CUDA_CALL(hb_mc_device_finish(&device));
 
   if (fail) {
     return HB_MC_FAIL;
   } else {
     return HB_MC_SUCCESS;
   }
+  */
 }
 
 

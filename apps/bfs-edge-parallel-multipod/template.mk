@@ -8,10 +8,13 @@ include app_path.mk
 
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 NUMPODS?=64
-tile-x ?= 16
-tile-y ?= 8
+tile-x?=16
+tile-y?=8
 override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
+
+# Get graph config
+include ../config.$(graph).mk
 
 # Tile Group Dimensions
 TILE_GROUP_DIM_X ?= $(tile-x)
@@ -22,9 +25,6 @@ vpath %.cpp $(APP_PATH)
 
 # TEST_SOURCES is a list of source files that need to be compiled
 TEST_SOURCES := main.cpp
-TEST_SOURCES += read_graph.cpp
-TEST_SOURCES += transpose_graph.cpp
-TEST_SOURCES += mmio.c
 TEST_SOURCES += host_bfs.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
@@ -32,7 +32,9 @@ DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 DEFINES += -DNUMPODS=$(NUMPODS)
 DEFINES += -DPODID=$(pod-id)
 DEFINES += -DNITER=$(niter)
-DEFINES += -DROOT=$(root)
+DEFINES += -DROOT=$(ROOT)
+DEFINES += -DEDGE=$(EDGE)
+DEFINES += -DVERTEX=$(VERTEX)
 CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
@@ -75,7 +77,11 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 #
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
-C_ARGS ?= $(BSG_MANYCORE_KERNELS) $(APP_PATH)/inputs/$(graph).mtx
+C_ARGS ?= $(BSG_MANYCORE_KERNELS) \
+					$(APP_PATH)/inputs/$(graph).fwd_offsets.txt \
+					$(APP_PATH)/inputs/$(graph).fwd_nonzeros.txt \
+					$(APP_PATH)/inputs/$(graph).rev_offsets.txt \
+					$(APP_PATH)/inputs/$(graph).rev_nonzeros.txt
 
 SIM_ARGS ?=
 

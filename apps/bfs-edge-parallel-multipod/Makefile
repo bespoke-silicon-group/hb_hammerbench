@@ -5,12 +5,11 @@ all: generate
 
 
 # test name;
-test-name = graph_$(1)__root_$(2)__niter_$(3)__pod-id_$(4)
+test-name = graph_$(1)__niter_$(2)__pod-id_$(3)
 
 
 # get parameter from test name;
 get-graph  = $(lastword $(subst _, ,$(filter graph_%,$(subst __, ,$(1)))))
-get-root   = $(lastword $(subst _, ,$(filter root_%,$(subst __, ,$(1)))))
 get-niter  = $(lastword $(subst _, ,$(filter niter_%,$(subst __, ,$(1)))))
 get-pod-id = $(lastword $(subst _, ,$(filter pod-id_%,$(subst __, ,$(1)))))
 
@@ -26,7 +25,6 @@ $(addsuffix /parameters.mk,$(TESTS_DIRS)): %/parameters.mk:
 	@touch $@
 	@echo test-name  = $* >> $@
 	@echo graph  = $(call get-graph,$*) >> $@
-	@echo root   = $(call get-root,$*) >> $@
 	@echo niter  = $(call get-niter,$*) >> $@
 	@echo pod-id = $(call get-pod-id,$*) >> $@
 

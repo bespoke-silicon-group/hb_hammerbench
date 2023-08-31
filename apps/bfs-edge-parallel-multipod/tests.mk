@@ -10,12 +10,32 @@ POD_RANGE = $(shell seq -s " " 0 63)
 # d=5, rev_not_fwd=1, frontier_size=38593, edge_traversed=0
 
 # Iter 0
-#TESTS += $(call test-name,u16k16,0,0,0)
+TESTS += $(call test-name,u16k16,0,0)
 # Iter 1
-#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,u16k16,0,1,$(x))))
+#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,u16k16,1,$(x))))
 # Iter 2
-#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,u16k16,0,2,$(x))))
+#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,u16k16,2,$(x))))
 # Iter 3
-#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,u16k16,0,3,$(x))))
+#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,u16k16,3,$(x))))
 # Iter 4
-#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,u16k16,0,4,$(x))))
+#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,u16k16,4,$(x))))
+
+
+
+# soc-Pokec
+TESTS += $(call test-name,soc-Pokec,0,0)
+
+#hollywood-2009
+TESTS += $(call test-name,hollywood-2009,0,0)
+
+#ljournal-2008
+TESTS += $(call test-name,ljournal-2008,0,0)
+
+#roadnet CA
+TESTS += $(call test-name,roadNet-CA,0,0)
+
+#road_central
+TESTS += $(call test-name,road-central,0,0)
+
+#road_usa
+TESTS += $(call test-name,road-usa,0,0)
