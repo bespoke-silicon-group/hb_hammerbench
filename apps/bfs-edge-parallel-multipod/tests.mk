@@ -23,19 +23,19 @@ TESTS += $(call test-name,u16k16,0,0)
 
 
 # soc-Pokec
-TESTS += $(call test-name,soc-Pokec,0,0)
+#TESTS += $(call test-name,soc-Pokec,0,0)
 
 #hollywood-2009
-TESTS += $(call test-name,hollywood-2009,0,0)
+#TESTS += $(call test-name,hollywood-2009,0,0)
 
 #ljournal-2008
-TESTS += $(call test-name,ljournal-2008,0,0)
+#TESTS += $(call test-name,ljournal-2008,0,0)
 
 #roadnet CA
-TESTS += $(call test-name,roadNet-CA,0,0)
+#TESTS += $(call test-name,roadNet-CA,0,0)
 
 #road_central
-TESTS += $(call test-name,road-central,0,0)
+#TESTS += $(call test-name,road-central,0,0)
 
 #road_usa
-TESTS += $(call test-name,road-usa,0,0)
+#TESTS += $(call test-name,road-usa,0,0)

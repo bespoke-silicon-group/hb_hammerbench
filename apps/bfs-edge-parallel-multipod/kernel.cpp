@@ -32,10 +32,8 @@ extern "C" int kernel(
   int pod_id,
   int V,
   int direction,  // rev=1, fwd=0
-  int* fwd_offsets,
-  int* fwd_nonzeros,
-  int* rev_offsets,
-  int* rev_nonzeros,
+  int* offsets,
+  int* nonzeros,
   int* distance,
   int* curr_frontier,
   int frontier_size,
@@ -76,9 +74,9 @@ extern "C" int kernel(
         l_distance[0] = distance[v];
         l_distance[1] = distance[v+1];
         asm volatile("": : :"memory");
-        l_rev_offsets[0] = rev_offsets[v];
-        l_rev_offsets[1] = rev_offsets[v+1];
-        l_rev_offsets[2] = rev_offsets[v+2];
+        l_rev_offsets[0] = offsets[v];
+        l_rev_offsets[1] = offsets[v+1];
+        l_rev_offsets[2] = offsets[v+2];
         asm volatile("": : :"memory");
       
         // 0
@@ -86,7 +84,7 @@ extern "C" int kernel(
           int nz_start = l_rev_offsets[0];
           int nz_stop  = l_rev_offsets[1];
           for (int nz = nz_start; nz < nz_stop; nz++) {
-            int src = rev_nonzeros[nz];
+            int src = nonzeros[nz];
             if (distance[src] != -1) {
               insert_into_dense(v, next_dense_frontier);
               break;
@@ -99,7 +97,7 @@ extern "C" int kernel(
           int nz_start = l_rev_offsets[1];
           int nz_stop  = l_rev_offsets[2];
           for (int nz = nz_start; nz < nz_stop; nz++) {
-            int src = rev_nonzeros[nz];
+            int src = nonzeros[nz];
             if (distance[src] != -1) {
               insert_into_dense(v+1, next_dense_frontier);
               break;
@@ -111,10 +109,10 @@ extern "C" int kernel(
       // Unroll by 1
       for (; v < stop; v++) {
         if (distance[v] == -1) {
-          int nz_start = rev_offsets[v];
-          int nz_stop = rev_offsets[v+1];
+          int nz_start = offsets[v];
+          int nz_stop = offsets[v+1];
           for (int nz = nz_start; nz < nz_stop; nz++) {
-            int src0 = rev_nonzeros[nz];
+            int src0 = nonzeros[nz];
             if (distance[src0] != -1) {
               insert_into_dense(v, next_dense_frontier);
               break;
@@ -139,8 +137,8 @@ extern "C" int kernel(
     
     for (int idx = bsg_amoadd(&g_q,1); idx < f_end; idx = bsg_amoadd(&g_q,1)) {
       int src = curr_frontier[idx];
-      int nz_start = fwd_offsets[src];
-      int nz_stop = fwd_offsets[src+1];
+      int nz_start = offsets[src];
+      int nz_stop = offsets[src+1];
       int nz_len = nz_stop - nz_start;
       if (do_edge_parallel && (nz_len > 128)) {
         int next_idx = bsg_amoadd(&g_q2,1);
@@ -150,7 +148,7 @@ extern "C" int kernel(
         // Forward traversal (vertex parallel)
         int nz = nz_start;
         for (; nz < nz_stop; nz++) {
-          int dst = fwd_nonzeros[nz];
+          int dst = nonzeros[nz];
           if (distance[dst] == -1) {
             insert_into_dense(dst, next_dense_frontier);
           }
@@ -168,7 +166,7 @@ extern "C" int kernel(
         int nz_start = g_edge_start[idx];
         int nz_stop = g_edge_stop[idx];
         for (int nz = nz_start+__bsg_id; nz < nz_stop; nz += bsg_tiles_X*bsg_tiles_Y) {
-          int dst = fwd_nonzeros[nz];
+          int dst = nonzeros[nz];
           if (distance[dst] == -1) {
             insert_into_dense(dst, next_dense_frontier);
           }

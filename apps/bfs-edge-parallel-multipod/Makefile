@@ -30,3 +30,7 @@ $(addsuffix /parameters.mk,$(TESTS_DIRS)): %/parameters.mk:
 
 
 include $(HB_HAMMERBENCH_PATH)/mk/testbench_common.mk
+
+
+clean:
+	rm -rf graph_*pod-id*

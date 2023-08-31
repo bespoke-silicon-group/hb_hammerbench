@@ -71,17 +71,13 @@ int bfs_multipod(int argc, char ** argv)
   read_graph(fwd_nonzeros,  fwd_nonzeros_file);
   read_graph(rev_offsets,  rev_offsets_file);
   read_graph(rev_nonzeros,  rev_nonzeros_file);
-  //std::vector<int> fwd_offsets, fwd_nonzeros;
-  //read_graph(graph_input, &V, &E, fwd_offsets, fwd_nonzeros);
 
   // BFS on host;
   std::vector<int> distance;
   std::vector<int> direction;
   host_bfs(root, V, fwd_offsets, fwd_nonzeros, rev_offsets, rev_nonzeros, distance, direction);
-  return 0;
 
 
-/*
   // frontiers;
   std::vector<int> curr_frontier;
   for (int i = 0; i < V; i++) {
@@ -119,10 +115,8 @@ int bfs_multipod(int argc, char ** argv)
   // Pod
   hb_mc_pod_id_t pod;
  
-  hb_mc_eva_t d_fwd_offsets;
-  hb_mc_eva_t d_fwd_nonzeros;
-  hb_mc_eva_t d_rev_offsets;
-  hb_mc_eva_t d_rev_nonzeros;
+  hb_mc_eva_t d_offsets;
+  hb_mc_eva_t d_nonzeros;
   hb_mc_eva_t d_curr_frontier;
   hb_mc_eva_t d_next_dense_frontier;
   hb_mc_eva_t d_curr_distance;
@@ -135,10 +129,8 @@ int bfs_multipod(int argc, char ** argv)
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
     // Allocate memory on device;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, fwd_offsets.size()*sizeof(int), &d_fwd_offsets));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, fwd_nonzeros.size()*sizeof(int), &d_fwd_nonzeros));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, rev_offsets.size()*sizeof(int), &d_rev_offsets));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, rev_nonzeros.size()*sizeof(int), &d_rev_nonzeros));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (V+1)*sizeof(int), &d_offsets));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, E*sizeof(int), &d_nonzeros));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, curr_frontier.size()*sizeof(int), &d_curr_frontier));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, num_dense_words*sizeof(int), &d_next_dense_frontier));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, curr_distance.size()*sizeof(int), &d_curr_distance));
@@ -146,10 +138,13 @@ int bfs_multipod(int argc, char ** argv)
     // DMA transfer;   
     printf("Transferring data: pod %d\n", pod);
     std::vector<hb_mc_dma_htod_t> htod_job;
-    htod_job.push_back({d_fwd_offsets, fwd_offsets.data(), fwd_offsets.size()*sizeof(int)});
-    htod_job.push_back({d_fwd_nonzeros, fwd_nonzeros.data(), fwd_nonzeros.size()*sizeof(int)});
-    htod_job.push_back({d_rev_offsets, rev_offsets.data(), rev_offsets.size()*sizeof(int)});
-    htod_job.push_back({d_rev_nonzeros, rev_nonzeros.data(), rev_nonzeros.size()*sizeof(int)});
+    if (direction[niter]) {
+      htod_job.push_back({d_offsets, rev_offsets, (V+1)*sizeof(int)});
+      htod_job.push_back({d_nonzeros, rev_nonzeros, E*sizeof(int)});
+    } else {
+      htod_job.push_back({d_offsets, fwd_offsets, (V+1)*sizeof(int)});
+      htod_job.push_back({d_nonzeros, fwd_nonzeros, E*sizeof(int)});
+    }
     htod_job.push_back({d_curr_frontier, curr_frontier.data(), curr_frontier.size()*sizeof(int)});
     htod_job.push_back({d_next_dense_frontier, next_dense_frontier, num_dense_words*sizeof(int)});
     htod_job.push_back({d_curr_distance, curr_distance.data(), curr_distance.size()*sizeof(int)});
@@ -158,16 +153,14 @@ int bfs_multipod(int argc, char ** argv)
     // CUDA args
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
     hb_mc_dimension_t grid_dim = { .x = 1, .y = 1};
-    #define CUDA_ARGC 11
+    #define CUDA_ARGC 9
     uint32_t cuda_argv[CUDA_ARGC] = {
       // inputs
       pod_id+(uint32_t)pod,
       V,
       direction[niter],
-      d_fwd_offsets,
-      d_fwd_nonzeros,
-      d_rev_offsets,
-      d_rev_nonzeros,
+      d_offsets,
+      d_nonzeros,
       d_curr_distance,
       d_curr_frontier,
       (uint32_t) curr_frontier.size(),
@@ -286,14 +279,14 @@ int bfs_multipod(int argc, char ** argv)
     }
   }
   // Finish;
-  //BSG_CUDA_CALL(hb_mc_device_finish(&device));
+  BSG_CUDA_CALL(hb_mc_device_finish(&device));
 
   if (fail) {
     return HB_MC_FAIL;
   } else {
     return HB_MC_SUCCESS;
   }
-  */
+  
 }
 
 
