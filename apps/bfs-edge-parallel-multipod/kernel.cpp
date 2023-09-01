@@ -58,13 +58,15 @@ extern "C" int kernel(
 
     if (__bsg_id == 0) {
       g_q = v_start;
+      //bsg_print_int(v_start);
+      //bsg_print_int(v_end);
       bsg_fence();
     }
     bsg_barrier_hw_tile_group_sync();
 
     for (int v_start = bsg_amoadd(&g_q, BLOCK_SIZE); v_start < v_end; v_start = bsg_amoadd(&g_q,BLOCK_SIZE)) {
       int v = v_start;
-      int stop = std::min(V, v_start+BLOCK_SIZE);
+      int stop = std::min(v_end, v_start+BLOCK_SIZE);
 
       // unroll by 2;
       #define REV_UNROLL 2
