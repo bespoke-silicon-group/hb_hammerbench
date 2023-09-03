@@ -81,9 +81,11 @@ C_ARGS ?= $(BSG_MANYCORE_KERNELS) \
 					$(APP_PATH)/inputs/$(graph).fwd_offsets.txt \
 					$(APP_PATH)/inputs/$(graph).fwd_nonzeros.txt \
 					$(APP_PATH)/inputs/$(graph).rev_offsets.txt \
-					$(APP_PATH)/inputs/$(graph).rev_nonzeros.txt
+					$(APP_PATH)/inputs/$(graph).rev_nonzeros.txt \
+					$(APP_PATH)/inputs/$(graph).distance.txt \
+					$(APP_PATH)/inputs/$(graph).direction.txt
 
-SIM_ARGS ?=
+SIM_ARGS ?=  +vcs+nostdout
 
 # Include platform-specific execution rules
 include $(EXAMPLES_PATH)/execution.mk

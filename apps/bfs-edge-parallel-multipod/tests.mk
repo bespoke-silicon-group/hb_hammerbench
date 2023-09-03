@@ -20,18 +20,31 @@ POD_RANGE = $(shell seq -s " " 0 63)
 	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,soc-Pokec,$(n),$(x)))))
 
 #hollywood-2009
-HW_ITER_RANGE = $(shell seq -s " " 0 9)
-$(foreach n, $(HW_ITER_RANGE), \
-	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,hollywood-2009,$(n),$(x)))))
+#HW_ITER_RANGE = $(shell seq -s " " 0 9)
+#$(foreach n, $(HW_ITER_RANGE), \
+#	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,hollywood-2009,$(n),$(x)))))
 
 #ljournal-2008
-#TESTS += $(call test-name,ljournal-2008,0,0)
+#LJ_ITER_RANGE1 = $(shell seq -s " " 0 11)
+#LJ_ITER_RANGE2 = $(shell seq -s " " 12 41)
+#$(foreach n, $(LJ_ITER_RANGE1), \
+	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,ljournal-2008,$(n),$(x)))))
+#$(foreach n, $(LJ_ITER_RANGE2), \
+	$(eval TESTS += $(call test-name,ljournal-2008,$(n),0)))
 
 #roadnet CA
-#TESTS += $(call test-name,roadNet-CA,0,0)
+CA_ITER_RANGE = $(shell seq -s " " 0 728)
+CA_POD_RANGE = $(shell seq -s " " 0 15)
+$(foreach n, $(CA_ITER_RANGE), \
+	$(foreach x, $(CA_POD_RANGE), $(eval TESTS += $(call test-name,roadNet-CA,$(n),$(x)))))
 
 #road_central
-#TESTS += $(call test-name,road-central,0,0)
+#RC_ITER_RANGE = $(shell seq -s " " 0 4167)
+#$(foreach n, $(RC_ITER_RANGE), \
+#	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,road-central,$(n),$(x)))))
 
 #road_usa
-#TESTS += $(call test-name,road-usa,0,0)
+#US_ITER_RANGE = $(shell seq -s " " 0 4611)
+#$(foreach n, $(US_ITER_RANGE), \
+#	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,road-usa,$(n),$(x)))))
+

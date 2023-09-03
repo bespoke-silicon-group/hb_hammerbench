@@ -15,6 +15,8 @@ for n in range(niter):
     # parse
     filename = "graph_{}__niter_{}__pod-id_{}/vanilla_stats.csv".format(graph, n, pid)
     stats = co.parse_vanilla_stat(filename)
+    if stats is None:
+      continue
     curr_runtime = stats["runtime"]
     if max_runtime < curr_runtime:
       max_runtime = curr_runtime

@@ -31,6 +31,17 @@ void read_graph(int* ptr, std::string filename)
   }
 }
 
+
+void read_vector(std::vector<int> &vec, std::string filename)
+{
+  std::ifstream fh(filename);
+  int num;
+  while (fh >> num) {
+    vec.push_back(num);
+  }
+}
+
+
 int bfs_multipod(int argc, char ** argv)
 {
   int r = 0;
@@ -41,6 +52,9 @@ int bfs_multipod(int argc, char ** argv)
   std::string fwd_nonzeros_file = argv[3];
   std::string rev_offsets_file  = argv[4];
   std::string rev_nonzeros_file = argv[5];
+  std::string distance_file  = argv[6];
+  std::string direction_file = argv[7];
+  
   std::cout << "bin_path = " << bin_path << std::endl;
   std::cout << "fwd_offsets_file = "  << fwd_offsets_file << std::endl;
   std::cout << "fwd_nonzeros_file = " << fwd_nonzeros_file << std::endl;
@@ -75,7 +89,9 @@ int bfs_multipod(int argc, char ** argv)
   // BFS on host;
   std::vector<int> distance;
   std::vector<int> direction;
-  host_bfs(root, V, fwd_offsets, fwd_nonzeros, rev_offsets, rev_nonzeros, distance, direction);
+  read_vector(distance, distance_file);
+  read_vector(direction, direction_file);
+  //host_bfs(root, V, fwd_offsets, fwd_nonzeros, rev_offsets, rev_nonzeros, distance, direction);
 
 
   // frontiers;
