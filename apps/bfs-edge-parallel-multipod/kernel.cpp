@@ -47,7 +47,6 @@ extern "C" int kernel(
   // local variables;
 
   // kernel start;
-  bsg_cuda_print_stat_kernel_start();
 
   if (direction) {
     // REV  
@@ -63,6 +62,7 @@ extern "C" int kernel(
       bsg_fence();
     }
     bsg_barrier_hw_tile_group_sync();
+    bsg_cuda_print_stat_kernel_start();
 
     for (int v_start = bsg_amoadd(&g_q, BLOCK_SIZE); v_start < v_end; v_start = bsg_amoadd(&g_q,BLOCK_SIZE)) {
       int v = v_start;
@@ -124,20 +124,30 @@ extern "C" int kernel(
       }
     }
 
+
   } else {
     // FWD
     int frontier_per_pod = (frontier_size+NUMPODS-1) / NUMPODS;
     int f_start = std::min(frontier_size, pod_id*frontier_per_pod);
     int f_end   = std::min(frontier_size, f_start+frontier_per_pod);
-    int do_edge_parallel = frontier_size < 128;
+    int do_edge_parallel = (frontier_size < 128) && DO_EDGE_PARALLEL;
     if (__bsg_id == 0) {
       g_q = f_start;
       g_q2 = 0;
       bsg_fence();
     }
+
+    #ifdef WARM_FRONTIER
+    for (int i = f_start+(__bsg_id*CACHE_BLOCK_WORDS); i < f_end; i+=bsg_tiles_X*bsg_tiles_Y*CACHE_BLOCK_WORDS) {
+      asm volatile ("lw x0, %[p]" :: [p] "m" (curr_frontier[i]));
+    }
+    bsg_fence();
+    #endif
     bsg_barrier_hw_tile_group_sync();
+    bsg_cuda_print_stat_kernel_start();
     
-    for (int idx = bsg_amoadd(&g_q,1); idx < f_end; idx = bsg_amoadd(&g_q,1)) {
+    //for (int idx = bsg_amoadd(&g_q,1); idx < f_end; idx = bsg_amoadd(&g_q,1)) {
+    for (int idx = f_start+__bsg_id; idx < f_end; idx+=bsg_tiles_X*bsg_tiles_Y) {
       int src = curr_frontier[idx];
       int nz_start = offsets[src];
       int nz_stop = offsets[src+1];
@@ -178,7 +188,7 @@ extern "C" int kernel(
   }
 
 
-  // kernel end
+  // Finish
   bsg_fence();
   bsg_cuda_print_stat_kernel_end();
   bsg_fence();

@@ -140,7 +140,7 @@ int bfs_multipod(int argc, char ** argv)
   hb_mc_device_foreach_pod_id(&device, pod)
   {
     // Loading program;
-    printf("Loading program for pod %d\n.", pod);
+    printf("Loading program for pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
