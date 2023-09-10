@@ -33,18 +33,20 @@ POD_RANGE = $(shell seq -s " " 0 63)
 	$(eval TESTS += $(call test-name,ljournal-2008,$(n),0)))
 
 #roadnet CA
-CA_ITER_RANGE = $(shell seq -s " " 0 728)
-CA_POD_RANGE = $(shell seq -s " " 0 15)
-$(foreach n, $(CA_ITER_RANGE), \
+#CA_ITER_RANGE = $(shell seq -s " " 120 135)
+#CA_POD_RANGE = $(shell seq -s " " 0 63)
+#$(foreach n, $(CA_ITER_RANGE), \
 	$(foreach x, $(CA_POD_RANGE), $(eval TESTS += $(call test-name,roadNet-CA,$(n),$(x)))))
 
-#road_central
-#RC_ITER_RANGE = $(shell seq -s " " 0 4167)
+#road_central (iter ~4167)
+#RC_ITER_RANGE = $(shell seq -s " " 1613 1628)
+#RC_POD_RANGE = $(shell seq -s " " 0 63)
 #$(foreach n, $(RC_ITER_RANGE), \
-#	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,road-central,$(n),$(x)))))
+	$(foreach x, $(RC_POD_RANGE), $(eval TESTS += $(call test-name,road-central,$(n),$(x)))))
 
-#road_usa
-#US_ITER_RANGE = $(shell seq -s " " 0 4611)
-#$(foreach n, $(US_ITER_RANGE), \
-#	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,road-usa,$(n),$(x)))))
+#road_usa (iter ~ 4611)
+US_ITER_RANGE = $(shell seq -s " " 960 975)
+US_POD_RANGE = $(shell seq -s " " 0 63)
+$(foreach n, $(US_ITER_RANGE), \
+	$(foreach x, $(US_POD_RANGE), $(eval TESTS += $(call test-name,road-usa,$(n),$(x)))))
 

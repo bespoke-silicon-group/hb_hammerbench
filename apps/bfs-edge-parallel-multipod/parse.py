@@ -2,13 +2,14 @@ import sys
 import core_utilization as co
 
 # input arguments
-graph    = sys.argv[1]
-niter    = int(sys.argv[2])
-numpods  = int(sys.argv[3])
+graph         = sys.argv[1]
+iter_start    = int(sys.argv[2])
+iter_end      = int(sys.argv[3])
+numpods       = int(sys.argv[4])
 
 
 total_runtime = 0
-for n in range(niter):
+for n in range(iter_start, iter_end):
   max_runtime = 0
   max_pid = 0
   for pid in range(numpods):
@@ -25,4 +26,4 @@ for n in range(niter):
   print("iter={}, max_pid={}, runtime={}".format(n, max_pid, max_runtime))
   total_runtime += max_runtime
 
-print("total_runtime: {}, adjusted={}".format(total_runtime, total_runtime-(niter*512)))
+print("total_runtime: {}, adjusted={}".format(total_runtime, total_runtime-((iter_end-iter_start)*512)))
