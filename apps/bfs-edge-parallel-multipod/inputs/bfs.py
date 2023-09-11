@@ -2,6 +2,7 @@ import sys
 
 graph_name = sys.argv[1]
 root = int(sys.argv[2])
+use_push_pull = (int(sys.argv[3]) == 1)
 
 # read fwd offsets;
 fwd_offsets = []
@@ -41,7 +42,6 @@ distance[root] = 0
 next_frontier = []
 rev_not_fwd = 0
 d=0
-use_push_pull = False
 
 while curr_frontier:
   print(d)

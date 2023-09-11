@@ -146,8 +146,11 @@ extern "C" int kernel(
     bsg_barrier_hw_tile_group_sync();
     bsg_cuda_print_stat_kernel_start();
     
-    //for (int idx = bsg_amoadd(&g_q,1); idx < f_end; idx = bsg_amoadd(&g_q,1)) {
+    #ifdef FWD_QUEUE_STATIC
     for (int idx = f_start+__bsg_id; idx < f_end; idx+=bsg_tiles_X*bsg_tiles_Y) {
+    #elif
+    for (int idx = bsg_amoadd(&g_q,1); idx < f_end; idx = bsg_amoadd(&g_q,1)) {
+    #endif
       int src = curr_frontier[idx];
       int nz_start = offsets[src];
       int nz_stop = offsets[src+1];
