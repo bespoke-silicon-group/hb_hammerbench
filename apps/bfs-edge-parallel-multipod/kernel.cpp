@@ -148,7 +148,7 @@ extern "C" int kernel(
     
     #ifdef FWD_QUEUE_STATIC
     for (int idx = f_start+__bsg_id; idx < f_end; idx+=bsg_tiles_X*bsg_tiles_Y) {
-    #elif
+    #else
     for (int idx = bsg_amoadd(&g_q,1); idx < f_end; idx = bsg_amoadd(&g_q,1)) {
     #endif
       int src = curr_frontier[idx];
