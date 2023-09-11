@@ -101,6 +101,7 @@ int bfs_multipod(int argc, char ** argv)
       curr_frontier.push_back(i);
     }
   }
+  printf("curr_frontier.size = %d\n", (uint32_t) curr_frontier.size());
  
   // curr  distance
   std::vector<int> curr_distance(V, -1);
