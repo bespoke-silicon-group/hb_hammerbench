@@ -15,8 +15,8 @@ POD_RANGE = $(shell seq -s " " 0 63)
 
 
 # soc-Pokec
-#PK_ITER_RANGE = $(shell seq -s " " 0 13)
-#$(foreach n, $(PK_ITER_RANGE), \
+PK_ITER_RANGE = $(shell seq -s " " 0 10)
+$(foreach n, $(PK_ITER_RANGE), \
 	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,soc-Pokec,$(n),$(x)))))
 
 #hollywood-2009
@@ -45,8 +45,8 @@ POD_RANGE = $(shell seq -s " " 0 63)
 	$(foreach x, $(RC_POD_RANGE), $(eval TESTS += $(call test-name,road-central,$(n),$(x)))))
 
 #road_usa (iter ~ 4611)
-US_ITER_RANGE = $(shell seq -s " " 960 975)
-US_POD_RANGE = $(shell seq -s " " 0 63)
-$(foreach n, $(US_ITER_RANGE), \
+#US_ITER_RANGE = $(shell seq -s " " 960 975)
+#US_POD_RANGE = $(shell seq -s " " 0 63)
+#$(foreach n, $(US_ITER_RANGE), \
 	$(foreach x, $(US_POD_RANGE), $(eval TESTS += $(call test-name,road-usa,$(n),$(x)))))
 
