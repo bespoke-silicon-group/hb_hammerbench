@@ -20,17 +20,14 @@ $(foreach n, $(PK_ITER_RANGE), \
 	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,soc-Pokec,$(n),$(x)))))
 
 #hollywood-2009
-#HW_ITER_RANGE = $(shell seq -s " " 0 9)
+#HW_ITER_RANGE = $(shell seq -s " " 0 7)
 #$(foreach n, $(HW_ITER_RANGE), \
-#	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,hollywood-2009,$(n),$(x)))))
+	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,hollywood-2009,$(n),$(x)))))
 
 #ljournal-2008
-#LJ_ITER_RANGE1 = $(shell seq -s " " 0 11)
-#LJ_ITER_RANGE2 = $(shell seq -s " " 12 41)
-#$(foreach n, $(LJ_ITER_RANGE1), \
+#LJ_ITER_RANGE = $(shell seq -s " " 0 13)
+#$(foreach n, $(LJ_ITER_RANGE), \
 	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,ljournal-2008,$(n),$(x)))))
-#$(foreach n, $(LJ_ITER_RANGE2), \
-	$(eval TESTS += $(call test-name,ljournal-2008,$(n),0)))
 
 #roadnet CA
 #CA_ITER_RANGE = $(shell seq -s " " 120 135)
