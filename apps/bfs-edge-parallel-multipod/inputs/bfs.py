@@ -44,7 +44,7 @@ rev_not_fwd = 0
 d=0
 
 while curr_frontier:
-  print(d)
+  d += 1
   # decide direction;
   if use_push_pull:
     if rev_not_fwd:
@@ -88,7 +88,6 @@ while curr_frontier:
   # swap
   curr_frontier = next_frontier
   next_frontier = []
-  d += 1
 
 
 # write out distance;
