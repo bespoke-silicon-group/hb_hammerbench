@@ -286,7 +286,7 @@ void convert_hb(std::vector<Node>& nodes, std::vector<Body>& bodies,
 
 
 // set diamsq - recursive;
-void set_diamsq(float diamsq, int node_id, std::vector<Node> nodes, HBNode* hbnodes) {
+void set_diamsq(float diamsq, int node_id, std::vector<Node>& nodes, HBNode* hbnodes) {
   // set diamsq;
   hbnodes[node_id].diamsq = diamsq;
   nodes[node_id].diamsq = diamsq;
@@ -338,6 +338,7 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
 
     while (!stack.empty()) {
       int curr_node_id = stack.back();
+      //printf("curr_node_id: %d\n", curr_node_id);
       stack.pop_back();
       Node curr_node = nodes[curr_node_id]; 
 
@@ -348,9 +349,14 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
       delta[2] = curr_body.pos[2] - curr_node.co_pos[2];
       float curr_diamsq = itolsq * curr_node.diamsq;
       float distsq = dist2(delta[0], delta[1], delta[2]);   
-    
+      //printf("curr_node.co_pos[0]=%f\n", curr_node.co_pos[0]); 
+      //printf("curr_node.co_pos[1]=%f\n", curr_node.co_pos[1]); 
+      //printf("curr_node.co_pos[2]=%f\n", curr_node.co_pos[2]); 
+      //printf("curr_node.diamsq=%f\n", curr_node.diamsq); 
+      //printf("distsq=%f, curr_diamsq=%f\n", distsq, curr_diamsq); 
       if (distsq >= curr_diamsq) {
         // far away;
+        //printf("far away\n");
         float node_force[3];
         updateForce(node_force, delta, distsq, curr_node.co_mass);
         curr_body.acc[0] += node_force[0];
@@ -573,6 +579,7 @@ int barneshut_multipod(int argc, char ** argv) {
     int body_start = std::min(nbodies, curr_pod_id*body_per_pod);
     int body_end = std::min(nbodies, body_start+body_per_pod);
 
+    float serror;
     for (int b = body_start; b < body_end; b++) {
       printf("b=%d, HB acc=(%f %f %f), x86 acc=(%f %f %f)\n",
         b,
@@ -583,6 +590,33 @@ int barneshut_multipod(int argc, char ** argv) {
         bodies[b].acc[1],
         bodies[b].acc[2]
       );
+      float acc_diff0 = (next_hbbodies[b].acc[0] - bodies[b].acc[0]);
+      float acc_diff1 = (next_hbbodies[b].acc[1] - bodies[b].acc[1]);
+      float acc_diff2 = (next_hbbodies[b].acc[2] - bodies[b].acc[2]);
+      serror += acc_diff0 * acc_diff0;
+      serror += acc_diff1 * acc_diff1;
+      serror += acc_diff2 * acc_diff2;
+
+      printf("b=%d, HB vel=(%f %f %f), x86 vel=(%f %f %f)\n",
+        b,
+        next_hbbodies[b].vel[0], 
+        next_hbbodies[b].vel[1], 
+        next_hbbodies[b].vel[2], 
+        bodies[b].vel[0],
+        bodies[b].vel[1],
+        bodies[b].vel[2]
+      );
+      float vel_diff0 = (next_hbbodies[b].vel[0] - bodies[b].vel[0]);
+      float vel_diff1 = (next_hbbodies[b].vel[1] - bodies[b].vel[1]);
+      float vel_diff2 = (next_hbbodies[b].vel[2] - bodies[b].vel[2]);
+      serror += vel_diff0 * vel_diff0;
+      serror += vel_diff1 * vel_diff1;
+      serror += vel_diff2 * vel_diff2;
+    }
+    
+    printf("serror = %f\n", serror);
+    if (serror > 0.001f) {
+      return HB_MC_FAIL;
     }
   }
   
