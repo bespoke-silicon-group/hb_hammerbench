@@ -40,7 +40,6 @@ static inline void barrier_multipod(int pod_id, volatile int* done, int* alert) 
 
   // center tile;
   if ((__bsg_x == bsg_tiles_X/2) && (__bsg_y == bsg_tiles_Y/2)) {
-    bsg_print_int(my_pod_x);
 
     // send remote store to the remote done list;
     volatile int* remote_done_ptr =  bsg_global_ptr((BSG_MACHINE_GLOBAL_X+(bsg_tiles_X/2)),
@@ -84,7 +83,6 @@ static inline void barrier_multipod(int pod_id, volatile int* done, int* alert) 
       }
     } 
   }
-  bsg_print_int(2);
   
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
@@ -107,7 +105,6 @@ extern "C" int kernel(
   bsg_barrier_hw_tile_group_init();
   //bsg_barrier_hw_tile_group_sync();
   barrier_multipod(pod_id, done, &alert);
-  bsg_print_int(3);
 
   // local variables;
 
