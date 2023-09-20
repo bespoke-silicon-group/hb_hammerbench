@@ -2,6 +2,7 @@
 #include <bsg_manycore.h>
 #include <bsg_manycore_atomic.h>
 #include <bsg_cuda_lite_barrier.h>
+#include "bsg_barrier_multipod.h"
 #include "HBNode.hpp"
 #include "HBBody.hpp"
 
@@ -22,15 +23,19 @@ inline float dist2(float x, float y, float z) {
   return (x*x) + (y*y) + (z*z);
 }
 
+// multipod barrier;
+volatile int done[NUM_POD_X] = {0};
+int alert = 0;
 
 // Kernel main;
 extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
                       int* body_start, int body_end,
-                      HBNode** nodestack
+                      HBNode** nodestack, int pod_id
 )
 {
   bsg_barrier_hw_tile_group_init();
   bsg_barrier_hw_tile_group_sync();   
+  bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
   bsg_cuda_print_stat_kernel_start();
 
   int curr;

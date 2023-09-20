@@ -541,13 +541,14 @@ int barneshut_multipod(int argc, char ** argv) {
     // CUDA args
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
     hb_mc_dimension_t grid_dim = { .x = 1, .y = 1}; 
-    #define CUDA_ARGC 5
+    #define CUDA_ARGC 6
     uint32_t cuda_argv[CUDA_ARGC] = {
       d_hbnodes,
       d_hbbodies,
       d_curr_body,
       body_end,
-      d_nodestack
+      d_nodestack,
+      (uint32_t) pod
     };
 
     // Enqueue kernel;

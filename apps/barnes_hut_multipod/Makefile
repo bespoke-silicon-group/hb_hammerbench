@@ -30,5 +30,5 @@ include $(HB_HAMMERBENCH_PATH)/mk/testbench_common.mk
 
 
 clean:
-	rm -rf graph_*pod-id*
+	rm -rf nbodies_*pod-id*
 

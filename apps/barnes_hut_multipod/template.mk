@@ -13,6 +13,10 @@ include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 TILE_GROUP_DIM_X ?= $(tile-x)
 TILE_GROUP_DIM_Y ?= $(tile-y)
 
+# number of pods participating in barrier;
+NUM_POD_X=$(BSG_MACHINE_PODS_X)
+NUM_POD_Y=$(BSG_MACHINE_PODS_X)
+
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
 
@@ -46,6 +50,10 @@ include $(EXAMPLES_PATH)/link.mk
 
 # Device Code;
 RISCV_CCPPFLAGS += -O3 -std=c++14
+RISCV_CCPPFLAGS += -I$(HB_HAMMERBENCH_PATH)/apps/common
+RISCV_CCPPFLAGS += -DNUM_POD_X=$(NUM_POD_X)
+RISCV_CCPPFLAGS += -DBSG_MACHINE_GLOBAL_X=$(BSG_MACHINE_GLOBAL_X)
+RISCV_CCPPFLAGS += -DBSG_MACHINE_GLOBAL_Y=$(BSG_MACHINE_GLOBAL_Y)
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_CCPPFLAGS += -DNUMPODS=$(NUMPODS)
