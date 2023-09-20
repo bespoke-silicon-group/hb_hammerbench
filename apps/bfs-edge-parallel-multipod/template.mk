@@ -7,10 +7,10 @@ include parameters.mk
 include app_path.mk
 
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
-NUMPODS?=128
+NUMPODS?=64
 tile-x?=16
 tile-y?=8
-override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X2Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
+override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 # number of pods participating in barrier;
@@ -65,6 +65,7 @@ include $(EXAMPLES_PATH)/link.mk
 # be built before executing.
 
 RISCV_CCPPFLAGS += -O3 -std=c++14
+RISCV_CCPPFLAGS += -I$(HB_HAMMERBENCH_PATH)/apps/common
 RISCV_CCPPFLAGS += -DNUM_POD_X=$(NUM_POD_X)
 RISCV_CCPPFLAGS += -DBASE_POD_ID=$(pod-id)
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)

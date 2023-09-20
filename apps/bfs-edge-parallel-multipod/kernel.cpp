@@ -4,7 +4,7 @@
 #include "bsg_manycore.hpp"
 #include "bsg_manycore_atomic.h"
 #include "bsg_cuda_lite_barrier.h"
-
+#include "bsg_barrier_multipod.h"
 
 #define BLOCK_SIZE 16
 
@@ -31,62 +31,6 @@ inline void insert_into_dense(int id, int *dense_frontier)
 volatile int done[NUM_POD_X] = {0};
 int alert = 0;
 
-static inline void barrier_multipod(int pod_id, volatile int* done, int* alert) {
-  bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
-  
-  // my pod id;
-  int my_pod_x = pod_id - BASE_POD_ID; 
-
-  // center tile;
-  if ((__bsg_x == bsg_tiles_X/2) && (__bsg_y == bsg_tiles_Y/2)) {
-
-    // send remote store to the remote done list;
-    volatile int* remote_done_ptr =  bsg_global_ptr((BSG_MACHINE_GLOBAL_X+(bsg_tiles_X/2)),
-                                                    (BSG_MACHINE_GLOBAL_Y+(bsg_tiles_Y/2)),
-                                                    &done[my_pod_x]);
-    *remote_done_ptr  = 1;
-    bsg_fence();
-
-    if (my_pod_x == 0) {
-      // main pod;
-      // wait for everyone to be done;
-      int done_count = 0;
-      while (done_count < NUM_POD_X) {
-        if (done[done_count] == 0) {
-          continue;
-        } else {
-          done_count++;
-        }
-      }
-
-      // once everyone joined, wake up everyone;
-      for (int px = 0; px < NUM_POD_X; px++) {
-        volatile int* remote_alert_ptr =  bsg_global_ptr((((1+px)*BSG_MACHINE_GLOBAL_X)+(bsg_tiles_X/2)),
-                                                         (BSG_MACHINE_GLOBAL_Y+(bsg_tiles_Y/2)),
-                                                         (alert));
-        *remote_alert_ptr = 1;
-      }
-    } else {
-      // other pods sleep;
-      int tmp;
-      while (1) {
-        tmp = bsg_lr(alert);
-        if (tmp) {
-          break;
-        } else {
-          tmp = bsg_lr_aq(alert);
-          if (tmp) {
-            break;
-          }
-        }
-      }
-    } 
-  }
-  
-  bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
-}
 
 // Kernel main;
 extern "C" int kernel(
@@ -104,7 +48,7 @@ extern "C" int kernel(
   // Initialize;
   bsg_barrier_hw_tile_group_init();
   //bsg_barrier_hw_tile_group_sync();
-  barrier_multipod(pod_id, done, &alert);
+  bsg_barrier_multipod(pod_id-BASE_POD_ID, NUM_POD_X, done, &alert);
 
   // local variables;
 
