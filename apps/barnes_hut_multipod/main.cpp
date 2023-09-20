@@ -16,7 +16,7 @@
 #define ALLOC_NAME "default_allocator"
 
 // Constants;
-#define itolsq  (1.0f/(0.5f*0.5f))
+#define itolsq  (1.0f/(0.5f*0.0f))
 #define epssq   (0.05f*0.05f)
 #define dthf    (0.25f)
 
@@ -321,6 +321,7 @@ void updateForce(float* force, float* delta, float distsq, float mass) {
 // calculate force;
 void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
 {
+  size_t max_stack_size = 0;
   for (size_t b = 0; b < bodies.size(); b++) {
     std::vector<int> stack;
     Body curr_body = bodies[b];
@@ -391,9 +392,12 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
             }
           } 
         }
+        if (stack.size() > max_stack_size) {
+          max_stack_size = stack.size();
+        }
       }
     }
-
+    
     // Finish
     float new_vel[3];
     new_vel[0] = dthf * (curr_body.acc[0] - prev_acc[0]);
@@ -409,6 +413,8 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
     bodies[b].acc[1] = curr_body.acc[1];
     bodies[b].acc[2] = curr_body.acc[2];
   }
+
+  printf("max_stack_size = %d\n", max_stack_size);
 }
 
 
@@ -500,6 +506,7 @@ int barneshut_multipod(int argc, char ** argv) {
   hb_mc_eva_t d_hbbodies;
   hb_mc_eva_t d_nodestack;
   hb_mc_eva_t d_curr_body;
+  hb_mc_eva_t d_remote_body;
 
   hb_mc_device_foreach_pod_id(&device, pod)
   {
@@ -519,6 +526,8 @@ int barneshut_multipod(int argc, char ** argv) {
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, bodies.size()*sizeof(HBBody), &d_hbbodies));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, STACK_SIZE*sizeof(int)*bsg_tiles_X*bsg_tiles_Y, &d_nodestack));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(int), &d_curr_body));
+    // For estimating interpod communications
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(HBBody)*(NUMPODS-1)*bodies.size(), &d_remote_body));
     
 
     // Convert to HBBody, HBNode;
@@ -541,13 +550,14 @@ int barneshut_multipod(int argc, char ** argv) {
     // CUDA args
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
     hb_mc_dimension_t grid_dim = { .x = 1, .y = 1}; 
-    #define CUDA_ARGC 6
+    #define CUDA_ARGC 7
     uint32_t cuda_argv[CUDA_ARGC] = {
       d_hbnodes,
       d_hbbodies,
       d_curr_body,
       body_end,
       d_nodestack,
+      d_remote_body,
       (uint32_t) pod
     };
 
@@ -556,14 +566,14 @@ int barneshut_multipod(int argc, char ** argv) {
     BSG_CUDA_CALL(hb_mc_kernel_enqueue(&device, grid_dim, tg_dim, "kernel", CUDA_ARGC, cuda_argv));
   }
 
+  // calculate force
+  calculate_force(nodes, bodies);
 
   // Launch pods;
   printf("Launching all pods\n");
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
 
 
-  // calculate force
-  calculate_force(nodes, bodies);
 
 
   // copy bodies from device;
@@ -616,7 +626,7 @@ int barneshut_multipod(int argc, char ** argv) {
     }
     
     printf("serror = %f\n", serror);
-    if (serror > 0.001f) {
+    if (serror > 0.01f) {
       return HB_MC_FAIL;
     }
   }

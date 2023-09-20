@@ -27,14 +27,20 @@ inline float dist2(float x, float y, float z) {
 volatile int done[NUM_POD_X] = {0};
 int alert = 0;
 
+int l_body_start;
+
 // Kernel main;
 extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
                       int* body_start, int body_end,
-                      HBNode** nodestack, int pod_id
+                      HBNode** nodestack,
+                      HBBody* remote_body,
+                      int pod_id
 )
 {
   bsg_barrier_hw_tile_group_init();
   bsg_barrier_hw_tile_group_sync();   
+  l_body_start = *body_start;
+  bsg_fence(); 
   bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
   bsg_cuda_print_stat_kernel_start();
 
@@ -180,7 +186,29 @@ extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
   }
   
   bsg_fence();
-
+  
+  // estimating interpod communication;
+  for (int i = l_body_start+__bsg_id; i < body_end; i+=bsg_tiles_X*bsg_tiles_Y) {
+    float l_vel[3];
+    float l_acc[3];
+    l_vel[0] = hbbodies[i].vel[0];
+    l_vel[1] = hbbodies[i].vel[1];
+    l_vel[2] = hbbodies[i].vel[2];
+    l_acc[0] = hbbodies[i].acc[0];
+    l_acc[1] = hbbodies[i].acc[1];
+    l_acc[2] = hbbodies[i].acc[2];
+    asm volatile("": : :"memory");
+    for (int n = 0; n < NUMPODS-1; n++) {
+      remote_body[(NBODIES*n)+i].vel[0] = l_vel[0];
+      remote_body[(NBODIES*n)+i].vel[1] = l_vel[1];
+      remote_body[(NBODIES*n)+i].vel[2] = l_vel[2];
+      remote_body[(NBODIES*n)+i].acc[0] = l_acc[0];
+      remote_body[(NBODIES*n)+i].acc[1] = l_acc[1];
+      remote_body[(NBODIES*n)+i].acc[2] = l_acc[2];
+    }
+    asm volatile("": : :"memory");
+  }
+  bsg_fence();
   
   bsg_barrier_hw_tile_group_sync();
   bsg_cuda_print_stat_kernel_end();
