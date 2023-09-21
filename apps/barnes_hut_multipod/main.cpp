@@ -579,6 +579,7 @@ int barneshut_multipod(int argc, char ** argv) {
   // copy bodies from device;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
+    BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     HBBody* next_hbbodies = (HBBody *) malloc(bodies.size()*sizeof(HBBody));
     std::vector<hb_mc_dma_dtoh_t> dtoh_job;
     dtoh_job.push_back({d_hbbodies, next_hbbodies, bodies.size()*sizeof(HBBody)});
