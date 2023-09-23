@@ -78,6 +78,7 @@ int pagerank_multipod(int argc, char ** argv)
   printf("V=%d\n", V);
   printf("E=%d\n", E);
 
+
   // Read input graph
   int * fwd_offsets  = (int *) malloc(sizeof(int)*(V+1));
   int * fwd_nonzeros = (int *) malloc(sizeof(int)*(E));
@@ -87,6 +88,7 @@ int pagerank_multipod(int argc, char ** argv)
   read_graph(fwd_nonzeros, fwd_nonzeros_file);
   read_graph(rev_offsets,  rev_offsets_file);
   read_graph(rev_nonzeros, rev_nonzeros_file);
+
 
   // Out degree;
   float *out_degree_inv = (float *) malloc(sizeof(float)*V);
@@ -100,6 +102,7 @@ int pagerank_multipod(int argc, char ** argv)
     //printf("out_degree_inv[%d]=%f\n", i, out_degree_inv[i]);
   }
 
+
   // Contrib;  
   float * contrib     = (float *) malloc(sizeof(float)*V);
   float * contrib_new = (float *) malloc(sizeof(float)*V);
@@ -107,6 +110,39 @@ int pagerank_multipod(int argc, char ** argv)
   for (int i = 0; i < V; i++) {
     contrib[i] = 1.0f / (float) V;
   }
+
+  // Partition vertices based on # of edges;
+  int E_per_pod = (E+numpods-1)/numpods;
+  int edge_count[numpods];
+  int V_range[numpods+1];
+  V_range[0] = 0;
+  printf("E_per_pod=%d\n", E_per_pod);
+
+  int curr_edge = rev_offsets[1] - rev_offsets[0];
+  int curr_pod = 0;
+  for (int v = 1; v < V; v++) {
+    if (curr_edge > E_per_pod) {
+      V_range[curr_pod+1] = v;
+      edge_count[curr_pod] = curr_edge;
+      curr_edge = 0;
+      curr_pod++;
+    }   
+    curr_edge += (rev_offsets[v+1] - rev_offsets[v]);
+  }
+  
+  V_range[numpods] = V;
+  edge_count[numpods-1] = curr_edge;
+
+
+  for (int p = 0; p < numpods; p++) {
+    printf("pod=%d, V_range=(%d, %d), V_count=%d, edge_count=%d\n",
+      p,
+      V_range[p], V_range[p+1],
+      V_range[p+1]-V_range[p],
+       edge_count[p]);
+  }
+
+  //return 0;
 
 
   // Initialize device;
@@ -132,10 +168,12 @@ int pagerank_multipod(int argc, char ** argv)
 
     // pod id;
     int curr_pod_id = pod_id + pod;
-    int V_per_pod = (V+numpods-1)/numpods;
-    int V_start = std::min(V, curr_pod_id*V_per_pod);
-    int V_end   = std::min(V, V_start+V_per_pod);
-    printf("curr_pod_id=%d, V_per_pod=%d, V_start=%d, V_end=%d\n", curr_pod_id, V_per_pod, V_start, V_end);
+    //int V_per_pod = (V+numpods-1)/numpods;
+    //int V_start = std::min(V, curr_pod_id*V_per_pod);
+    //int V_end   = std::min(V, V_start+V_per_pod);
+    int V_start = V_range[curr_pod_id];
+    int V_end = V_range[curr_pod_id+1];
+    printf("curr_pod_id=%d, V_start=%d, V_end=%d\n", curr_pod_id, V_start, V_end);
 
     // Allocate memory on device;
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (V+1)*sizeof(int), &d_in_indices));
@@ -201,9 +239,11 @@ int pagerank_multipod(int argc, char ** argv)
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
 
     int curr_pod_id = pod_id + pod;
-    int V_per_pod = (V+numpods-1)/numpods;
-    int V_start = std::min(V, curr_pod_id*V_per_pod);
-    int V_end = std::min(V, V_start+V_per_pod);
+    //int V_per_pod = (V+numpods-1)/numpods;
+    //int V_start = std::min(V, curr_pod_id*V_per_pod);
+    //int V_end = std::min(V, V_start+V_per_pod);
+    int V_start = V_range[curr_pod_id];
+    int V_end = V_range[curr_pod_id+1];
 
     std::vector<hb_mc_dma_dtoh_t> dtoh_job;
     dtoh_job.push_back({d_contrib_new, actual_contrib_new, V*sizeof(float)});
