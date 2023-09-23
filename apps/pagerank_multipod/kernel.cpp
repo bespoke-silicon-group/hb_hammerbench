@@ -32,7 +32,7 @@ int alert = 0;
 extern "C" int kernel(
   int* in_indices,
   int* in_neighbors,
-  int* out_degree,
+  float* out_degree_inv,
   float* new_rank,
   float* contrib,
   float* contrib_new,
@@ -52,12 +52,8 @@ extern "C" int kernel(
     // start, end idx;
     int in_start = in_indices[curr_id];
     int in_end = in_indices[curr_id+1];
-    // calculate inv of out-degree;
-    int od = out_degree[curr_id];
-    float odf = (float) od;
-    float onef = 1.0f;
-    float od_inv;
-    fdiv_asm(od_inv, onef, odf);
+    // Load inv of out-degree;
+    float od_inv = out_degree_inv[curr_id];
     asm volatile ("" ::: "memory");
 
     int s = in_start;

@@ -30,7 +30,7 @@ void read_graph(int* ptr, std::string filename) {
 
 void host_pagerank( int* in_indices,
                     int* in_neighbors,
-                    int* out_degree,
+                    float* out_degree_inv,
                     float* contrib,
                     float* contrib_new,
                     float* new_rank,
@@ -40,8 +40,6 @@ void host_pagerank( int* in_indices,
   for (int i = start_id; i < end_id; i++) {
     int nz_start = in_indices[i];
     int nz_end = in_indices[i+1];
-    int od = out_degree[i];
-    float odf = (float) od;
     float temp_new = 0.0f;
     for (int nz = nz_start; nz < nz_end; nz++) {
       int idx = in_neighbors[nz];
@@ -50,7 +48,7 @@ void host_pagerank( int* in_indices,
     }
 
     temp_new = (temp_new * damp) + beta_score;
-    contrib_new[i] = temp_new / odf;
+    contrib_new[i] = temp_new * out_degree_inv[i];
     new_rank[i] = temp_new;
   }
 }
@@ -91,9 +89,15 @@ int pagerank_multipod(int argc, char ** argv)
   read_graph(rev_nonzeros, rev_nonzeros_file);
 
   // Out degree;
-  int *out_degree = (int *) malloc(sizeof(int)*V);
+  float *out_degree_inv = (float *) malloc(sizeof(float)*V);
   for (int i = 0; i < V; i++) {
-    out_degree[i] = fwd_offsets[i+1] - fwd_offsets[i];
+    int od = fwd_offsets[i+1] - fwd_offsets[i];
+    if (od == 0) {
+      out_degree_inv[i] = 1.0f;
+    } else {
+      out_degree_inv[i] = 1.0f / (float) od;
+    }
+    //printf("out_degree_inv[%d]=%f\n", i, out_degree_inv[i]);
   }
 
   // Contrib;  
@@ -113,7 +117,7 @@ int pagerank_multipod(int argc, char ** argv)
   hb_mc_pod_id_t pod;
   hb_mc_eva_t d_in_indices;
   hb_mc_eva_t d_in_neighbors;
-  hb_mc_eva_t d_out_degree;
+  hb_mc_eva_t d_out_degree_inv;
   hb_mc_eva_t d_new_rank;
   hb_mc_eva_t d_contrib;
   hb_mc_eva_t d_contrib_new;
@@ -136,7 +140,7 @@ int pagerank_multipod(int argc, char ** argv)
     // Allocate memory on device;
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (V+1)*sizeof(int), &d_in_indices));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (E)*sizeof(int), &d_in_neighbors));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (V)*sizeof(int), &d_out_degree));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (V)*sizeof(float), &d_out_degree_inv));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (V)*sizeof(float), &d_new_rank));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (V)*sizeof(float), &d_contrib));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (V)*sizeof(float), &d_contrib_new));
@@ -148,7 +152,7 @@ int pagerank_multipod(int argc, char ** argv)
     std::vector<hb_mc_dma_htod_t> htod_job;
     htod_job.push_back({d_in_indices, rev_offsets, (V+1)*sizeof(int)});
     htod_job.push_back({d_in_neighbors, rev_nonzeros, (E)*sizeof(int)});
-    htod_job.push_back({d_out_degree, out_degree, (V)*sizeof(int)});
+    htod_job.push_back({d_out_degree_inv, out_degree_inv, (V)*sizeof(float)});
     htod_job.push_back({d_contrib, contrib, (V)*sizeof(int)});
     htod_job.push_back({d_start_id, &V_start, sizeof(int)});
     BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_job.data(), htod_job.size()));
@@ -160,7 +164,7 @@ int pagerank_multipod(int argc, char ** argv)
     uint32_t cuda_argv[CUDA_ARGC] = {
       d_in_indices,
       d_in_neighbors,
-      d_out_degree,
+      d_out_degree_inv,
       d_new_rank,
       d_contrib,
       d_contrib_new,
@@ -175,7 +179,7 @@ int pagerank_multipod(int argc, char ** argv)
 
     // host pagerank;
     host_pagerank(rev_offsets, rev_nonzeros,
-                  out_degree,
+                  out_degree_inv,
                   contrib,
                   contrib_new,
                   new_rank,
@@ -219,7 +223,7 @@ int pagerank_multipod(int argc, char ** argv)
           return HB_MC_FAIL;
         }
       } else {
-        sse0 += (actual_contrib_new[v]-contrib_new[v]) + (actual_contrib_new[v]-contrib_new[v]);
+        sse0 += ((actual_contrib_new[v]-contrib_new[v])*(actual_contrib_new[v]-contrib_new[v]));
       }
 
       // check new_rank;
@@ -231,7 +235,7 @@ int pagerank_multipod(int argc, char ** argv)
           return HB_MC_FAIL;
         }
       } else {
-        sse1 += (actual_new_rank[v]-new_rank[v]) + (actual_new_rank[v]-new_rank[v]);
+        sse1 += ((actual_new_rank[v]-new_rank[v])*(actual_new_rank[v]-new_rank[v]));
       }
     }
 
