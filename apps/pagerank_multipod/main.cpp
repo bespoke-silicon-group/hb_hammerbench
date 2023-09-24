@@ -111,35 +111,35 @@ int pagerank_multipod(int argc, char ** argv)
     contrib[i] = 1.0f / (float) V;
   }
 
-  // Partition vertices based on # of edges;
-  int E_per_pod = (E+numpods-1)/numpods;
-  int edge_count[numpods];
+  // Partition vertices based on # of edges + vertices (hybrid);
+  int V2E_per_pod = ((2*V)+E+numpods-1)/numpods;
+  int v2e_count[numpods];
   int V_range[numpods+1];
   V_range[0] = 0;
-  printf("E_per_pod=%d\n", E_per_pod);
+  printf("V2E_per_pod=%d\n", V2E_per_pod);
 
-  int curr_edge = rev_offsets[1] - rev_offsets[0];
+  int curr_v2e = (rev_offsets[1] - rev_offsets[0]) + 2;
   int curr_pod = 0;
   for (int v = 1; v < V; v++) {
-    if (curr_edge > E_per_pod) {
+    if (curr_v2e > V2E_per_pod) {
       V_range[curr_pod+1] = v;
-      edge_count[curr_pod] = curr_edge;
-      curr_edge = 0;
+      v2e_count[curr_pod] = curr_v2e;
+      curr_v2e = 0;
       curr_pod++;
     }   
-    curr_edge += (rev_offsets[v+1] - rev_offsets[v]);
+    curr_v2e += (rev_offsets[v+1] - rev_offsets[v]) + 2;
   }
   
   V_range[numpods] = V;
-  edge_count[numpods-1] = curr_edge;
+  v2e_count[numpods-1] = curr_v2e;
 
 
   for (int p = 0; p < numpods; p++) {
-    printf("pod=%d, V_range=(%d, %d), V_count=%d, edge_count=%d\n",
+    printf("pod=%d, V_range=(%d, %d), V_count=%d, count=%d\n",
       p,
       V_range[p], V_range[p+1],
       V_range[p+1]-V_range[p],
-       edge_count[p]);
+      v2e_count[p]);
   }
 
   //return 0;
