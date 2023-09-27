@@ -238,10 +238,10 @@ int spgemm_multipod(int argc, char ** argv)
     // row_offset;
     for (int row = 0; row < num_row+1; row++) {
       int host_row = row+row_start;
-      int expected = output_row_offset[host_row];
+      int expected = output_row_offset[host_row]-output_row_offset[row_start];
       int actual = actual_C_row_offset[row];
-      printf("row_offset : row=%d, expected=%d, actual=%d\n",
-        host_row, expected, actual);
+      //printf("row_offset : row=%d, expected=%d, actual=%d\n",
+      //  host_row, expected, actual);
       if (expected != actual) {
         printf("row_offset mismatch: row=%d, expected=%d, actual=%d\n",
           host_row, expected, actual);
@@ -253,8 +253,8 @@ int spgemm_multipod(int argc, char ** argv)
       int host_nz = C_nnz_start+nz;
       int expected = output_col_idx[host_nz];
       int actual = actual_C_col_idx[nz];
-      printf("col_idx : nz=%d, expected=%d, actual=%d\n",
-        host_nz, expected, actual);
+      //printf("col_idx : nz=%d, expected=%d, actual=%d\n",
+      //  host_nz, expected, actual);
       if (expected != actual) {
         printf("col_idx mismatch: nz=%d, expected=%d, actual=%d\n",
           host_nz, expected, actual);
@@ -266,8 +266,8 @@ int spgemm_multipod(int argc, char ** argv)
       int host_nz = C_nnz_start+nz;
       float expected = output_nnz[host_nz];
       float actual = actual_C_nnz[nz];
-      printf("nnz: nz=%d, expected=%f, actual=%f\n",
-        host_nz, expected, actual);
+      //printf("nnz: nz=%d, expected=%f, actual=%f\n",
+      //  host_nz, expected, actual);
       if (expected != actual) {
         printf("nnz mismatch: nz=%d, expected=%f, actual=%f\n",
           host_nz, expected, actual);
