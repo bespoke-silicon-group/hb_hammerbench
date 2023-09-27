@@ -30,7 +30,8 @@ TEST_SOURCES := main.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
-DEFINES += -DNUMPODS=$(NUMPODS)
+DEFINES += -DNUMPODS=$(NUMPODS)			# total number of pods;
+DEFINES += -DNUM_POD_X=$(NUM_POD_X) # number of pods simulating now;
 DEFINES += -DPODID=$(pod-id)
 DEFINES += -DVERTEX=$(VERTEX)
 DEFINES += -DEDGE=$(EDGE)
