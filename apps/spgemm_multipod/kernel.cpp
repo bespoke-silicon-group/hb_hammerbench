@@ -168,7 +168,7 @@ extern "C" int kernel(
       int b = B_col_idx_start;
       for (; b < B_col_idx_end; b+=1) {
         int B_col_idx0 = B_col_idx[b];
-        int B_nnz0 = B_nnz[b];
+        float B_nnz0 = B_nnz[b];
         asm volatile ("" ::: "memory");
         // make new node;
         HBListNode* new_node = get_new_node(&g_free_node_q, dram_nodes);
@@ -186,12 +186,19 @@ extern "C" int kernel(
         bool is_accum_empty = list_empty(&accum_row);
         bool is_curr_empty = list_empty(&curr_row);
         if (is_accum_empty) {
-          HBListNode* node = list_pop_front(&curr_row);
-          list_append_back(&temp_row, node);
-        } else {
           if (is_curr_empty) {
             // both lists empty;
             break;
+          } else {
+            // pop curr;
+            HBListNode* node = list_pop_front(&curr_row);
+            list_append_back(&temp_row, node);
+          }
+        } else {
+          if (is_curr_empty) {
+            // pop accum;
+            HBListNode* node = list_pop_front(&accum_row);
+            list_append_back(&temp_row, node);
           } else {
             // compare two fronts;
             int accum_front = accum_row.head->col_idx;

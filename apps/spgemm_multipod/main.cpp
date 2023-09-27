@@ -160,7 +160,6 @@ int spgemm_multipod(int argc, char ** argv)
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_row)*sizeof(int), &d_C_col_count[pod]));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_row)*sizeof(int), &d_C_list_head[pod]));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (DRAM_LIST_NODES)*3*sizeof(int), &d_dram_nodes[pod]));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(int), &d_row_start[pod]));
     
     // DMA transfer;
     printf("Transferring data: pod %d\n", pod);
@@ -170,13 +169,13 @@ int spgemm_multipod(int argc, char ** argv)
     for (int i = 0; i < num_row+1; i++) {
       device_row_offset[i] = row_offset[row_start+i]-row_offset[row_start];
     }
-    htod_job.push_back({d_A_row_offset[pod], &device_row_offset, (num_row+1)*sizeof(int)});
+    htod_job.push_back({d_A_row_offset[pod], device_row_offset, (num_row+1)*sizeof(int)});
     htod_job.push_back({d_A_col_idx[pod], &col_idx[nnz_start], (num_nnz)*sizeof(int)});
     htod_job.push_back({d_A_nnz[pod], &nnz[nnz_start], (num_nnz)*sizeof(float)});
     // matrix B
-    htod_job.push_back({d_B_row_offset[pod], &row_offset, (V+1)*sizeof(int)});
-    htod_job.push_back({d_B_col_idx[pod], &col_idx, (E)*sizeof(int)});
-    htod_job.push_back({d_B_nnz[pod], &nnz, (E)*sizeof(float)});
+    htod_job.push_back({d_B_row_offset[pod], row_offset, (V+1)*sizeof(int)});
+    htod_job.push_back({d_B_col_idx[pod], col_idx, (E)*sizeof(int)});
+    htod_job.push_back({d_B_nnz[pod], nnz, (E)*sizeof(float)});
     BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_job.data(), htod_job.size()));
 
     // CUDA args;
@@ -210,6 +209,7 @@ int spgemm_multipod(int argc, char ** argv)
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
 
   // Read from device;
+  bool fail = false;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
     printf("Reading results: pods %d\n", pod);
@@ -228,7 +228,7 @@ int spgemm_multipod(int argc, char ** argv)
     std::vector<hb_mc_dma_dtoh_t> dtoh_job;
     int *actual_C_row_offset  = (int*) malloc((num_row+1)*sizeof(int));
     int *actual_C_col_idx     = (int*) malloc((num_C_nnz)*sizeof(int));
-    float *actual_C_nnz         = (int*) malloc((num_C_nnz)*sizeof(float));
+    float *actual_C_nnz         = (float*) malloc((num_C_nnz)*sizeof(float));
     dtoh_job.push_back({d_C_row_offset[pod], actual_C_row_offset, (num_row+1)*sizeof(int)});
     dtoh_job.push_back({d_C_col_idx[pod], actual_C_col_idx, (num_C_nnz)*sizeof(int)});
     dtoh_job.push_back({d_C_nnz[pod], actual_C_nnz, (num_C_nnz)*sizeof(float)});
@@ -236,11 +236,12 @@ int spgemm_multipod(int argc, char ** argv)
 
     // Validate;
     // row_offset;
-    bool fail = false;
     for (int row = 0; row < num_row+1; row++) {
       int host_row = row+row_start;
       int expected = output_row_offset[host_row];
       int actual = actual_C_row_offset[row];
+      printf("row_offset : row=%d, expected=%d, actual=%d\n",
+        host_row, expected, actual);
       if (expected != actual) {
         printf("row_offset mismatch: row=%d, expected=%d, actual=%d\n",
           host_row, expected, actual);
@@ -252,6 +253,8 @@ int spgemm_multipod(int argc, char ** argv)
       int host_nz = C_nnz_start+nz;
       int expected = output_col_idx[host_nz];
       int actual = actual_C_col_idx[nz];
+      printf("col_idx : nz=%d, expected=%d, actual=%d\n",
+        host_nz, expected, actual);
       if (expected != actual) {
         printf("col_idx mismatch: nz=%d, expected=%d, actual=%d\n",
           host_nz, expected, actual);
@@ -263,6 +266,8 @@ int spgemm_multipod(int argc, char ** argv)
       int host_nz = C_nnz_start+nz;
       float expected = output_nnz[host_nz];
       float actual = actual_C_nnz[nz];
+      printf("nnz: nz=%d, expected=%f, actual=%f\n",
+        host_nz, expected, actual);
       if (expected != actual) {
         printf("nnz mismatch: nz=%d, expected=%f, actual=%f\n",
           host_nz, expected, actual);
