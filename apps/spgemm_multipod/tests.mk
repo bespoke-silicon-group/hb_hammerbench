@@ -1,10 +1,11 @@
-POD_RANGE = $(shell seq -s " " 63 63)
+POD_RANGE = $(shell seq -s " " 0 63)
 
-#test4
-TESTS += $(call test-name,test4,0)
+# test
+#TESTS += $(call test-name,test4,0)
+#TESTS += $(call test-name,test8,0)
 
 # wiki-Vote
-#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,wiki-Vote,$(x))))
+$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,wiki-Vote,$(x))))
 # offshore
 #$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,offshore,$(x))))
 # road central
