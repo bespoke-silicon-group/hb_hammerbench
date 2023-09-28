@@ -2,6 +2,7 @@
 #include "bsg_barrier_multipod.h"
 #include <bsg_manycore_atomic.h>
 #include <bsg_manycore.h>
+#include <cstdint>
 #include "hb_list.h"
 
 #define fmadd_asm(rd_p, rs1_p, rs2_p, rs3_p) \
@@ -10,7 +11,8 @@
       : [rs1] "f" ((rs1_p)), [rs2] "f" ((rs2_p)), [rs3] "f" ((rs3_p)))
 
 
-#define INIT_NUM_DRAM_NODES 2048
+#define INIT_NUM_DRAM_NODES 256
+#define NUM_DMEM_NODES 256
 #define LIST_NULL_PTR ((HBListNode*) 0)
 
 // multipod barrier;
@@ -25,7 +27,8 @@ __attribute__((section(".dram"))) int g_convert_q;
 
 // Free nodes;
 HBList free_dram_nodes;
-
+HBList free_dmem_nodes;
+HBListNode dmem_nodes[NUM_DMEM_NODES];
 
 // List init;
 static inline void list_init(HBList* list) {
@@ -57,7 +60,7 @@ static inline bool list_empty(HBList* list) {
 
 
 // Get a new node;
-static inline HBListNode* get_new_node(int* q, HBListNode* dram_nodes) {
+static inline HBListNode* get_new_dram_node(int* q, HBListNode* dram_nodes) {
   // free local nodes ran out; fall back to DRAM;
   if (list_empty(&free_dram_nodes)) {
     // Nothing in hand; Get more from the common pool;
@@ -66,6 +69,15 @@ static inline HBListNode* get_new_node(int* q, HBListNode* dram_nodes) {
   } else {
     // Get it from the private free list;
     return list_pop_front(&free_dram_nodes);
+  }
+}
+
+// Try getting new dmem node; fall back to DRAM;
+static inline HBListNode* get_new_dmem_node(int* q, HBListNode* dram_nodes) {
+  if (list_empty(&free_dmem_nodes)) {
+    return get_new_dram_node(q, dram_nodes);
+  } else {
+    return list_pop_front(&free_dmem_nodes);
   }
 }
 
@@ -83,10 +95,22 @@ static inline void list_append_back(HBList* list, HBListNode* node) {
   list->count++;
 }
 
+static inline bool is_dram_node(HBListNode* node) {
+  intptr_t ptr = reinterpret_cast<intptr_t>(node);
+  return ptr & 0x80000000;
+}
 
 // Return the node to the free list;
 static inline void list_free(HBListNode* node) {
-  list_append_back(&free_dram_nodes, node);
+  if (is_dram_node(node)) {
+    list_append_back(&free_dram_nodes, node);
+  } else {
+    list_append_back(&free_dmem_nodes, node);
+  }
+}
+
+static inline void list_free_dmem_node(HBListNode* node) {
+  list_append_back(&free_dmem_nodes, node);
 }
 
 
@@ -126,7 +150,7 @@ extern "C" int kernel(
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
 
-
+  //bsg_print_int(reinterpret_cast<int>(dmem_nodes));
   // Initialize dram free nodes;
   list_init(&free_dram_nodes);
   int start_idx = bsg_amoadd(&g_free_node_q, INIT_NUM_DRAM_NODES);
@@ -137,6 +161,13 @@ extern "C" int kernel(
   }
   bsg_fence();
 
+  // Initialize free dmem nodes;
+  list_init(&free_dmem_nodes);
+  for (int i = 0; i < NUM_DMEM_NODES; i++) {
+    HBListNode* new_node = &dmem_nodes[i];
+    new_node->next = (HBListNode*) 0;
+    list_append_back(&free_dmem_nodes, new_node);
+  }
 
   // Multi-pod barrier;
   bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
@@ -171,7 +202,7 @@ extern "C" int kernel(
         float B_nnz0 = B_nnz[b];
         asm volatile ("" ::: "memory");
         // make new node;
-        HBListNode* new_node = get_new_node(&g_free_node_q, dram_nodes);
+        HBListNode* new_node = get_new_dmem_node(&g_free_node_q, dram_nodes);
         new_node->col_idx = B_col_idx0;
         new_node->nnz = B_nnz0;
         new_node->next = (HBListNode*) 0;
@@ -228,7 +259,66 @@ extern "C" int kernel(
       accum_row.tail = temp_row.tail;
       accum_row.count = temp_row.count;
     }
+  
+    // convert all the dmem nodes into dram nodes;
+    HBListNode* prev_node = (HBListNode*) 0;
+    HBListNode* curr_node = accum_row.head;
 
+    while (curr_node != (HBListNode*) 0) {
+      HBListNode* next_node = curr_node->next;
+
+      if (!is_dram_node(curr_node)) {
+        // make a new DRAM node;
+        HBListNode* new_node = get_new_dram_node(&g_free_node_q, dram_nodes);
+
+        // update the pointers on the list object;
+        if (curr_node == accum_row.head) {
+          accum_row.head = new_node;
+        }
+        if (curr_node == accum_row.tail) {
+          accum_row.tail = new_node;
+        }
+
+        // copy data to the new node;
+        new_node->col_idx = curr_node->col_idx;
+        new_node->nnz = curr_node->nnz;
+        // connect to the next;
+        new_node->next = next_node;
+        // connect to the prev;
+        if (prev_node != (HBListNode*) 0) {
+          prev_node->next = new_node;
+        }
+        // free dmem
+        list_free_dmem_node(curr_node);
+        // next prev node is new node;;
+        prev_node = new_node;
+      } else {
+        prev_node = curr_node;
+      }
+
+      curr_node = next_node;
+    }
+  
+
+/*
+    HBList convert_row;
+    list_init(&convert_row);
+
+    while (!list_empty(&accum_row)) {
+      HBListNode* node = list_pop_front(&accum_row);
+      if ((node & 0x80000000)) {
+        // is DRAM node;
+        list_append_back(&convert_row, node);
+      } else {
+        // is DMEM node;
+        HBListNode* new_node = get_new_dram_node(&g_free_node_q, dram_nodes);
+        new_node->col_idx = node.col_idx;
+        new_node->nnz =
+        new_node->next = (HBListNode*) 0;
+        list_append_back(&convert_row, node);
+      }
+    }
+*/
     // set it to C_list_head;
     C_list_head[curr_row] = accum_row.head;
     C_col_count[curr_row] = accum_row.count;
