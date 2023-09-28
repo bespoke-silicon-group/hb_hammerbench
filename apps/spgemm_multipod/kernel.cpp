@@ -113,7 +113,21 @@ static inline void list_free_dmem_node(HBListNode* node) {
   list_append_back(&free_dmem_nodes, node);
 }
 
-
+static inline void list_concat(HBList* list1, HBList* list2) {
+  if (list_empty(list2)) {
+    return;
+  } else {
+    if (list_empty(list1)) {
+      list1->count = list2->count;
+      list1->head = list2->head;
+      list1->tail = list2->tail;
+    } else {
+      list1->count += list2->count;
+      list1->tail->next = list2->head;
+      list1->tail = list2->tail;
+    }
+  }
+}
 
 
 // Kernel main;
@@ -222,14 +236,18 @@ extern "C" int kernel(
             break;
           } else {
             // pop curr;
-            HBListNode* node = list_pop_front(&curr_row);
-            list_append_back(&temp_row, node);
+            //HBListNode* node = list_pop_front(&curr_row);
+            //list_append_back(&temp_row, node);
+            list_concat(&temp_row, &curr_row);
+            break;
           }
         } else {
           if (is_curr_empty) {
             // pop accum;
-            HBListNode* node = list_pop_front(&accum_row);
-            list_append_back(&temp_row, node);
+            //HBListNode* node = list_pop_front(&accum_row);
+            //list_append_back(&temp_row, node);
+            list_concat(&temp_row, &accum_row);
+            break;
           } else {
             // compare two fronts;
             int accum_front = accum_row.head->col_idx;
