@@ -157,7 +157,7 @@ int spgemm_multipod(int argc, char ** argv)
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_C_nnz+1)*sizeof(int), &d_C_col_idx[pod]));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_C_nnz+1)*sizeof(int), &d_C_nnz[pod]));
     // needed by algorithm
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_row)*sizeof(int), &d_C_col_count[pod]));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_row+1)*sizeof(int), &d_C_col_count[pod]));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_row)*sizeof(int), &d_C_list_head[pod]));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (DRAM_LIST_NODES)*3*sizeof(int), &d_dram_nodes[pod]));
     
@@ -176,7 +176,15 @@ int spgemm_multipod(int argc, char ** argv)
     htod_job.push_back({d_B_row_offset[pod], row_offset, (V+1)*sizeof(int)});
     htod_job.push_back({d_B_col_idx[pod], col_idx, (E)*sizeof(int)});
     htod_job.push_back({d_B_nnz[pod], nnz, (E)*sizeof(float)});
+    // C col count;
+    int *device_C_col_count = (int*) malloc(sizeof(int)*(num_row+1)); 
+    for (int i = 0; i < num_row+1; i++) {
+      device_C_col_count[i] = 0;
+    }
+    htod_job.push_back({d_C_col_count[pod], device_C_col_count, (num_row+1)*sizeof(int)});
     BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_job.data(), htod_job.size()));
+
+
 
     // CUDA args;
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};

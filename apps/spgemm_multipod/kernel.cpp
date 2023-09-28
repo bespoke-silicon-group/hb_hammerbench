@@ -3,6 +3,7 @@
 #include <bsg_manycore_atomic.h>
 #include <bsg_manycore.h>
 #include <cstdint>
+#include <algorithm>
 #include "hb_list.h"
 
 #define fmadd_asm(rd_p, rs1_p, rs2_p, rs3_p) \
@@ -36,6 +37,10 @@ static inline void list_init(HBList* list) {
   list->head = (HBListNode*) 0;
   list->tail = (HBListNode*) 0;
 }
+
+// Sum tree;
+#define NUM_TILES (bsg_tiles_X*bsg_tiles_Y)
+ __attribute__((section(".dram"))) int sum_tree[(2*NUM_TILES)-1];
 
 // Assumes that list is not empty;
 static inline HBListNode* list_pop_front(HBList* list) {
@@ -155,11 +160,14 @@ extern "C" int kernel(
 {
   bsg_barrier_hw_tile_group_init();
   bsg_barrier_hw_tile_group_sync();
-  // Initialize amo variables;
+  // Initialize amo variables + sum tree;
   if (__bsg_id == 0) {
     g_free_node_q = 0;
     g_solve_q = 0;
     g_convert_q = 0;
+    for (int i = 0; i < (2*NUM_TILES)-1; i++) {
+      sum_tree[i] = 0;
+    }
   }
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
@@ -345,6 +353,7 @@ extern "C" int kernel(
   bsg_barrier_hw_tile_group_sync();
 
   // calculate C row offset;
+  /*
   if (__bsg_id == 0) {
     int r = 0;
     int accum=0;
@@ -410,6 +419,52 @@ extern "C" int kernel(
     // last one;
     C_row_offset[r] = accum;
   }
+  */
+  int row_per_tile = (num_row+NUM_TILES)/NUM_TILES;
+  int r_start = __bsg_id*row_per_tile;
+  int r_end = std::min(r_start+row_per_tile, num_row+1);
+  
+  // calculate sum;
+  int sum = 0;
+  for (int i = r_start; i < r_end; i++) {
+    C_row_offset[i] = sum;
+    sum += C_col_count[i];
+  }
+
+  // update sum tree;
+  int r = 0;
+  int m = NUM_TILES;
+  for (int l = 0; l < TREE_LEVELS; l++) {
+    bsg_amoadd(&sum_tree[r], sum);
+    m >>= 1;
+    if (m & __bsg_id) {
+      r = (2*r)+2;
+    } else {
+      r = (2*r)+1;
+    }
+  }
+  bsg_fence();
+  bsg_barrier_hw_tile_group_sync();
+
+  // collect from sum  tree;
+  int offset = 0;
+  r = 0;
+  m = NUM_TILES;
+  for (int l = 0; l < TREE_LEVELS; l++) {
+    m >>= 1;
+    if (__bsg_id & m) {
+      offset += sum_tree[(2*r)+1];
+      r = (2*r)+2;
+    } else {
+      r = (2*r)+1;
+    }
+  }
+
+  // update with offset;
+  for (int i = r_start; i < r_end; i++) {
+    bsg_amoadd(&C_row_offset[i], offset);
+  }
+
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
 
