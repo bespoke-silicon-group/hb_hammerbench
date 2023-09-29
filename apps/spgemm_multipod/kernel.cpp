@@ -172,7 +172,6 @@ extern "C" int kernel(
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
 
-  //bsg_print_int(reinterpret_cast<int>(dmem_nodes));
   // Initialize dram free nodes;
   list_init(&free_dram_nodes);
   int start_idx = bsg_amoadd(&g_free_node_q, INIT_NUM_DRAM_NODES);
@@ -198,6 +197,7 @@ extern "C" int kernel(
   // KERNEL START;
   // solve rows;
   for (int curr_row = bsg_amoadd(&g_solve_q,1); curr_row < num_row; curr_row=bsg_amoadd(&g_solve_q,1)) {
+    bsg_print_int(curr_row);
     int A_col_idx_start = A_row_offset[curr_row];
     int A_col_idx_end = A_row_offset[curr_row+1];
     asm volatile ("" ::: "memory");
@@ -244,16 +244,12 @@ extern "C" int kernel(
             break;
           } else {
             // pop curr;
-            //HBListNode* node = list_pop_front(&curr_row);
-            //list_append_back(&temp_row, node);
             list_concat(&temp_row, &curr_row);
             break;
           }
         } else {
           if (is_curr_empty) {
             // pop accum;
-            //HBListNode* node = list_pop_front(&accum_row);
-            //list_append_back(&temp_row, node);
             list_concat(&temp_row, &accum_row);
             break;
           } else {
@@ -326,100 +322,19 @@ extern "C" int kernel(
     }
   
 
-/*
-    HBList convert_row;
-    list_init(&convert_row);
-
-    while (!list_empty(&accum_row)) {
-      HBListNode* node = list_pop_front(&accum_row);
-      if ((node & 0x80000000)) {
-        // is DRAM node;
-        list_append_back(&convert_row, node);
-      } else {
-        // is DMEM node;
-        HBListNode* new_node = get_new_dram_node(&g_free_node_q, dram_nodes);
-        new_node->col_idx = node.col_idx;
-        new_node->nnz =
-        new_node->next = (HBListNode*) 0;
-        list_append_back(&convert_row, node);
-      }
-    }
-*/
     // set it to C_list_head;
     C_list_head[curr_row] = accum_row.head;
     C_col_count[curr_row] = accum_row.count;
+  
+    bsg_print_int(10000+curr_row);
   }
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
+  if(__bsg_id == 0) {
+    bsg_print_int(20000);
+  }
 
   // calculate C row offset;
-  /*
-  if (__bsg_id == 0) {
-    int r = 0;
-    int accum=0;
-    // unroll by 16;
-    for (; r + 15 < num_row; r+=16) {
-      int c0 = C_col_count[r+0];
-      int c1 = C_col_count[r+1];
-      int c2 = C_col_count[r+2];
-      int c3 = C_col_count[r+3];
-      int c4 = C_col_count[r+4];
-      int c5 = C_col_count[r+5];
-      int c6 = C_col_count[r+6];
-      int c7 = C_col_count[r+7];
-      int c8 = C_col_count[r+8];
-      int c9 = C_col_count[r+9];
-      int c10 = C_col_count[r+10];
-      int c11 = C_col_count[r+11];
-      int c12 = C_col_count[r+12];
-      int c13 = C_col_count[r+13];
-      int c14 = C_col_count[r+14];
-      int c15 = C_col_count[r+15];
-      asm volatile ("" ::: "memory");
-      C_row_offset[r+0] = accum;
-      accum += c0;
-      C_row_offset[r+1] = accum;
-      accum += c1;
-      C_row_offset[r+2] = accum;
-      accum += c2;
-      C_row_offset[r+3] = accum;
-      accum += c3;
-      C_row_offset[r+4] = accum;
-      accum += c4;
-      C_row_offset[r+5] = accum;
-      accum += c5;
-      C_row_offset[r+6] = accum;
-      accum += c6;
-      C_row_offset[r+7] = accum;
-      accum += c7;
-      C_row_offset[r+8] = accum;
-      accum += c8;
-      C_row_offset[r+9] = accum;
-      accum += c9;
-      C_row_offset[r+10] = accum;
-      accum += c10;
-      C_row_offset[r+11] = accum;
-      accum += c11;
-      C_row_offset[r+12] = accum;
-      accum += c12;
-      C_row_offset[r+13] = accum;
-      accum += c13;
-      C_row_offset[r+14] = accum;
-      accum += c14;
-      C_row_offset[r+15] = accum;
-      accum += c15;
-      asm volatile ("" ::: "memory");
-    }
-    // no unroll;
-    for (; r < num_row; r++) {
-      int c0 = C_col_count[r];
-      C_row_offset[r] = accum;
-      accum += c0;
-    }
-    // last one;
-    C_row_offset[r] = accum;
-  }
-  */
   int row_per_tile = (num_row+NUM_TILES)/NUM_TILES;
   int r_start = __bsg_id*row_per_tile;
   int r_end = std::min(r_start+row_per_tile, num_row+1);
@@ -468,9 +383,13 @@ extern "C" int kernel(
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
 
+  if(__bsg_id == 0) {
+    bsg_print_int(30000);
+  }
 
   // Convert lists into CSR matrix;
   for (int curr_row = bsg_amoadd(&g_convert_q,1); curr_row < num_row; curr_row=bsg_amoadd(&g_convert_q,1)) {
+    bsg_print_int(40000+curr_row);
     HBListNode* curr_node = C_list_head[curr_row];
     int row_offset = C_row_offset[curr_row];
     while (curr_node != (HBListNode*) 0) {

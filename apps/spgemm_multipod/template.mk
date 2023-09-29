@@ -6,7 +6,7 @@ include ../config.$(graph).mk
 
 # Hardware;
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
-NUMPODS?=64
+
 tile-x?=16
 tile-y?=8
 override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
@@ -20,7 +20,9 @@ NUM_POD_Y=$(BSG_MACHINE_PODS_X)
 TILE_GROUP_DIM_X ?= $(tile-x)
 TILE_GROUP_DIM_Y ?= $(tile-y)
 TREE_LEVELS=8
-
+# How to partition matrix;
+POD_DIM_X?=8
+POD_DIM_Y?=8
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
@@ -31,8 +33,9 @@ TEST_SOURCES := main.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
-DEFINES += -DNUMPODS=$(NUMPODS)			# total number of pods;
 DEFINES += -DNUM_POD_X=$(NUM_POD_X) # number of pods simulating now;
+DEFINES += -DPOD_DIM_X=$(POD_DIM_X)
+DEFINES += -DPOD_DIM_Y=$(POD_DIM_Y)
 DEFINES += -DPODID=$(pod-id)
 DEFINES += -DVERTEX=$(VERTEX)
 DEFINES += -DEDGE=$(EDGE)
@@ -59,8 +62,6 @@ RISCV_CCPPFLAGS += -DBSG_MACHINE_GLOBAL_X=$(BSG_MACHINE_GLOBAL_X)
 RISCV_CCPPFLAGS += -DBSG_MACHINE_GLOBAL_Y=$(BSG_MACHINE_GLOBAL_Y)
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
-RISCV_CCPPFLAGS += -DNUMPODS=$(NUMPODS)
-RISCV_CCPPFLAGS += -DEDGE=$(EDGE)
 RISCV_CCPPFLAGS += -DTREE_LEVELS=$(TREE_LEVELS)
 
 RISCV_TARGET_OBJECTS = kernel.rvo

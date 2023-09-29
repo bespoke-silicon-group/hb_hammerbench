@@ -13,7 +13,7 @@
 #include <math.h>
 
 #define ALLOC_NAME "default_allocator"
-#define DRAM_LIST_NODES 4194304 // (=2**22)
+#define DRAM_LIST_NODES 16777216 // (=2**24)
 
 void read_graph(int* ptr, std::string filename) {
   std::ifstream fh(filename);
@@ -34,6 +34,29 @@ void read_graph_float(float* ptr, std::string filename) {
     idx++;
   }
 }
+
+void get_submatrix(int row_start, int row_end,
+                   int col_start, int col_end,
+                   int *row_offset, int *col_idx, float *nnz,
+                   std::vector<int>& sub_row_offset, 
+                   std::vector<int>& sub_col_idx, 
+                   std::vector<float>& sub_nnz) {
+
+  int offset = 0;
+  for (int row = row_start; row < row_end; row++) {
+    sub_row_offset.push_back(offset);
+    int start = row_offset[row];
+    int end = row_offset[row+1];
+    for (int i = start; i < end; i++) {
+      if ((col_idx[i] >= col_start) && (col_idx[i] < col_end)) {
+        sub_col_idx.push_back(col_idx[i]-col_start);
+        sub_nnz.push_back(nnz[i]);
+        offset++;
+      }
+    } 
+  }
+  sub_row_offset.push_back(offset);
+} 
 
 int spgemm_multipod(int argc, char ** argv)
 {
@@ -56,12 +79,18 @@ int spgemm_multipod(int argc, char ** argv)
 
   // Define parameters;
   int pod_id = PODID;
-  int numpods = NUMPODS;
+  int pod_id_x = PODID % POD_DIM_X;
+  int pod_id_y = PODID / POD_DIM_X;
+  int pod_dim_x = POD_DIM_X;
+  int pod_dim_y = POD_DIM_Y;
   int V = VERTEX;
   int E = EDGE;
   int OUTPUT_E = OUTPUT_EDGE;
   printf("pod_id = %d\n", pod_id);
-  printf("numpods = %d\n", numpods);
+  printf("pod_id_x = %d\n", pod_id_x);
+  printf("pod_id_y = %d\n", pod_id_y);
+  printf("pod_dim_x= %d\n", pod_dim_x);
+  printf("pod_dim_y= %d\n", pod_dim_y);
   printf("V=%d\n", V);
   printf("E=%d\n", E);
   printf("OUTPUT_E=%d\n", OUTPUT_E);
@@ -81,23 +110,8 @@ int spgemm_multipod(int argc, char ** argv)
   read_graph_float(output_nnz, output_nnz_file);
 
   // partition by row (vertex);
-  int V_per_pod = (V+numpods-1)/numpods;
-  int psum[NUMPODS] = {0};
-  int total_psum = 0;
-  for (int p = 0; p < numpods; p++) {
-    int row_start = std::min(p*V_per_pod,V);
-    int row_end  = std::min(row_start+V_per_pod,V);
-    for (int r = row_start; r < row_end; r++) {
-      for (int cid = row_offset[r]; cid < row_offset[r+1]; cid++) {
-        int c = col_idx[cid];
-        psum[p] += (row_offset[c+1] - row_offset[c]);
-      }
-    }
-    total_psum += psum[p];
-    printf("pod=%d, psum=%d\n", p, psum[p]);
-  }
-  printf("total_psum=%d\n", total_psum);
-  
+  int row_per_pod = (V+pod_dim_y-1)/pod_dim_y;
+  int col_per_pod = (V+pod_dim_x-1)/pod_dim_x;
  
   // Initialize device;
   hb_mc_device_t device;
@@ -131,31 +145,59 @@ int spgemm_multipod(int argc, char ** argv)
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
     // pod id;
-    int curr_pod_id = pod_id + pod;
-    int row_start = std::min(curr_pod_id*V_per_pod,V);
-    int row_end  = std::min(row_start+V_per_pod,V);
+    int curr_pod_id_x = pod_id_x + pod;
+    int curr_pod_id_y = pod_id_y;
+
+    int row_start = std::min(curr_pod_id_y*row_per_pod,V);
+    int row_end  = std::min(row_start+row_per_pod,V);
     int num_row = row_end-row_start;
-    int nnz_start = row_offset[row_start];
-    int nnz_end = row_offset[row_end];
-    int num_nnz = nnz_end-nnz_start;
-    printf("curr_pod_id=%d, row_start=%d, row_end=%d\n", curr_pod_id, row_start, row_end);
+    int col_start = std::min(curr_pod_id_x*col_per_pod,V);
+    int col_end = std::min(col_start+col_per_pod,V);
+    int num_col = col_end-col_start;
+
+    //int nnz_start = row_offset[row_start];
+    //int nnz_end = row_offset[row_end];
+    //int num_nnz = nnz_end-nnz_start;
+    printf("curr_pod_id=(%d %d), row_start=%d, row_end=%d\n",
+      curr_pod_id_x, curr_pod_id_y,
+      row_start, row_end);
+    
+    // sub matrix A;
+    std::vector<int> sub_A_row_offset;
+    std::vector<int> sub_A_col_idx;
+    std::vector<float> sub_A_nnz;
+    get_submatrix(row_start, row_end, 0, V,
+      row_offset, col_idx, nnz,
+      sub_A_row_offset, sub_A_col_idx, sub_A_nnz); 
+    // sub matrix B;
+    std::vector<int> sub_B_row_offset;
+    std::vector<int> sub_B_col_idx;
+    std::vector<float> sub_B_nnz;
+    get_submatrix(0, V, col_start, col_end,
+      row_offset, col_idx, nnz,
+      sub_B_row_offset, sub_B_col_idx, sub_B_nnz); 
+    // sub matrix C;
+    std::vector<int> sub_C_row_offset;
+    std::vector<int> sub_C_col_idx;
+    std::vector<float> sub_C_nnz;
+    get_submatrix(row_start, row_end, col_start, col_end,
+      output_row_offset, output_col_idx, output_nnz,
+      sub_C_row_offset, sub_C_col_idx, sub_C_nnz); 
+
 
     // Allocate memory on device;
     // matrix A
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_row+1)*sizeof(int), &d_A_row_offset[pod]));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_nnz)*sizeof(int), &d_A_col_idx[pod]));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_nnz)*sizeof(float), &d_A_nnz[pod]));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sub_A_row_offset.size()*sizeof(int), &d_A_row_offset[pod]));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sub_A_col_idx.size()*sizeof(int), &d_A_col_idx[pod]));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sub_A_nnz.size()*sizeof(float), &d_A_nnz[pod]));
     // matrix B
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (V+1)*sizeof(int), &d_B_row_offset[pod]));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (E)*sizeof(int), &d_B_col_idx[pod]));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (E)*sizeof(float), &d_B_nnz[pod]));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sub_B_row_offset.size()*sizeof(int), &d_B_row_offset[pod]));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sub_B_col_idx.size()*sizeof(int), &d_B_col_idx[pod]));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sub_B_nnz.size()*sizeof(float), &d_B_nnz[pod]));
     // matrix C
-    int C_nnz_start = output_row_offset[row_start];
-    int C_nnz_end = output_row_offset[row_end];
-    int num_C_nnz = C_nnz_end - C_nnz_start;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_row+1)*sizeof(int), &d_C_row_offset[pod]));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_C_nnz+1)*sizeof(int), &d_C_col_idx[pod]));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_C_nnz+1)*sizeof(int), &d_C_nnz[pod]));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sub_C_row_offset.size()*sizeof(int), &d_C_row_offset[pod]));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sub_C_col_idx.size()*sizeof(int), &d_C_col_idx[pod]));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sub_C_nnz.size()*sizeof(float), &d_C_nnz[pod]));
     // needed by algorithm
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_row+1)*sizeof(int), &d_C_col_count[pod]));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_row)*sizeof(int), &d_C_list_head[pod]));
@@ -165,17 +207,13 @@ int spgemm_multipod(int argc, char ** argv)
     printf("Transferring data: pod %d\n", pod);
     std::vector<hb_mc_dma_htod_t> htod_job;
     // matrix A;
-    int *device_row_offset = (int*) malloc(sizeof(int)*(num_row+1)); 
-    for (int i = 0; i < num_row+1; i++) {
-      device_row_offset[i] = row_offset[row_start+i]-row_offset[row_start];
-    }
-    htod_job.push_back({d_A_row_offset[pod], device_row_offset, (num_row+1)*sizeof(int)});
-    htod_job.push_back({d_A_col_idx[pod], &col_idx[nnz_start], (num_nnz)*sizeof(int)});
-    htod_job.push_back({d_A_nnz[pod], &nnz[nnz_start], (num_nnz)*sizeof(float)});
+    htod_job.push_back({d_A_row_offset[pod], sub_A_row_offset.data(), sub_A_row_offset.size()*sizeof(int)});
+    htod_job.push_back({d_A_col_idx[pod], sub_A_col_idx.data(), sub_A_col_idx.size()*sizeof(int)});
+    htod_job.push_back({d_A_nnz[pod], sub_A_nnz.data(), sub_A_nnz.size()*sizeof(float)});
     // matrix B
-    htod_job.push_back({d_B_row_offset[pod], row_offset, (V+1)*sizeof(int)});
-    htod_job.push_back({d_B_col_idx[pod], col_idx, (E)*sizeof(int)});
-    htod_job.push_back({d_B_nnz[pod], nnz, (E)*sizeof(float)});
+    htod_job.push_back({d_B_row_offset[pod], sub_B_row_offset.data(), sub_B_row_offset.size()*sizeof(int)});
+    htod_job.push_back({d_B_col_idx[pod], sub_B_col_idx.data(), sub_B_col_idx.size()*sizeof(int)});
+    htod_job.push_back({d_B_nnz[pod], sub_B_nnz.data(), sub_B_nnz.size()*sizeof(float)});
     // C col count;
     int *device_C_col_count = (int*) malloc(sizeof(int)*(num_row+1)); 
     for (int i = 0; i < num_row+1; i++) {
@@ -210,6 +248,9 @@ int spgemm_multipod(int argc, char ** argv)
     // Enqueue kernel;
     printf("Enqueing kernel: pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_kernel_enqueue(&device, grid_dim, tg_dim, "kernel", CUDA_ARGC, cuda_argv));
+
+    // Free;
+    free(device_C_col_count);
   }
 
   // Launch pods;
@@ -222,63 +263,67 @@ int spgemm_multipod(int argc, char ** argv)
   {
     printf("Reading results: pods %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
-    int curr_pod_id = pod_id + pod;
-    int row_start = std::min(curr_pod_id*V_per_pod,V);
-    int row_end  = std::min(row_start+V_per_pod,V);
+    int curr_pod_id_x = pod_id_x + pod;
+    int curr_pod_id_y = pod_id_y;
+    int row_start = std::min(curr_pod_id_y*row_per_pod,V);
+    int row_end  = std::min(row_start+row_per_pod,V);
     int num_row = row_end-row_start;
-    int nnz_start = row_offset[row_start];
-    int nnz_end = row_offset[row_end];
-    int num_nnz = nnz_end-nnz_start;
-    int C_nnz_start = output_row_offset[row_start];
-    int C_nnz_end = output_row_offset[row_end];
-    int num_C_nnz = C_nnz_end - C_nnz_start;
+    int col_start = std::min(curr_pod_id_x*col_per_pod,V);
+    int col_end = std::min(col_start+col_per_pod,V);
+    int num_col = col_end-col_start;
 
+    // matrix C;
+    std::vector<int> sub_C_row_offset;
+    std::vector<int> sub_C_col_idx;
+    std::vector<float> sub_C_nnz;
+    get_submatrix(row_start, row_end, col_start, col_end,
+      output_row_offset, output_col_idx, output_nnz,
+      sub_C_row_offset, sub_C_col_idx, sub_C_nnz); 
+
+    // DMA transfer; device -> host;
     std::vector<hb_mc_dma_dtoh_t> dtoh_job;
-    int *actual_C_row_offset  = (int*) malloc((num_row+1)*sizeof(int));
-    int *actual_C_col_idx     = (int*) malloc((num_C_nnz)*sizeof(int));
-    float *actual_C_nnz         = (float*) malloc((num_C_nnz)*sizeof(float));
-    dtoh_job.push_back({d_C_row_offset[pod], actual_C_row_offset, (num_row+1)*sizeof(int)});
-    dtoh_job.push_back({d_C_col_idx[pod], actual_C_col_idx, (num_C_nnz)*sizeof(int)});
-    dtoh_job.push_back({d_C_nnz[pod], actual_C_nnz, (num_C_nnz)*sizeof(float)});
+    int *actual_C_row_offset  = (int*) malloc(sub_C_row_offset.size()*sizeof(int));
+    int *actual_C_col_idx     = (int*) malloc(sub_C_col_idx.size()*sizeof(int));
+    float *actual_C_nnz       = (float*) malloc(sub_C_nnz.size()*sizeof(float));
+    dtoh_job.push_back({d_C_row_offset[pod], actual_C_row_offset, sub_C_row_offset.size()*sizeof(int)});
+    dtoh_job.push_back({d_C_col_idx[pod], actual_C_col_idx, sub_C_col_idx.size()*sizeof(int)});
+    dtoh_job.push_back({d_C_nnz[pod], actual_C_nnz, sub_C_nnz.size()*sizeof(float)});
     BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, dtoh_job.data(), dtoh_job.size()));
 
     // Validate;
     // row_offset;
-    for (int row = 0; row < num_row+1; row++) {
-      int host_row = row+row_start;
-      int expected = output_row_offset[host_row]-output_row_offset[row_start];
+    for (int row = 0; row < sub_C_row_offset.size(); row++) {
+      int expected = sub_C_row_offset[row];
       int actual = actual_C_row_offset[row];
       //printf("row_offset : row=%d, expected=%d, actual=%d\n",
-      //  host_row, expected, actual);
+      //  row, expected, actual);
       if (expected != actual) {
         printf("row_offset mismatch: row=%d, expected=%d, actual=%d\n",
-          host_row, expected, actual);
+          row, expected, actual);
         fail = true;
       }
     }
     // col_idx;
-    for (int nz = 0; nz < num_C_nnz; nz++) {
-      int host_nz = C_nnz_start+nz;
-      int expected = output_col_idx[host_nz];
+    for (int nz = 0; nz < sub_C_col_idx.size(); nz++) {
+      int expected = sub_C_col_idx[nz];
       int actual = actual_C_col_idx[nz];
       //printf("col_idx : nz=%d, expected=%d, actual=%d\n",
-      //  host_nz, expected, actual);
+      //  nz, expected, actual);
       if (expected != actual) {
         printf("col_idx mismatch: nz=%d, expected=%d, actual=%d\n",
-          host_nz, expected, actual);
+          nz, expected, actual);
         fail = true;
       }
     }
     // nnz;
-    for (int nz = 0; nz < num_C_nnz; nz++) {
-      int host_nz = C_nnz_start+nz;
-      float expected = output_nnz[host_nz];
+    for (int nz = 0; nz < sub_C_nnz.size(); nz++) {
+      float expected = sub_C_nnz[nz];
       float actual = actual_C_nnz[nz];
       //printf("nnz: nz=%d, expected=%f, actual=%f\n",
-      //  host_nz, expected, actual);
+      //  nz, expected, actual);
       if (expected != actual) {
         printf("nnz mismatch: nz=%d, expected=%f, actual=%f\n",
-          host_nz, expected, actual);
+          nz, expected, actual);
         fail = true;
       }
     }
