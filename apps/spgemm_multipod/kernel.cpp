@@ -197,7 +197,7 @@ extern "C" int kernel(
   // KERNEL START;
   // solve rows;
   for (int curr_row = bsg_amoadd(&g_solve_q,1); curr_row < num_row; curr_row=bsg_amoadd(&g_solve_q,1)) {
-    bsg_print_int(curr_row);
+    //bsg_print_int(curr_row);
     int A_col_idx_start = A_row_offset[curr_row];
     int A_col_idx_end = A_row_offset[curr_row+1];
     asm volatile ("" ::: "memory");
@@ -326,12 +326,12 @@ extern "C" int kernel(
     C_list_head[curr_row] = accum_row.head;
     C_col_count[curr_row] = accum_row.count;
   
-    bsg_print_int(10000+curr_row);
+    //bsg_print_int(10000+curr_row);
   }
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
   if(__bsg_id == 0) {
-    bsg_print_int(20000);
+    //bsg_print_int(20000);
   }
 
   // calculate C row offset;
@@ -384,12 +384,12 @@ extern "C" int kernel(
   bsg_barrier_hw_tile_group_sync();
 
   if(__bsg_id == 0) {
-    bsg_print_int(30000);
+    //bsg_print_int(30000);
   }
 
   // Convert lists into CSR matrix;
   for (int curr_row = bsg_amoadd(&g_convert_q,1); curr_row < num_row; curr_row=bsg_amoadd(&g_convert_q,1)) {
-    bsg_print_int(40000+curr_row);
+    //bsg_print_int(40000+curr_row);
     HBListNode* curr_node = C_list_head[curr_row];
     int row_offset = C_row_offset[curr_row];
     while (curr_node != (HBListNode*) 0) {
