@@ -1,1 +1,1 @@
-TESTS += $(call test-name,256,1)
+TESTS += $(call test-name,512,2)
