@@ -58,7 +58,7 @@ int verify_fft (float complex *out, int N) {
 
 
 // Host main;
-int fft128_multipod (int argc, char **argv)
+int fft_multipod (int argc, char **argv)
 {
   int r = 0;
 
@@ -90,7 +90,7 @@ int fft128_multipod (int argc, char **argv)
 
   // Initialize devices;
   hb_mc_device_t device;
-  BSG_CUDA_CALL(hb_mc_device_init(&device, "fft128_multipod", 0));
+  BSG_CUDA_CALL(hb_mc_device_init(&device, "fft_multipod", 0));
   eva_t d_A;
   eva_t d_B;
   eva_t d_TW;
@@ -188,4 +188,4 @@ int fft128_multipod (int argc, char **argv)
   }
 }
 
-declare_program_main("fft128_multipod", fft128_multipod);
+declare_program_main("fft_multipod", fft_multipod);

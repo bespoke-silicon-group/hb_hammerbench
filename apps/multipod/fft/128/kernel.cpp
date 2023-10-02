@@ -4,6 +4,7 @@
 #include "bsg_barrier_multipod.h"
 
 #define N (NUM_POINTS*NUM_POINTS)
+#define NUM_TILES (bsg_tiles_X*bsg_tiles_Y)
 
 // Multipod barrier;
 volatile int done[NUM_POD_X]={0};
@@ -14,15 +15,11 @@ int alert = 0;
 #ifdef WARM_CACHE
 #define CACHE_LINE_COMPLEX 8
 __attribute__ ((noinline))
-static void warmup(FP32Complex *in, FP32Complex *out, FP32Complex *tw, int N)
+static void warmup(FP32Complex *in, FP32Complex *out, FP32Complex *tw, int n)
 {
-  for (int i = __bsg_id*CACHE_LINE_COMPLEX; i < N; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_COMPLEX) {
+  for (int i = __bsg_id*CACHE_LINE_COMPLEX; i < n; i += NUM_TILES*CACHE_LINE_COMPLEX) {
       asm volatile ("lw x0, %[p]" :: [p] "m" (in[i]));
-      //asm volatile ("sw x0, %[p]" :: [p] "m" (out[i]));
   }
-  //for (int i = __bsg_id*CACHE_LINE_COMPLEX; i < N; i += bsg_tiles_X*bsg_tiles_Y*CACHE_LINE_COMPLEX) {
-  //    asm volatile ("lw x0, %[p]" :: [p] "m" (tw[i]));
-  //}
 }
 #endif
 
@@ -46,8 +43,14 @@ kernel(FP32Complex *in,
     bsg_fence();
     bsg_barrier_hw_tile_group_sync();
 
+    // remapping tile id;
+    int my_id = (__bsg_id % NUM_POINTS);
+    int group_id = (__bsg_id / NUM_POINTS);
+    int num_group = (NUM_TILES / NUM_POINTS);
+
+
     // load twiddle factor to local.
-    load_sequential(local_tw, tw+(__bsg_id*NUM_POINTS));
+    load_sequential(local_tw, tw+(my_id*NUM_POINTS));
     bsg_fence();
     bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
 
@@ -55,9 +58,9 @@ kernel(FP32Complex *in,
     // Kernel Start
     bsg_cuda_print_stat_kernel_start();
     
-    for (int i = 0; i < num_iter; i++) {
-      FP32Complex *input_sq = &in[i*N];
-      FP32Complex *input_vec = input_sq + __bsg_id;
+    for (int i = 0; i < num_iter; i+=num_group) {
+      FP32Complex *input_sq = &in[(i+group_id)*N];
+      FP32Complex *input_vec = input_sq + (my_id);
 
       // step 1
       load_strided(fft_workset, input_vec);
@@ -68,9 +71,9 @@ kernel(FP32Complex *in,
       bsg_barrier_hw_tile_group_sync();
 
       // step 2
-      input_vec = input_sq + (__bsg_id * NUM_POINTS);
-      FP32Complex *output_sq = &out[i*N];
-      FP32Complex *output_vec = output_sq + __bsg_id;
+      input_vec = input_sq + (my_id * NUM_POINTS);
+      FP32Complex *output_sq = &out[(i+group_id)*N];
+      FP32Complex *output_vec = output_sq + my_id;
       load_sequential(fft_workset, input_vec);
       fft128_specialized(fft_workset);
       store_strided(output_vec, fft_workset);
