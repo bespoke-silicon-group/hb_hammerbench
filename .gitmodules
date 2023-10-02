@@ -1,6 +1,9 @@
 [submodule "apps/aes/tiny-AES-c"]
 	path = apps/aes/tiny-AES-c
 	url = git@github.com:bespoke-silicon-group/tiny-AES-c
+[submodule "apps/multipod/aes/tiny-AES-c"]
+	path = apps/multipod/aes/tiny-AES-c
+	url = git@github.com:bespoke-silicon-group/tiny-AES-c
 [submodule "apps/barnes_hut/Galois"]
 	path = apps/barnes_hut/Galois
 	url = git@github.com:bespoke-silicon-group/Galois

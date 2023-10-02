@@ -89,7 +89,7 @@ int sgemm_multipod(int argc, char **argv)
     uint32_t cuda_argv[CUDA_ARGC] = {d_mat1, d_mat2, d_result, pod};
 
     // Enqueue kernel
-    bsg_pr_info("Enqueue Kernel: pod %d\n", pod);
+    printf("Enqueue Kernel: pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel", CUDA_ARGC, cuda_argv));
   }
 
