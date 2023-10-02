@@ -12,10 +12,11 @@
 #include <bsg_manycore_regression.h>
 #include <bsg_manycore.h>
 #include <cstdint>
-#include <aes.hpp>
+#include <vector>
+#include "aes.hpp"
 
 #define ALLOC_NAME "default_allocator"
-#define NUM_TILES (TILE_GROUP_DIM_X*TILE_GROUP_DIM_Y)
+#define NUM_TILES (bsg_tiles_X*bsg_tiles_Y)
 #define MSG_LEN 1024
 
 int aes_multipod(int argc, char **argv)
@@ -79,8 +80,8 @@ int aes_multipod(int argc, char **argv)
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
   
     // Allocate memory on device;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(ctx), &ctx_device));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(buf), &buf_device));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(ctx), &d_ctx));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(buf), &d_buf));
 
     // DMA transfer;
     printf("Transferring data: pod %d\n", pod);
@@ -91,10 +92,10 @@ int aes_multipod(int argc, char **argv)
 
 
     // Cuda args;
-    hb_mc_dimension_t tg = { .x = TILE_GROUP_DIM_X, .y = TILE_GROUP_DIM_Y};
-    hb_mc_dimension_t grid = { .x = 1, .y = 1};
+    hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
+    hb_mc_dimension_t grid_dim = { .x = 1, .y = 1};
     #define CUDA_ARGC 5
-    uint32_t cuda_argv[CUDA_ARGC] = {ctx_device, buf_device, MSG_LEN, niters, pod};
+    uint32_t cuda_argv[CUDA_ARGC] = {d_ctx, d_buf, MSG_LEN, NUM_ITER, pod};
 
     // Enqueue kernel;
     printf("Enqueue Kernel: pod %d\n", pod);
@@ -130,9 +131,9 @@ int aes_multipod(int argc, char **argv)
     for (int i = 0; i < NUM_TILES*NUM_ITER; i++) {
       for (int j = 0; j < MSG_LEN; j++) {
         uint8_t actual = actual_buf[(MSG_LEN*i)+j];
-        uint8_t expected = expected_buf[(MSG_LEN*i)+j];
+        uint8_t expected = expected_buf[j];
         if (actual != expected) {
-          printf("Mismatch: i=%d, j=%d, actual=%d, expected=%d", i, j, actual, expected);
+          printf("Mismatch: i=%d, j=%d, actual=%d, expected=%d\n", i, j, actual, expected);
           fail = true;
         }
       }

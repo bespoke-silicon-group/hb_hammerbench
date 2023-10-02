@@ -9,7 +9,6 @@ tile-y?=8
 override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
-
 # number of pods participating in barrier;
 NUM_POD_X=$(BSG_MACHINE_PODS_X)
 NUM_POD_Y=$(BSG_MACHINE_PODS_X)
@@ -21,14 +20,18 @@ vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
 
 # Test sources;
-TEST_SOURCES := main.cpp
+VPATH=../tiny-AES-c
+TEST_SOURCES = main.cpp
+TEST_SOURCES += aes.c
+aes.o: CFLAGS += -DHOST_CODE
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 DEFINES += -DNUM_POD_X=$(NUM_POD_X) # number of pods simulating now;
 DEFINES += -DNUM_ITER=$(NUM-ITER)
+DEFINES += -DECB=0 -DCTR=0
 
-FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
+FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable -I../tiny-AES-c
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++11 $(FLAGS)
 
@@ -51,7 +54,7 @@ RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_CCPPFLAGS += -DNUM_ITER=$(NUM-ITER)
 
-RISCV_TARGET_OBJECTS = kernel.rvo
+RISCV_TARGET_OBJECTS = kernel.rvo aes_kernel.rvo
 BSG_MANYCORE_KERNELS = main.riscv
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
