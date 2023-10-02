@@ -16,6 +16,7 @@
 
 #define ALLOC_NAME "default_allocator"
 #define NUM_TILES (TILE_GROUP_DIM_X*TILE_GROUP_DIM_Y)
+#define MSG_LEN 1024
 
 int aes_multipod(int argc, char **argv)
 {
