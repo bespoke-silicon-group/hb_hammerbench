@@ -130,9 +130,13 @@ int pagerank_multipod(int argc, char ** argv)
     curr_v2e += (rev_offsets[v+1] - rev_offsets[v]) + 2;
   }
   
-  V_range[numpods] = V;
-  v2e_count[numpods-1] = curr_v2e;
+  V_range[curr_pod+1] = V;
+  v2e_count[curr_pod] = curr_v2e;
 
+  for (int p = curr_pod+1; p < numpods; p++) {
+    V_range[p+1]=V;
+    v2e_count[p] = 0;
+  }
 
   for (int p = 0; p < numpods; p++) {
     printf("pod=%d, V_range=(%d, %d), V_count=%d, count=%d\n",
