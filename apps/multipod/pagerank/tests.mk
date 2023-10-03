@@ -15,3 +15,5 @@ $(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,roadNet-CA,$(x))))
 $(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,road-usa,$(x))))
 # RC
 $(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,road-central,$(x))))
+# WV
+$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,wiki-Vote,$(x))))
