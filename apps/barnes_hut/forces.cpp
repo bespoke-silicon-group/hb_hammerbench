@@ -28,6 +28,7 @@ extern "C" void forces(Config *pcfg, HBOctree *proot, HBBody *HBBodies, int nBod
         int cur;
         cur = bsg_amoadd(amocur, 1);
         while(cur < body_end){
+                //bsg_print_int(cur);
                 float diamsq = diam * diam * cfg.itolsq;
                 HBBody *pcurb = &HBBodies[cur];
                 HBBody curb = *pcurb;
