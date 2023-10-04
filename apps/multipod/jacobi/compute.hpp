@@ -2,6 +2,7 @@
 #include "bsg_cuda_lite_barrier.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include "bsg_barrier_multipod.h"
 
 __attribute__ ((always_inline)) 
 void copySelf(
@@ -130,7 +131,10 @@ void compute (
   float *a_up,
   float *a_down,
   float *a_self,
-  const int nz
+  const int nz,
+  int pod_id,
+  volatile int* done,
+  int* alert
 ) {
 
   float c0f = (float) c0;
@@ -141,7 +145,8 @@ void compute (
     copySelf(dram_self, a_self, ii, nz);
     prefetch_dram(a_left, a_right, a_up, a_down, ii);
     bsg_fence();
-    bsg_barrier_hw_tile_group_sync();
+    //bsg_barrier_hw_tile_group_sync();
+    bsg_barrier_multipod(pod_id, NUM_POD_X, done, alert);
 
     // compute 4 at a time
     bsg_unroll(1)
@@ -240,6 +245,7 @@ void compute (
       dram_next[ii+i+3] = next3; 
     }
     bsg_fence();
-    bsg_barrier_hw_tile_group_sync();
+    //bsg_barrier_hw_tile_group_sync();
+    bsg_barrier_multipod(pod_id, NUM_POD_X, done, alert);
   }
 }
