@@ -8,6 +8,9 @@
 // currently for one pod row;
 static inline void bsg_barrier_multipod(int pod_id, int num_pod_x, volatile int* done, int* alert)
 {
+  for (int px = 0; px < num_pod_x; px++) {
+    done[px] = 0;
+  }
   *alert=0;
   bsg_fence();
   bsg_barrier_hw_tile_group_sync();
