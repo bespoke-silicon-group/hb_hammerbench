@@ -158,9 +158,10 @@ int spgemm_multipod(int argc, char ** argv)
     //int nnz_start = row_offset[row_start];
     //int nnz_end = row_offset[row_end];
     //int num_nnz = nnz_end-nnz_start;
-    printf("curr_pod_id=(%d %d), row_start=%d, row_end=%d\n",
+    printf("curr_pod_id=(%d %d), row_start=%d, row_end=%d, col_start=%d, col_end=%d\n",
       curr_pod_id_x, curr_pod_id_y,
-      row_start, row_end);
+      row_start, row_end,
+      col_start, col_end);
     
     // sub matrix A;
     std::vector<int> sub_A_row_offset;
