@@ -20,9 +20,6 @@ NUM_POD_Y=$(BSG_MACHINE_PODS_X)
 TILE_GROUP_DIM_X ?= $(tile-x)
 TILE_GROUP_DIM_Y ?= $(tile-y)
 TREE_LEVELS=8
-# How to partition matrix;
-POD_DIM_X?=8
-POD_DIM_Y?=8
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
