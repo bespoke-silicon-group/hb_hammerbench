@@ -15,8 +15,8 @@ POD_RANGE = $(shell seq -s " " 0 63)
 
 
 # soc-Pokec
-PK_ITER_RANGE = $(shell seq -s " " 0 10)
-$(foreach n, $(PK_ITER_RANGE), \
+#PK_ITER_RANGE = $(shell seq -s " " 0 10)
+#$(foreach n, $(PK_ITER_RANGE), \
 	$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,soc-Pokec,$(n),$(x)))))
 
 #hollywood-2009
@@ -47,3 +47,11 @@ $(foreach n, $(PK_ITER_RANGE), \
 #$(foreach n, $(US_ITER_RANGE), \
 	$(foreach x, $(US_POD_RANGE), $(eval TESTS += $(call test-name,road-usa,$(n),$(x)))))
 
+
+# known-slow pods;
+TESTS += $(call test-name,soc-Pokec,3,0)
+TESTS += $(call test-name,hollywood-2009,2,9)
+TESTS += $(call test-name,ljournal-2008,4,61)
+TESTS += $(call test-name,roadNet-CA,131,26)
+TESTS += $(call test-name,road-central,1625,19)
+TESTS += $(call test-name,road-usa,968,6)
