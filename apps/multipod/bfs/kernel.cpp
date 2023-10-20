@@ -12,9 +12,10 @@
 __attribute__((section(".dram"))) int g_q;
 
 // DRAM variables to do edge parallel;
+#define EP_QUEUE_SIZE 4096
 __attribute__((section(".dram"))) int g_q2;
-__attribute__((section(".dram"))) int g_edge_start[128];
-__attribute__((section(".dram"))) int g_edge_stop[128];
+__attribute__((section(".dram"))) int g_edge_start[EP_QUEUE_SIZE];
+__attribute__((section(".dram"))) int g_edge_stop[EP_QUEUE_SIZE];
 
 
 // set a bit in dense bit vector;
@@ -136,7 +137,7 @@ extern "C" int kernel(
     int frontier_per_pod = (frontier_size+NUMPODS-1) / NUMPODS;
     int f_start = std::min(frontier_size, pod_id*frontier_per_pod);
     int f_end   = std::min(frontier_size, f_start+frontier_per_pod);
-    int do_edge_parallel = (frontier_size < 128) && DO_EDGE_PARALLEL;
+    int do_edge_parallel = DO_EDGE_PARALLEL;
     if (__bsg_id == 0) {
       g_q = f_start;
       g_q2 = 0;
