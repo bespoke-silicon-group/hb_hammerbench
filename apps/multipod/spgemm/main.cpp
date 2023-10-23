@@ -79,16 +79,16 @@ int spgemm_multipod(int argc, char ** argv)
 
   // Define parameters;
   int pod_id = PODID;
-  int pod_id_x = PODID % POD_DIM_X;
-  int pod_id_y = PODID / POD_DIM_X;
+  //int pod_id_x = PODID % POD_DIM_X;
+  //int pod_id_y = PODID / POD_DIM_X;
   int pod_dim_x = POD_DIM_X;
   int pod_dim_y = POD_DIM_Y;
   int V = VERTEX;
   int E = EDGE;
   int OUTPUT_E = OUTPUT_EDGE;
   printf("pod_id = %d\n", pod_id);
-  printf("pod_id_x = %d\n", pod_id_x);
-  printf("pod_id_y = %d\n", pod_id_y);
+  //printf("pod_id_x = %d\n", pod_id_x);
+  //printf("pod_id_y = %d\n", pod_id_y);
   printf("pod_dim_x= %d\n", pod_dim_x);
   printf("pod_dim_y= %d\n", pod_dim_y);
   printf("V=%d\n", V);
@@ -145,8 +145,8 @@ int spgemm_multipod(int argc, char ** argv)
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
     // pod id;
-    int curr_pod_id_x = pod_id_x + pod;
-    int curr_pod_id_y = pod_id_y;
+    int curr_pod_id_x = (PODID+pod) % POD_DIM_X;
+    int curr_pod_id_y = (PODID+pod) / POD_DIM_X;
 
     int row_start = std::min(curr_pod_id_y*row_per_pod,V);
     int row_end  = std::min(row_start+row_per_pod,V);
@@ -264,8 +264,8 @@ int spgemm_multipod(int argc, char ** argv)
   {
     printf("Reading results: pods %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
-    int curr_pod_id_x = pod_id_x + pod;
-    int curr_pod_id_y = pod_id_y;
+    int curr_pod_id_x = (PODID+pod) % POD_DIM_X;
+    int curr_pod_id_y = (PODID+pod) / POD_DIM_X;
     int row_start = std::min(curr_pod_id_y*row_per_pod,V);
     int row_end  = std::min(row_start+row_per_pod,V);
     int num_row = row_end-row_start;
