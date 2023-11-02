@@ -6,7 +6,7 @@
 #include "bsg_cuda_lite_barrier.h"
 #include "bsg_barrier_multipod.h"
 
-#define BLOCK_SIZE 16
+#define REV_WORK_SIZE 1
 
 // FWD queue;
 __attribute__((section(".dram"))) int g_q;
@@ -32,6 +32,90 @@ inline void insert_into_dense(int id, int *dense_frontier)
 volatile int done[NUM_POD_X] = {0};
 int alert = 0;
 
+// Local storage for rev-dist;
+int rev_dist[8];
+
+
+// Rev loop;
+inline void rev_loop(int v, int* distance, int* offsets, int *nonzeros, int *next_dense_frontier)
+{
+        if (distance[v] == -1) {
+          int nz_start = offsets[v];
+          int nz_stop = offsets[v+1];
+          int nz = nz_start;
+
+          // unroll by 8
+          for (; nz+8 <= nz_stop; nz+=8) {
+            int rev_src0 = nonzeros[nz+0];
+            int rev_src1 = nonzeros[nz+1];
+            int rev_src2 = nonzeros[nz+2];
+            int rev_src3 = nonzeros[nz+3];
+            int rev_src4 = nonzeros[nz+4];
+            int rev_src5 = nonzeros[nz+5];
+            int rev_src6 = nonzeros[nz+6];
+            int rev_src7 = nonzeros[nz+7];
+            asm volatile("": : :"memory");
+            int dist_temp0 = distance[rev_src0];
+            int dist_temp1 = distance[rev_src1];
+            int dist_temp2 = distance[rev_src2];
+            int dist_temp3 = distance[rev_src3];
+            int dist_temp4 = distance[rev_src4];
+            int dist_temp5 = distance[rev_src5];
+            int dist_temp6 = distance[rev_src6];
+            int dist_temp7 = distance[rev_src7];
+            asm volatile("": : :"memory");
+            rev_dist[0] = dist_temp0;
+            rev_dist[1] = dist_temp1;
+            rev_dist[2] = dist_temp2;
+            rev_dist[3] = dist_temp3;
+            rev_dist[4] = dist_temp4;
+            rev_dist[5] = dist_temp5;
+            rev_dist[6] = dist_temp6;
+            rev_dist[7] = dist_temp7;
+            asm volatile("": : :"memory");
+            for (int i = 0; i < 8; i++) {
+              if (rev_dist[i] != -1) {
+                insert_into_dense(v, next_dense_frontier);
+                return;
+              }
+            }
+          }
+
+          // unroll by 4
+          for (; nz+4 <= nz_stop; nz+=4) {
+            int rev_src0 = nonzeros[nz+0];
+            int rev_src1 = nonzeros[nz+1];
+            int rev_src2 = nonzeros[nz+2];
+            int rev_src3 = nonzeros[nz+3];
+            asm volatile("": : :"memory");
+            int dist_temp0 = distance[rev_src0];
+            int dist_temp1 = distance[rev_src1];
+            int dist_temp2 = distance[rev_src2];
+            int dist_temp3 = distance[rev_src3];
+            asm volatile("": : :"memory");
+            rev_dist[0] = dist_temp0;
+            rev_dist[1] = dist_temp1;
+            rev_dist[2] = dist_temp2;
+            rev_dist[3] = dist_temp3;
+            asm volatile("": : :"memory");
+            for (int i = 0; i < 4; i++) {
+              if (rev_dist[i] != -1) {
+                insert_into_dense(v, next_dense_frontier);
+                return;
+              }
+            }
+          }
+
+          // unroll by 1
+          for (; nz < nz_stop; nz++) {
+            int src0 = nonzeros[nz];
+            if (distance[src0] != -1) {
+              insert_into_dense(v, next_dense_frontier);
+              return;
+            }
+          }
+        }
+}
 
 // Kernel main;
 extern "C" int kernel(
@@ -71,63 +155,12 @@ extern "C" int kernel(
     bsg_barrier_hw_tile_group_sync();
     bsg_cuda_print_stat_kernel_start();
 
-    for (int v_start = bsg_amoadd(&g_q, BLOCK_SIZE); v_start < v_end; v_start = bsg_amoadd(&g_q,BLOCK_SIZE)) {
+    for (int v_start = bsg_amoadd(&g_q, REV_WORK_SIZE); v_start < v_end; v_start = bsg_amoadd(&g_q,REV_WORK_SIZE)) {
       int v = v_start;
-      int stop = std::min(v_end, v_start+BLOCK_SIZE);
+      int stop = std::min(v_end, v_start+REV_WORK_SIZE);
 
-      // unroll by 2;
-      #define REV_UNROLL 2
-      for (;v+REV_UNROLL <= stop; v+=REV_UNROLL) {
-        register int l_distance[REV_UNROLL];
-        register int l_rev_offsets[REV_UNROLL+1];
-        l_distance[0] = distance[v];
-        l_distance[1] = distance[v+1];
-        asm volatile("": : :"memory");
-        l_rev_offsets[0] = offsets[v];
-        l_rev_offsets[1] = offsets[v+1];
-        l_rev_offsets[2] = offsets[v+2];
-        asm volatile("": : :"memory");
-      
-        // 0
-        if (l_distance[0] == -1) {
-          int nz_start = l_rev_offsets[0];
-          int nz_stop  = l_rev_offsets[1];
-          for (int nz = nz_start; nz < nz_stop; nz++) {
-            int src = nonzeros[nz];
-            if (distance[src] != -1) {
-              insert_into_dense(v, next_dense_frontier);
-              break;
-            } 
-          }
-        }
-
-        // 1
-        if (l_distance[1] == -1) {
-          int nz_start = l_rev_offsets[1];
-          int nz_stop  = l_rev_offsets[2];
-          for (int nz = nz_start; nz < nz_stop; nz++) {
-            int src = nonzeros[nz];
-            if (distance[src] != -1) {
-              insert_into_dense(v+1, next_dense_frontier);
-              break;
-            } 
-          }
-        }
-      }
-
-      // Unroll by 1
       for (; v < stop; v++) {
-        if (distance[v] == -1) {
-          int nz_start = offsets[v];
-          int nz_stop = offsets[v+1];
-          for (int nz = nz_start; nz < nz_stop; nz++) {
-            int src0 = nonzeros[nz];
-            if (distance[src0] != -1) {
-              insert_into_dense(v, next_dense_frontier);
-              break;
-            }
-          }
-        }
+        rev_loop(v, distance, offsets, nonzeros, next_dense_frontier);
       }
     }
 
