@@ -188,6 +188,7 @@ extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
   bsg_fence();
   
   // estimating interpod communication;
+  /*
   for (int i = l_body_start+__bsg_id; i < body_end; i+=bsg_tiles_X*bsg_tiles_Y) {
     float l_vel[3];
     float l_acc[3];
@@ -209,7 +210,7 @@ extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
     asm volatile("": : :"memory");
   }
   bsg_fence();
-  
+  */
   bsg_barrier_hw_tile_group_sync();
   bsg_cuda_print_stat_kernel_end();
   bsg_fence();
