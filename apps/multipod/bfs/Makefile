@@ -5,13 +5,15 @@ all: generate
 
 
 # test name;
-test-name = graph_$(1)__niter_$(2)__pod-id_$(3)
+test-name = graph_$(1)__niter_$(2)__pod-id_$(3)__tgx_$(4)__tgy_$(5)
 
 
 # get parameter from test name;
 get-graph  = $(lastword $(subst _, ,$(filter graph_%,$(subst __, ,$(1)))))
 get-niter  = $(lastword $(subst _, ,$(filter niter_%,$(subst __, ,$(1)))))
 get-pod-id = $(lastword $(subst _, ,$(filter pod-id_%,$(subst __, ,$(1)))))
+get-tgx = $(lastword $(subst _, ,$(filter tgx_%,$(subst __, ,$(1)))))
+get-tgy = $(lastword $(subst _, ,$(filter tgy_%,$(subst __, ,$(1)))))
 
 # TESTS
 TESTS =
@@ -27,6 +29,8 @@ $(addsuffix /parameters.mk,$(TESTS_DIRS)): %/parameters.mk:
 	@echo graph  = $(call get-graph,$*) >> $@
 	@echo niter  = $(call get-niter,$*) >> $@
 	@echo pod-id = $(call get-pod-id,$*) >> $@
+	@echo tgx = $(call get-tgx,$*) >> $@
+	@echo tgy = $(call get-tgy,$*) >> $@
 
 
 include $(HB_HAMMERBENCH_PATH)/mk/testbench_common.mk

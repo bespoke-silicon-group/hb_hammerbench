@@ -20,8 +20,8 @@ NUM_POD_Y=$(BSG_MACHINE_PODS_X)
 include ../config.$(graph).mk
 
 # Tile Group Dimensions
-TILE_GROUP_DIM_X ?= $(tile-x)
-TILE_GROUP_DIM_Y ?= $(tile-y)
+TILE_GROUP_DIM_X ?= $(tgx)
+TILE_GROUP_DIM_Y ?= $(tgy)
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)

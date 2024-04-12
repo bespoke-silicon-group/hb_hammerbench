@@ -17,9 +17,9 @@ include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 NUM_POD_X=$(BSG_MACHINE_PODS_X)
 NUM_POD_Y=$(BSG_MACHINE_PODS_X)
 # Tile group DIM
-TILE_GROUP_DIM_X ?= $(tile-x)
-TILE_GROUP_DIM_Y ?= $(tile-y)
-TREE_LEVELS=8
+TILE_GROUP_DIM_X ?= $(tgx)
+TILE_GROUP_DIM_Y ?= $(tgy)
+TREE_LEVELS=$(tlevel)
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
