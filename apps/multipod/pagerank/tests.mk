@@ -20,10 +20,10 @@ POD_RANGE = $(shell seq -s " " 0 63)
 
 
 # known-slow pods;
-TESTS += $(call test-name,soc-Pokec,48)
-TESTS += $(call test-name,hollywood-2009,37)
-TESTS += $(call test-name,ljournal-2008,21)
-TESTS += $(call test-name,roadNet-CA,44)
-TESTS += $(call test-name,road-central,19)
-TESTS += $(call test-name,road-usa,47)
-TESTS += $(call test-name,wiki-Vote,36)
+TESTS += $(call test-name,soc-Pokec,0)
+TESTS += $(call test-name,hollywood-2009,0)
+TESTS += $(call test-name,ljournal-2008,0)
+TESTS += $(call test-name,roadNet-CA,0)
+TESTS += $(call test-name,road-central,0)
+TESTS += $(call test-name,road-usa,0)
+TESTS += $(call test-name,wiki-Vote,0)

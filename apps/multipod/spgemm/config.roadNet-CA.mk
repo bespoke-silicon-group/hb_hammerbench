@@ -3,4 +3,4 @@ EDGE=5533214
 OUTPUT_EDGE=12908450
 # How to partition matrix;
 POD_DIM_X=1
-POD_DIM_Y=64
+POD_DIM_Y=32
