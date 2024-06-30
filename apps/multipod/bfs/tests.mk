@@ -49,9 +49,9 @@ POD_RANGE = $(shell seq -s " " 0 63)
 
 
 # known-slow pods;
-TESTS += $(call test-name,soc-Pokec,4,36)
+TESTS += $(call test-name,soc-Pokec,4,4)
 TESTS += $(call test-name,hollywood-2009,2,9)
-TESTS += $(call test-name,ljournal-2008,4,61)
+TESTS += $(call test-name,ljournal-2008,4,15)
 TESTS += $(call test-name,roadNet-CA,131,0)
 TESTS += $(call test-name,road-central,1625,0)
 TESTS += $(call test-name,road-usa,968,0)
