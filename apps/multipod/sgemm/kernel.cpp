@@ -284,7 +284,7 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
 
 
   // start kernel
-  bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
   bsg_cuda_print_stat_kernel_start();
 
 

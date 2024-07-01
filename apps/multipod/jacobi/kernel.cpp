@@ -63,9 +63,9 @@ int kernel(
   bsg_barrier_hw_tile_group_init();
   bsg_barrier_hw_tile_group_sync();
 #ifdef WARM_CACHE
-  warmup(A0, Anext, nx, ny, nz);
+  //warmup(A0, Anext, nx, ny, nz);
 #endif
-  bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
 
   // kernel start
   bsg_cuda_print_stat_kernel_start();

@@ -3,9 +3,9 @@ include app_path.mk
 
 # Hardware;
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
-NUMPODS?=64
-tile-x?=16
-tile-y?=8
+NUMPODS?=32
+tile-x?=32
+tile-y?=16
 override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 

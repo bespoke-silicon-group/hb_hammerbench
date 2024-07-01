@@ -44,7 +44,7 @@ extern "C" int kernel(
   bsg_barrier_hw_tile_group_init();
   bsg_barrier_hw_tile_group_sync();
   // prepare here;
-  bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
   bsg_cuda_print_stat_kernel_start();
 
   for (int curr_id = bsg_amoadd(start_id,1); curr_id < end_id; curr_id = bsg_amoadd(start_id,1)) {

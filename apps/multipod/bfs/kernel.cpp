@@ -48,8 +48,8 @@ extern "C" int kernel(
 {
   // Initialize;
   bsg_barrier_hw_tile_group_init();
-  //bsg_barrier_hw_tile_group_sync();
-  bsg_barrier_multipod(pod_id-BASE_POD_ID, NUM_POD_X, done, &alert);
+  bsg_barrier_hw_tile_group_sync();
+  //bsg_barrier_multipod(pod_id-BASE_POD_ID, NUM_POD_X, done, &alert);
 
   // local variables;
 

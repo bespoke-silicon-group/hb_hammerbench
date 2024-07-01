@@ -42,13 +42,14 @@ kernel(FP32Complex * in,
 {
     bsg_barrier_hw_tile_group_init();
     #ifdef WARM_CACHE
-    warmup(in, tw, N);
+    //warmup(in, tw, N);
     #endif
     bsg_fence();
     bsg_barrier_hw_tile_group_sync();
 
     // Kernel start;
-    bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+    //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+    bsg_barrier_hw_tile_group_sync();
     bsg_cuda_print_stat_kernel_start();
 
     for (int i = 0; i < num_iter; i++) {

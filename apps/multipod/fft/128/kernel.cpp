@@ -38,7 +38,7 @@ kernel(FP32Complex *in,
 {
     bsg_barrier_hw_tile_group_init();
     #ifdef WARM_CACHE
-    warmup(in, out, tw, N);
+    //warmup(in, out, tw, N);
     #endif
     bsg_fence();
     bsg_barrier_hw_tile_group_sync();
@@ -52,7 +52,8 @@ kernel(FP32Complex *in,
     // load twiddle factor to local.
     load_sequential(local_tw, tw+(my_id*NUM_POINTS));
     bsg_fence();
-    bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+    bsg_barrier_hw_tile_group_sync();
+    //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
 
 
     // Kernel Start
