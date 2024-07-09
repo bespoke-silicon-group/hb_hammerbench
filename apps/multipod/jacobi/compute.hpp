@@ -143,7 +143,7 @@ void compute (
   for (int ii = 0; ii < nz; ii += LOCAL_SIZE) {
 
     copySelf(dram_self, a_self, ii, nz);
-    prefetch_dram(a_left, a_right, a_up, a_down, ii);
+    //prefetch_dram(a_left, a_right, a_up, a_down, ii);
     bsg_fence();
     //bsg_barrier_hw_tile_group_sync();
     bsg_barrier_multipod(pod_id, NUM_POD_X, done, alert);
