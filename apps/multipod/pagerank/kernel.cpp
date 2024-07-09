@@ -2,7 +2,7 @@
 #include "bsg_barrier_multipod.h"
 #include <bsg_manycore_atomic.h>
 #include <bsg_manycore.h>
-
+#include <algorithm>
 
 #define fmadd_asm(rd_p, rs1_p, rs2_p, rs3_p) \
     asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
