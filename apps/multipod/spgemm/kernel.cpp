@@ -12,7 +12,7 @@
       : [rs1] "f" ((rs1_p)), [rs2] "f" ((rs2_p)), [rs3] "f" ((rs3_p)))
 
 
-#define INIT_NUM_DRAM_NODES 256
+#define INIT_NUM_DRAM_NODES 16384
 #define NUM_DMEM_NODES 256
 #define LIST_NULL_PTR ((HBListNode*) 0)
 
