@@ -1,5 +1,12 @@
-BENCHMARKS = jacobi fft128 fft256 sgemm barnes_hut bfs pagerank spgemm
-
+BENCHMARKS = 
+BENCHMARKS += jacobi
+BENCHMARKS += fft128
+BENCHMARKS += fft256
+BENCHMARKS += sgemm
+BENCHMARKS += barnes_hut
+BENCHMARKS += bfs
+BENCHMARKS += pagerank
+BENCHMARKS += spgemm
 
 # clean target;
 clean.jacobi:
