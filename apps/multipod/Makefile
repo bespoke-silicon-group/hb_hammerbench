@@ -1,8 +1,8 @@
 BENCHMARKS = 
-BENCHMARKS += jacobi
-BENCHMARKS += fft128
-BENCHMARKS += fft256
-BENCHMARKS += sgemm
+#BENCHMARKS += jacobi
+#BENCHMARKS += fft128
+#BENCHMARKS += fft256
+#BENCHMARKS += sgemm
 BENCHMARKS += barnes_hut
 BENCHMARKS += bfs
 BENCHMARKS += pagerank
