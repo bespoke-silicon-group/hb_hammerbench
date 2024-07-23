@@ -288,6 +288,10 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
   bsg_cuda_print_stat_kernel_start();
 
 
+  // remap id
+  int new_x = (__bsg_x % 32);
+  int new_y = __bsg_y + (__bsg_x/32*bsg_tiles_Y);
+
   // reset output;
   bsg_unroll(1)
   for (int iter = 0; iter < NITER; iter++) {
@@ -297,9 +301,9 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
     float *curr_result = &result[N*N*iter];
 
     bsg_unroll(1)
-    for (int by = __bsg_y; by < NUM_BLOCK; by += bsg_tiles_Y) {
+    for (int by = new_y; by < NUM_BLOCK; by += 16) {
       bsg_unroll(1)
-      for (int bx = __bsg_x; bx < NUM_BLOCK; bx += bsg_tiles_X) {
+      for (int bx = new_x; bx < NUM_BLOCK; bx += 32) {
 
         // reset out
         reset_out();
