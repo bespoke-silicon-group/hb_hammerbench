@@ -31,7 +31,8 @@ $(addsuffix /parameters.mk,$(TESTS_DIRS)): %/parameters.mk:
 include $(HB_HAMMERBENCH_PATH)/mk/testbench_common.mk
 
 # for regression
-EXECUTION_DIRS := $(addprefix $(APP_PATH)/,$(TESTS_DIRS))
-include $(HB_HAMMERBENCH_PATH)/apps/common_complex.mk
+#EXECUTION_DIRS := $(addprefix $(APP_PATH)/,$(TESTS_DIRS))
+#include $(HB_HAMMERBENCH_PATH)/apps/common_complex.mk
 
-
+clean:
+	rm -rf tile-x_*__tile-y_*__buffer-size_*__warm-cache_*
