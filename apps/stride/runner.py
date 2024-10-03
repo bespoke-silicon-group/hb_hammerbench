@@ -1,16 +1,19 @@
 import subprocess
 import matplotlib as mpl
+mpl.use('pdf')
 import itertools
 from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
 class Test(object):
-    def __init__(self, stride_size, stride_n, x, y, warmup):
+    def __init__(self, stride_size, stride_n, x, y, warmup, tiles_x, tiles_y):
         self.stride_size = stride_size
         self.stride_n = stride_n
         self.x = x
         self.y = y
         self.warmup = warmup
+        self.tiles_x = tiles_x
+        self.tiles_y = tiles_y
         self._data = None
         self._dram_data = None
     
@@ -30,13 +33,13 @@ class Test(object):
         return self._dram_data
     
     def format_for_tests_mk(self):
-        return "TESTS += $(call test-name,{},{},{},{},{})".format(
-            self.stride_size, self.stride_n, self.x, self.y, self.warmup
+        return "TESTS += $(call test-name,{},{},{},{},{},{},{})".format(
+            self.stride_size, self.stride_n, self.x, self.y, self.warmup, self.tiles_x, self.tiles_y
         )
 
     def run_directory(self):
-        return "stride-size_{}__stride-n_{}__x_{}__y_{}__warmup_{}".format(
-            self.stride_size, self.stride_n, self.x, self.y, self.warmup
+        return "stride-size_{}__stride-n_{}__x_{}__y_{}__warmup_{}__tiles-x_{}__tiles-y_{}".format(
+            self.stride_size, self.stride_n, self.x, self.y, self.warmup, self.tiles_x, self.tiles_y
         )
 
     def vanilla_stats_csv(self):
@@ -57,17 +60,17 @@ class Test(object):
     def dram_cycles(self):
         return self.dram_data['average_read_latency'].sum()
 
-def testbench(warmup):
+def testbench(warmup, tiles_x, tiles_y):
     # create tests.mk
     STRIDE_SIZES = [32]
     STRIDE_NS = [1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900]
     # randomly pick 10 (x,y) pairs from the 16x8 grid
-    XYS = itertools.product(range(16), range(8))
+    XYS = itertools.product(range(tiles_x), range(tiles_y))
     XYS = list(XYS)
     np.random.seed(0)
     np.random.shuffle(XYS)
     XYS = XYS[:10]
-    TESTS = [Test(size, n, x, y, warmup) for (size, n, (x, y)) in itertools.product(STRIDE_SIZES, STRIDE_NS, XYS)]
+    TESTS = [Test(size, n, x, y, warmup, tiles_x, tiles_y) for (size, n, (x, y)) in itertools.product(STRIDE_SIZES, STRIDE_NS, XYS)]
     with open("tests.mk", "w") as tests_mk:
         for test in TESTS:
             tests_mk.write(test.format_for_tests_mk() + '\n')
@@ -75,6 +78,8 @@ def testbench(warmup):
 
     # run the tests using `make && make profile -j` command
     # show stdout and stderr
+    subprocess.run(['make'], shell=True, check=True)
+    subprocess.run(['make -C {} machine -j'.format(TESTS[0].run_directory())], shell=True, check=True)
     subprocess.run(['make && make profile -j 31'], shell=True, check=True)
 
     print("Tests completed")
@@ -99,12 +104,17 @@ def testbench(warmup):
         for (n, c) in zip(stride_n[(x,y)], cycles[(x,y)]):
             print("x={}, y={}, n={}, c={}, c/n={}".format(x, y, n, c, c/n))
 
-    print("mean latency: {}".format(np.average([fit[0] for fit in FITS.values()])))
-    print("mean dram latency: {}".format(np.average(dram_cycles)))
+    print("Tiles: {}x{}".format(tiles_x, tiles_y))
+    print("mean total latency (core cycles): {}".format(np.average([fit[0] for fit in FITS.values()])))
+    print("mean dram latency (dram cycles): {}".format(np.average(dram_cycles)))
+    plt.title('{}x{} Cycles vs Stride-n'.format(tiles_x, tiles_y))
     plt.xlabel('stride-n')
     plt.ylabel('cycles')
     plt.legend()
-    plt.show()
+    plt.savefig('cycles_vs_stride-n_{}_{}x{}.png'.format(
+        "warm" if warmup == "yes" else "cold", tiles_x, tiles_y
+    ))
+    plt.cla()
 
 def debug():
     t = Test(32, 1000, 12, 0, "no")

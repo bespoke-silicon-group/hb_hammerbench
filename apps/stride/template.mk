@@ -1,6 +1,10 @@
 # This Makefile compiles, links, and executes examples Run `make help`
 # to see the available targets for the selected platform.
 
+# import parameters and APP_PATH
+include parameters.mk
+include app_path.mk
+
 ################################################################################
 # environment.mk verifies the build environment and sets the following
 # makefile variables:
@@ -13,13 +17,11 @@
 ###############################################################################
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
+override BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tiles-x)Y$(tiles-y)_hbm_one_pseudo_channel
 
 ###############################################################################
 # Host code compilation flags and flow
 ###############################################################################
-# import parameters and APP_PATH
-include parameters.mk
-include app_path.mk
 
 # Tile Group Dimensions
 TILE_GROUP_DIM_X ?= $(BSG_MACHINE_POD_TILES_X)
