@@ -1,1 +1,1 @@
-APP_PATH = $(HB_HAMMERBENCH_PATH)/apps/multipod/pagerank
+APP_PATH = $(HB_HAMMERBENCH_PATH)/apps/pagerank

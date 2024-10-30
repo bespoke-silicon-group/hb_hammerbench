@@ -1,1 +1,1 @@
-APP_PATH = $(HB_HAMMERBENCH_PATH)/apps/multipod/fft/128
+APP_PATH = $(HB_HAMMERBENCH_PATH)/apps/fft/128

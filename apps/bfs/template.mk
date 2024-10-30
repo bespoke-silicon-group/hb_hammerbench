@@ -64,7 +64,7 @@ include $(EXAMPLES_PATH)/link.mk
 # be built before executing.
 
 RISCV_CCPPFLAGS += -O3 -std=c++14
-RISCV_CCPPFLAGS += -I$(HB_HAMMERBENCH_PATH)/apps/multipod/common
+RISCV_CCPPFLAGS += -I$(HB_HAMMERBENCH_PATH)/apps/common
 RISCV_CCPPFLAGS += -DNUM_POD_X=$(NUM_POD_X)
 RISCV_CCPPFLAGS += -DBASE_POD_ID=$(pod-id)
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)

@@ -1,1 +1,1 @@
-APP_PATH = $(HB_HAMMERBENCH_PATH)/apps/multipod/smithwaterman
+APP_PATH = $(HB_HAMMERBENCH_PATH)/apps/smithwaterman
