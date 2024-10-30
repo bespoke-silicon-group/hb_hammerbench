@@ -3,8 +3,8 @@ Directory Structure
 
 
 - {aes, barnes_hut, bfs, blackscholes, fft, jacobi, pagerank, sgemm, smithwaterman, spgemm}
-    The latest implementation of parallel benchmarks used for the ISCA paper.
-    It supports both single, two-pod simulations.
+    The latest implementation of ten parallel benchmarks used for the ISCA paper.
+    It supports both single and two-pod simulations.
     Use only these for benchmarking purposes.
 
 
