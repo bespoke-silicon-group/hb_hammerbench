@@ -14,9 +14,9 @@ For initial setup do the following:
 2. From bsg_bladerunner, `cd bsg_replicant/examples; git clone git@github.com:bespoke-silicon-group/hb_hammerbench`
 
 
-### Runnning a benchmark
+### Running a benchmark
 - `apps/` directory contains all the benchmarks.
-- Go into one of the benchmarks (`apps/sgemm), and run `make generate`. This will generate some launch directories (e.g. N_512__NITER_2).
+- Go into one of the benchmarks (`apps/sgemm`), and run `make generate`. This will generate some launch directories (e.g. N_512__NITER_2).
 - From the launch directory, run `make profile.log`. This will launch the simulation and generate profiling data.
 
 
