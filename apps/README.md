@@ -1,5 +1,25 @@
+```
 Directory Structure
 
-- multipod : the latest implementation of parallel benchmarks used for the ISCA paper. It supports both single, two-pod simulations. Use only these for benchmarking purposes.
-- memcpy, vector_add : Microbenchmarks used for tutorials.
-- legacy : the old implementation of some benchmarks. These are not supported.
+
+- {aes, barnes_hut, bfs, blackscholes, fft, jacobi, pagerank, sgemm, smithwaterman, spgemm}
+    The latest implementation of parallel benchmarks used for the ISCA paper.
+    It supports both single, two-pod simulations.
+    Use only these for benchmarking purposes.
+
+
+- {memcpy, vector_add}
+    Microbenchmarks used for tutorials.
+
+
+- {common}
+    Some common library functions.
+
+
+- {graph_data}
+    graph files (.mtx) used by bfs, pagerank, and spgemm.
+
+
+- {legacy}
+    The old implementation of some benchmarks. These are not supported.
+```

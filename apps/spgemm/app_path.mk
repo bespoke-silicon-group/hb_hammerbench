@@ -1,1 +1,1 @@
-APP_PATH = $(HB_HAMMERBENCH_PATH)/apps/multipod/spgemm
+APP_PATH = $(HB_HAMMERBENCH_PATH)/apps/spgemm
