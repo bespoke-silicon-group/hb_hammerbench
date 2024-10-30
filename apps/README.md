@@ -21,5 +21,5 @@ Directory Structure
 
 
 - {legacy}
-    The old implementation of some benchmarks. These are not supported.
+    The old implementation of some benchmarks and some experiments. These are not supported.
 ```
