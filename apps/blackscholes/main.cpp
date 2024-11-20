@@ -65,7 +65,7 @@ int bs_multipod(int argc, char ** argv) {
 
   // Initialize devices;
   hb_mc_device_t device;
-  BSG_CUDA_CALL(hb_mc_device_init(&device, "bs_multipod", 0));
+  BSG_CUDA_CALL(hb_mc_device_init(&device, "bs_multipod", DEVICE_ID));
 
   eva_t d_options;
 

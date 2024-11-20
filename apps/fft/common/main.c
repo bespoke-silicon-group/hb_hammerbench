@@ -90,7 +90,7 @@ int fft_multipod (int argc, char **argv)
 
   // Initialize devices;
   hb_mc_device_t device;
-  BSG_CUDA_CALL(hb_mc_device_init(&device, "fft_multipod", 0));
+  BSG_CUDA_CALL(hb_mc_device_init(&device, "fft_multipod", DEVICE_ID));
   eva_t d_A;
   eva_t d_B;
   eva_t d_TW;

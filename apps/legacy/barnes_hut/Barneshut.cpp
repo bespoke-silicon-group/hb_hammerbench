@@ -980,7 +980,7 @@ int run(Bodies& bodies, BodyPtrs& pBodies, size_t nbodies) {
         int npods = npods_x * npods_y;
         int pod_id = pod_x + npods_x * py;
         bsg_pr_info("Running Barnes-Hut Phase %s on pod X:%d Y:%d\n", prog_phase.c_str(), pod_x, pod_y);
-        BSG_CUDA_CALL(hb_mc_device_init(&device, test_name.c_str(), 0));
+        BSG_CUDA_CALL(hb_mc_device_init(&device, test_name.c_str(), DEVICE_ID));
 
         // Initialize pods;
         hb_mc_pod_id_t pod;

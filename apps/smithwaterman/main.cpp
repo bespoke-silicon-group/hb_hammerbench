@@ -70,7 +70,7 @@ int sw_multipod(int argc, char ** argv) {
  
   // initialize device; 
   hb_mc_device_t device;
-  BSG_CUDA_CALL(hb_mc_device_init(&device, "sw_multipod", 0));
+  BSG_CUDA_CALL(hb_mc_device_init(&device, "sw_multipod", DEVICE_ID));
 
   eva_t d_query;
   eva_t d_ref;

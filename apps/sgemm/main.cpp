@@ -58,7 +58,7 @@ int sgemm_multipod(int argc, char **argv)
 
   // Initialize devices;
   hb_mc_device_t device;
-  BSG_CUDA_CALL(hb_mc_device_init(&device, "sgemm_multipod", 0));
+  BSG_CUDA_CALL(hb_mc_device_init(&device, "sgemm_multipod", DEVICE_ID));
   eva_t d_mat1;
   eva_t d_mat2;
   eva_t d_result;

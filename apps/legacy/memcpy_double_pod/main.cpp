@@ -39,7 +39,7 @@ int kernel_memcpy(int argc, char **argv) {
  
   // Initialize Device.
   hb_mc_device_t device;
-  BSG_CUDA_CALL(hb_mc_device_init(&device, test_name, 0));
+  BSG_CUDA_CALL(hb_mc_device_init(&device, test_name, DEVICE_ID));
 
   std::map<hb_mc_pod_id_t,int*> A_host_map;
   std::map<hb_mc_pod_id_t,int*> B_host_map;

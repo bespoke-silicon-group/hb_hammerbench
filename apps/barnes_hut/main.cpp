@@ -496,7 +496,7 @@ int barneshut_multipod(int argc, char ** argv) {
 
   // Initialize Device;
   hb_mc_device_t device;
-  BSG_CUDA_CALL(hb_mc_device_init(&device, "barneshut_multipod", 0));
+  BSG_CUDA_CALL(hb_mc_device_init(&device, "barneshut_multipod", DEVICE_ID));
 
 
   // Pod
