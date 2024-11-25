@@ -38,7 +38,7 @@ int kernel_matrix_mul (int argc, char **argv)
       // Define path to binary.
       // Initialize device, load binary and unfreeze tiles.
       hb_mc_device_t device;
-      BSG_CUDA_CALL(hb_mc_device_init(&device, test_name, DEVICE_ID));
+      BSG_CUDA_CALL(hb_mc_device_init(&device, test_name, HB_MC_DEVICE_ID));
 
 
       hb_mc_pod_id_t pod;

@@ -32,7 +32,7 @@ int kernel_gups_rmw(int argc, char **argv) {
  
   // Initialize Device.
   hb_mc_device_t device;
-  BSG_CUDA_CALL(hb_mc_device_init(&device, test_name, DEVICE_ID));
+  BSG_CUDA_CALL(hb_mc_device_init(&device, test_name, HB_MC_DEVICE_ID));
 
   // Allocate a block of memory in host.
   int * A_host = (int *) malloc(A_SIZE*sizeof(int));

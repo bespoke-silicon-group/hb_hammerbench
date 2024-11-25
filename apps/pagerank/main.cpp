@@ -151,7 +151,7 @@ int pagerank_multipod(int argc, char ** argv)
 
   // Initialize device;
   hb_mc_device_t device;
-  BSG_CUDA_CALL(hb_mc_device_init(&device, "pagerank_multipod", DEVICE_ID));
+  BSG_CUDA_CALL(hb_mc_device_init(&device, "pagerank_multipod", HB_MC_DEVICE_ID));
 
   // Pod;
   hb_mc_pod_id_t pod;
