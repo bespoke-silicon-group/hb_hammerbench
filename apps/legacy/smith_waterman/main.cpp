@@ -141,7 +141,7 @@ int kernel_smith_waterman (int argc, char **argv) {
         /* Initialize device, load binary and unfreeze tiles. */
         hb_mc_dimension_t tg_dim = { .x = TILE_GROUP_DIM_X, .y = TILE_GROUP_DIM_Y};
         hb_mc_device_t device;
-        BSG_CUDA_CALL(hb_mc_device_init_custom_dimensions(&device, test_name, HB_MC_DEVICE_ID, tg_dim));
+        BSG_CUDA_CALL(hb_mc_device_init_custom_dimensions(&device, test_name, 0, tg_dim));
 
         /* if DMA is not supported just return SUCCESS */
         if (!hb_mc_manycore_supports_dma_write(device.mc)
