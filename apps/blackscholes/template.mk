@@ -51,7 +51,7 @@ RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 
 RISCV_TARGET_OBJECTS = kernel.rvo
 BSG_MANYCORE_KERNELS = main.riscv
-RISCV_LINK_SCRIPT=bs_link.ld
+LINK_GEN_MOVE_RODATA_TO_DMEM=1
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 
 

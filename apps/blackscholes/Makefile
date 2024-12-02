@@ -21,8 +21,6 @@ $(addsuffix /parameters.mk,$(TESTS_DIRS)): %/parameters.mk:
 	@touch $@
 	@echo test-name  = $* >> $@
 	@echo num-option = $(call get-num-option,$*) >> $@
-	@cp bs_link.ld $(dir $@)
-
 
 include $(HB_HAMMERBENCH_PATH)/mk/testbench_common.mk
 
