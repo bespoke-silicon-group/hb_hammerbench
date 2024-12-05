@@ -36,12 +36,12 @@ kernel(FP32Complex *in,
        int num_iter,
        int pod_id) 
 {
-    bsg_barrier_hw_tile_group_init();
+    bsg_barrier_tile_group_init();
     #ifdef WARM_CACHE
     warmup(in, out, tw, N);
     #endif
     bsg_fence();
-    bsg_barrier_hw_tile_group_sync();
+    bsg_barrier_tile_group_sync();
 
 
     // load twiddle factor to local.
@@ -64,7 +64,7 @@ kernel(FP32Complex *in,
         store_strided(input_vec, fft_workset);
       }
       bsg_fence();
-      bsg_barrier_hw_tile_group_sync();
+      bsg_barrier_tile_group_sync();
 
       // step 2
       FP32Complex *output_sq = &out[i*N];
@@ -76,14 +76,14 @@ kernel(FP32Complex *in,
         store_strided(output_vec, fft_workset);
       }
       bsg_fence();
-      bsg_barrier_hw_tile_group_sync();
+      bsg_barrier_tile_group_sync();
     }
 
 
     // Kernel end
     bsg_cuda_print_stat_kernel_end();
     bsg_fence();
-    bsg_barrier_hw_tile_group_sync();
+    bsg_barrier_tile_group_sync();
 
     return 0;
 }
