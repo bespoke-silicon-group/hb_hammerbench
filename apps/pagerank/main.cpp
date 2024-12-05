@@ -197,7 +197,7 @@ int pagerank_multipod(int argc, char ** argv)
     htod_job.push_back({d_out_degree_inv, out_degree_inv, (V)*sizeof(float)});
     htod_job.push_back({d_contrib, contrib, (V)*sizeof(int)});
     htod_job.push_back({d_start_id, &V_start, sizeof(int)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_job.data(), htod_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_job.data(), htod_job.size()));
 
     // CUDA args;
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
@@ -252,7 +252,7 @@ int pagerank_multipod(int argc, char ** argv)
     std::vector<hb_mc_dma_dtoh_t> dtoh_job;
     dtoh_job.push_back({d_contrib_new, actual_contrib_new, V*sizeof(float)});
     dtoh_job.push_back({d_new_rank, actual_new_rank, V*sizeof(float)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, dtoh_job.data(), dtoh_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_job.data(), dtoh_job.size()));
 
     // validate
     float sse0 = 0.0f;

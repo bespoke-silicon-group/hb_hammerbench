@@ -20,11 +20,11 @@ extern "C" __attribute__ ((noinline))
 int
 kernel_memcpy(int * A, int * B, int N) {
 
-  bsg_barrier_hw_tile_group_init();
+  bsg_barrier_tile_group_init();
 #ifdef WARM_CACHE
   warmup(A, B, N);
 #endif
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
   bsg_cuda_print_stat_kernel_start();
 
   for (int i = __bsg_id*16; i < N; i += bsg_tiles_X*bsg_tiles_Y*16) {
@@ -68,7 +68,7 @@ kernel_memcpy(int * A, int * B, int N) {
   bsg_fence();
   bsg_cuda_print_stat_kernel_end();
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
 
   return 0;
 }

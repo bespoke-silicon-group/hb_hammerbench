@@ -80,8 +80,8 @@ inline void align(uint8_t* seqa, uint8_t* seqb, int* output) {
 // Kernel main;
 extern "C" int kernel(uint8_t* query, uint8_t* ref, int* output, int pod_id)
 {
-  bsg_barrier_hw_tile_group_init();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_init();
+  bsg_barrier_tile_group_sync();
 
   // prefetch;
   int* query_word = (int*) query;
@@ -123,6 +123,6 @@ extern "C" int kernel(uint8_t* query, uint8_t* ref, int* output, int pod_id)
   bsg_fence();
   bsg_cuda_print_stat_kernel_end();
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
   return 0;
 }

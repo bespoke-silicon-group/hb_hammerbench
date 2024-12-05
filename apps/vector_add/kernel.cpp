@@ -21,11 +21,11 @@ extern "C" __attribute__ ((noinline))
 int
 kernel_vector_add(float * A, float * B, float *C, int N) {
 
-  bsg_barrier_hw_tile_group_init();
+  bsg_barrier_tile_group_init();
 #ifdef WARM_CACHE
   warmup(A, B, C, N);
 #endif
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
   bsg_cuda_print_stat_kernel_start();
 
   // Each tile does a portion of vector_add
@@ -41,7 +41,7 @@ kernel_vector_add(float * A, float * B, float *C, int N) {
   bsg_fence();
   bsg_cuda_print_stat_kernel_end();
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
 
   return 0;
 }

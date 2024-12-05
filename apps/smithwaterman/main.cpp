@@ -93,7 +93,7 @@ int sw_multipod(int argc, char ** argv) {
     std::vector<hb_mc_dma_htod_t> htod_job;
     htod_job.push_back({d_query, query, num_seq*seq_len*sizeof(uint8_t)});
     htod_job.push_back({d_ref, ref, num_seq*seq_len*sizeof(uint8_t)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_job.data(), htod_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_job.data(), htod_job.size()));
 
     // Cuda args;
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
@@ -129,7 +129,7 @@ int sw_multipod(int argc, char ** argv) {
     // DMA transfer; device -> host;
     std::vector<hb_mc_dma_dtoh_t> dtoh_job;
     dtoh_job.push_back({d_output, actual_output, num_seq*sizeof(int)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, dtoh_job.data(), dtoh_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_job.data(), dtoh_job.size()));
 
     // validate;
     for (int i = 0; i < num_seq; i++) {

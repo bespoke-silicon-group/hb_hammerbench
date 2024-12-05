@@ -145,7 +145,6 @@ void compute (
     copySelf(dram_self, a_self, ii, nz);
     prefetch_dram(a_left, a_right, a_up, a_down, ii);
     bsg_fence();
-    //bsg_barrier_hw_tile_group_sync();
     bsg_barrier_multipod(pod_id, NUM_POD_X, done, alert);
 
     // compute 4 at a time
@@ -245,7 +244,6 @@ void compute (
       dram_next[ii+i+3] = next3; 
     }
     bsg_fence();
-    //bsg_barrier_hw_tile_group_sync();
     bsg_barrier_multipod(pod_id, NUM_POD_X, done, alert);
   }
 }

@@ -544,7 +544,7 @@ int barneshut_multipod(int argc, char ** argv) {
     htod_job.push_back({d_hbnodes, hbnodes, nodes.size()*sizeof(HBNode)});
     htod_job.push_back({d_hbbodies, hbbodies, bodies.size()*sizeof(HBBody)});
     htod_job.push_back({d_curr_body, &body_start, sizeof(int)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_job.data(), htod_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_job.data(), htod_job.size()));
 
 
     // CUDA args
@@ -583,7 +583,7 @@ int barneshut_multipod(int argc, char ** argv) {
     HBBody* next_hbbodies = (HBBody *) malloc(bodies.size()*sizeof(HBBody));
     std::vector<hb_mc_dma_dtoh_t> dtoh_job;
     dtoh_job.push_back({d_hbbodies, next_hbbodies, bodies.size()*sizeof(HBBody)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, dtoh_job.data(), dtoh_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_job.data(), dtoh_job.size()));
 
     // Validate; 
     int curr_pod_id = pod_id + pod;

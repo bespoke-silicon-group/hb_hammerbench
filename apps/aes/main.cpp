@@ -88,7 +88,7 @@ int aes_multipod(int argc, char **argv)
     std::vector<hb_mc_dma_htod_t> htod_job;
     htod_job.push_back({d_ctx, &ctx[0], sizeof(ctx)});
     htod_job.push_back({d_buf, &buf[0], sizeof(buf)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_job.data(), htod_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_job.data(), htod_job.size()));
 
 
     // Cuda args;
@@ -124,7 +124,7 @@ int aes_multipod(int argc, char **argv)
     // DMA transfer: device -> host;
     std::vector<hb_mc_dma_dtoh_t> dtoh_job;
     dtoh_job.push_back({d_buf, actual_buf, NUM_TILES*NUM_ITER*MSG_LEN*sizeof(uint8_t)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, dtoh_job.data(), dtoh_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_job.data(), dtoh_job.size()));
 
 
     // Validate;

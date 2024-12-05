@@ -118,7 +118,7 @@ int fft_multipod (int argc, char **argv)
           .size   = N * sizeof(float complex)
         }
       };
-      BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_A_job, 1));
+      BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_A_job, 1));
     }
 
     hb_mc_dma_htod_t htod_TW_job [] = {
@@ -128,7 +128,7 @@ int fft_multipod (int argc, char **argv)
         .size   = N * sizeof(float complex)
       }
     };
-    BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_TW_job, 1));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_TW_job, 1));
 
           
     // Cuda arguments;
@@ -171,7 +171,7 @@ int fft_multipod (int argc, char **argv)
           .size   = N * sizeof(float complex)
         }
       };
-      BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, dtoh_B_job, 1));
+      BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_B_job, 1));
 
       if (verify_fft(B_host, NUM_POINTS*NUM_POINTS)) {
         fail = 1;
