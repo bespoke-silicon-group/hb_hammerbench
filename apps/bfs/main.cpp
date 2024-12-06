@@ -165,7 +165,7 @@ int bfs_multipod(int argc, char ** argv)
     htod_job.push_back({d_curr_frontier, curr_frontier.data(), curr_frontier.size()*sizeof(int)});
     htod_job.push_back({d_next_dense_frontier, next_dense_frontier, num_dense_words*sizeof(int)});
     htod_job.push_back({d_curr_distance, curr_distance.data(), curr_distance.size()*sizeof(int)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_job.data(), htod_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_job.data(), htod_job.size()));
 
     // CUDA args
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
@@ -211,7 +211,7 @@ int bfs_multipod(int argc, char ** argv)
     // DMA
     std::vector<hb_mc_dma_dtoh_t> dtoh_job;
     dtoh_job.push_back({d_next_dense_frontier, next_dense_frontier, num_dense_words*sizeof(int)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, dtoh_job.data(), dtoh_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_job.data(), dtoh_job.size()));
 
     // collect frontier
     for (int i = 0; i < num_dense_words; i++) {

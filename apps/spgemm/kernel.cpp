@@ -158,8 +158,8 @@ extern "C" int kernel(
   int pod_id
 )
 {
-  bsg_barrier_hw_tile_group_init();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_init();
+  bsg_barrier_tile_group_sync();
   // Initialize amo variables + sum tree;
   if (__bsg_id == 0) {
     g_free_node_q = 0;
@@ -170,7 +170,7 @@ extern "C" int kernel(
     }
   }
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
 
   // Initialize dram free nodes;
   list_init(&free_dram_nodes);
@@ -329,7 +329,7 @@ extern "C" int kernel(
     //bsg_print_int(10000+curr_row);
   }
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
   if(__bsg_id == 0) {
     //bsg_print_int(20000);
   }
@@ -359,7 +359,7 @@ extern "C" int kernel(
     }
   }
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
 
   // collect from sum  tree;
   int offset = 0;
@@ -381,7 +381,7 @@ extern "C" int kernel(
   }
 
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
 
   if(__bsg_id == 0) {
     //bsg_print_int(30000);
@@ -402,9 +402,9 @@ extern "C" int kernel(
   bsg_fence();
 
   // KERNEL END;
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
   bsg_cuda_print_stat_kernel_end();
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
   return 0;
 }

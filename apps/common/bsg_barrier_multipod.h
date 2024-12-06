@@ -13,7 +13,7 @@ static inline void bsg_barrier_multipod(int pod_id, int num_pod_x, volatile int*
   }
   *alert=0;
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
 
   // center tile;
   if ((__bsg_x == bsg_tiles_X/2) && (__bsg_y == bsg_tiles_Y/2)) {
@@ -61,7 +61,7 @@ static inline void bsg_barrier_multipod(int pod_id, int num_pod_x, volatile int*
   }
 
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
 }
 
 #endif

@@ -36,12 +36,12 @@ kernel(FP32Complex *in,
        int num_iter,
        int pod_id) 
 {
-    bsg_barrier_hw_tile_group_init();
+    bsg_barrier_tile_group_init();
     #ifdef WARM_CACHE
     warmup(in, out, tw, N);
     #endif
     bsg_fence();
-    bsg_barrier_hw_tile_group_sync();
+    bsg_barrier_tile_group_sync();
 
     // remapping tile id;
     int my_id = (__bsg_id % NUM_POINTS);
@@ -68,7 +68,7 @@ kernel(FP32Complex *in,
       twiddle_scaling(fft_workset, local_tw);
       store_strided(input_vec, fft_workset);
       bsg_fence();
-      bsg_barrier_hw_tile_group_sync();
+      bsg_barrier_tile_group_sync();
 
       // step 2
       input_vec = input_sq + (my_id * NUM_POINTS);
@@ -78,14 +78,14 @@ kernel(FP32Complex *in,
       fft128_specialized(fft_workset);
       store_strided(output_vec, fft_workset);
       bsg_fence();
-      bsg_barrier_hw_tile_group_sync();
+      bsg_barrier_tile_group_sync();
     }
 
 
     // Kernel end
     bsg_cuda_print_stat_kernel_end();
     bsg_fence();
-    bsg_barrier_hw_tile_group_sync();
+    bsg_barrier_tile_group_sync();
 
     return 0;
 }

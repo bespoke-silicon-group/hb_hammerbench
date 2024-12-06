@@ -279,8 +279,8 @@ static inline void compute_block() {
 extern "C"
 int kernel(float *mat1, float *mat2, float *result, int pod_id)
 {
-  bsg_barrier_hw_tile_group_init();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_init();
+  bsg_barrier_tile_group_sync();
 
 
   // start kernel
@@ -325,9 +325,9 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
 
   // end kernel
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
   bsg_cuda_print_stat_kernel_end();
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
   return 0;
 }

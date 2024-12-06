@@ -221,7 +221,7 @@ int spgemm_multipod(int argc, char ** argv)
       device_C_col_count[i] = 0;
     }
     htod_job.push_back({d_C_col_count[pod], device_C_col_count, (num_row+1)*sizeof(int)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_job.data(), htod_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_job.data(), htod_job.size()));
 
 
 
@@ -289,7 +289,7 @@ int spgemm_multipod(int argc, char ** argv)
     dtoh_job.push_back({d_C_row_offset[pod], actual_C_row_offset, sub_C_row_offset.size()*sizeof(int)});
     dtoh_job.push_back({d_C_col_idx[pod], actual_C_col_idx, sub_C_col_idx.size()*sizeof(int)});
     dtoh_job.push_back({d_C_nnz[pod], actual_C_nnz, sub_C_nnz.size()*sizeof(float)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, dtoh_job.data(), dtoh_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_job.data(), dtoh_job.size()));
 
     // Validate;
     // row_offset;

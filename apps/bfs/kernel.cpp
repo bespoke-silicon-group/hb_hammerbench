@@ -47,8 +47,7 @@ extern "C" int kernel(
 )
 {
   // Initialize;
-  bsg_barrier_hw_tile_group_init();
-  //bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_init();
   bsg_barrier_multipod(pod_id-BASE_POD_ID, NUM_POD_X, done, &alert);
 
   // local variables;
@@ -68,7 +67,7 @@ extern "C" int kernel(
       //bsg_print_int(v_end);
       bsg_fence();
     }
-    bsg_barrier_hw_tile_group_sync();
+    bsg_barrier_tile_group_sync();
     bsg_cuda_print_stat_kernel_start();
 
     for (int v_start = bsg_amoadd(&g_q, BLOCK_SIZE); v_start < v_end; v_start = bsg_amoadd(&g_q,BLOCK_SIZE)) {
@@ -150,7 +149,7 @@ extern "C" int kernel(
     }
     bsg_fence();
     #endif
-    bsg_barrier_hw_tile_group_sync();
+    bsg_barrier_tile_group_sync();
     bsg_cuda_print_stat_kernel_start();
     
     #ifdef FWD_QUEUE_STATIC
@@ -179,7 +178,7 @@ extern "C" int kernel(
     }
 
     bsg_fence();
-    bsg_barrier_hw_tile_group_sync();
+    bsg_barrier_tile_group_sync();
 
     // Edge parallel
     if (do_edge_parallel) {
@@ -202,7 +201,7 @@ extern "C" int kernel(
   bsg_fence();
   bsg_cuda_print_stat_kernel_end();
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
 
   return 0;
 }

@@ -93,7 +93,7 @@ int kernel_vector_add(int argc, char **argv) {
       }
     };
 
-    BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_job, 2));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_job, 2));
 
 
     // CUDA arguments
@@ -120,7 +120,7 @@ int kernel_vector_add(int argc, char **argv) {
       }
     };
 
-    BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, &dtoh_job, 1));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, &dtoh_job, 1));
 
     // Validate
     for (int i = 0; i < SIZE; i++) {

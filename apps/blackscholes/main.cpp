@@ -83,7 +83,7 @@ int bs_multipod(int argc, char ** argv) {
     printf("Transferring data: pod %d\n", pod);
     std::vector<hb_mc_dma_htod_t> htod_job;
     htod_job.push_back({d_options, options, num_option*sizeof(OptionData)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_device(&device, htod_job.data(), htod_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_job.data(), htod_job.size()));
 
     // Cuda args;
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
@@ -124,7 +124,7 @@ int bs_multipod(int argc, char ** argv) {
     // DMA transfer: device -> host;
     std::vector<hb_mc_dma_dtoh_t> dtoh_job;
     dtoh_job.push_back({d_options, actual_options, num_option*sizeof(OptionData)});
-    BSG_CUDA_CALL(hb_mc_device_dma_to_host(&device, dtoh_job.data(), dtoh_job.size()));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_job.data(), dtoh_job.size()));
 
     // Validate;
     float err = 0.0f;

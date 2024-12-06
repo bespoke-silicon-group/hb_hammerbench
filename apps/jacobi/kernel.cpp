@@ -25,7 +25,7 @@ static int warmup(float *A0, float *Anext, int nx, int ny, int nz)
   }
 
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
   return 0;
 }
 #endif
@@ -60,8 +60,8 @@ int kernel(
   const bool y_h_bound = (__bsg_y == (bsg_tiles_Y-1));
 
   // Init hw barrier.
-  bsg_barrier_hw_tile_group_init();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_init();
+  bsg_barrier_tile_group_sync();
 #ifdef WARM_CACHE
   warmup(A0, Anext, nx, ny, nz);
 #endif
@@ -137,7 +137,7 @@ int kernel(
   bsg_fence();
   bsg_cuda_print_stat_kernel_end(); // stat kernel end
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
 
 	return 0;
 }

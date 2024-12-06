@@ -37,8 +37,8 @@ extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
                       int pod_id
 )
 {
-  bsg_barrier_hw_tile_group_init();
-  bsg_barrier_hw_tile_group_sync();   
+  bsg_barrier_tile_group_init();
+  bsg_barrier_tile_group_sync();   
   l_body_start = *body_start;
   bsg_fence(); 
   bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
@@ -211,9 +211,9 @@ extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
   }
   bsg_fence();
   */
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
   bsg_cuda_print_stat_kernel_end();
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
   return 0;
 }

@@ -33,8 +33,8 @@ void warmup(struct AES_ctx *ctx, uint8_t* buf, size_t length, int niters) {
 extern "C"
 int kernel(struct AES_ctx *ctx, uint8_t* buf, size_t length, int niters, int pod_id)
 {
-  bsg_barrier_hw_tile_group_init();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_init();
+  bsg_barrier_tile_group_sync();
   warmup(ctx, buf, length, niters);
   bsg_fence();
 
@@ -55,6 +55,6 @@ int kernel(struct AES_ctx *ctx, uint8_t* buf, size_t length, int niters, int pod
   bsg_fence();
   bsg_cuda_print_stat_kernel_end();
   bsg_fence();
-  bsg_barrier_hw_tile_group_sync();
+  bsg_barrier_tile_group_sync();
   return 0;
 }
