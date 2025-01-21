@@ -14,8 +14,8 @@ include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 NUM_POD_X=$(BSG_MACHINE_PODS_X)
 NUM_POD_Y=$(BSG_MACHINE_PODS_X)
 # Tile group DIM
-TILE_GROUP_DIM_X ?= 1
-TILE_GROUP_DIM_Y ?= 1
+TILE_GROUP_DIM_X ?= 16
+TILE_GROUP_DIM_Y ?= 8
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
@@ -56,7 +56,7 @@ RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_CCPPFLAGS += -DITERATIONS=$(NITER)
 
-RISCV_TARGET_OBJECTS = kernel.rvo core_list_joinq.rvo core_matrix.rvo core_state.rvo core_util.rvo core_portme.rvo
+RISCV_TARGET_OBJECTS = kernel.rvo core_list_join.rvo core_matrix.rvo core_state.rvo core_util.rvo core_portme.rvo
 BSG_MANYCORE_KERNELS = main.riscv
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
