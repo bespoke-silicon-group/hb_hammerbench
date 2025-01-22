@@ -61,7 +61,7 @@ int kernel(uint16_t *crc, int niter)
   // start kernel;
   //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
   bsg_barrier_tile_group_sync();
-  bsg_cuda_print_stat_kernel_start();
+  //bsg_cuda_print_stat_kernel_start();
 
   // Run Coremark;
   iterate(&results);
@@ -70,7 +70,7 @@ int kernel(uint16_t *crc, int niter)
   bsg_fence();
   //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
   bsg_barrier_tile_group_sync();
-  bsg_cuda_print_stat_kernel_end();
+  //bsg_cuda_print_stat_kernel_end();
   bsg_fence();
   //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
   bsg_barrier_tile_group_sync();

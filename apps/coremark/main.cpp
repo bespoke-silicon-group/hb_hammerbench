@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <random>
 #include <limits>
+#include <chrono>
 #include <bsg_manycore_cuda.h>
 #include <bsg_manycore_regression.h>
 #include <bsg_manycore_eva.h>
@@ -22,7 +23,7 @@ int coremark_multipod(int argc, char **argv)
   const char *bin_path = argv[1];
 
   // parameters;
-  printf("NITER=%d\n", NITER);
+  bsg_pr_test_info("NITER=%d\n", NITER);
 
 
   // Pod;
@@ -34,7 +35,7 @@ int coremark_multipod(int argc, char **argv)
   hb_mc_pod_id_t pod;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
-    printf("Loading program for pod %d\n", pod);
+    bsg_pr_test_info("Loading program for pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
@@ -48,13 +49,17 @@ int coremark_multipod(int argc, char **argv)
     uint32_t cuda_argv[CUDA_ARGC] = {d_crc, NITER};
 
     // Enqueue kernel
-    printf("Enqueue Kernel: pod %d\n", pod);
+    bsg_pr_test_info("Enqueue Kernel: pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel", CUDA_ARGC, cuda_argv));
   }
 
   // Launch pods;
-  printf("Launching all pods\n");
+  bsg_pr_test_info("Launching all pods\n");
+  auto start = std::chrono::high_resolution_clock::now();
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  bsg_pr_test_info("Execution time: %f\n seconds", elapsed.count());
 
   
   // Validate;
@@ -62,7 +67,7 @@ int coremark_multipod(int argc, char **argv)
   uint16_t host_crc[bsg_tiles_X*bsg_tiles_Y*3];
 
   hb_mc_device_foreach_pod_id(&device, pod) {
-    printf("Reading results: pods %d\n", pod);
+    bsg_pr_test_info("Reading results: pods %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     
     // DMA transfer: device -> host;
