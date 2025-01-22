@@ -59,7 +59,7 @@ int coremark_multipod(int argc, char **argv)
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
-  bsg_pr_test_info("Execution time: %f\n seconds", elapsed.count());
+  bsg_pr_test_info("Execution time: %f seconds\n", elapsed.count());
 
   
   // Validate;
