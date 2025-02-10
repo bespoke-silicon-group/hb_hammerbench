@@ -11,4 +11,4 @@ POD_RANGE = $(shell seq -s " " 0 8 63)
 # known-slowest pods;
 TESTS += $(call test-name,16384,0)
 TESTS += $(call test-name,32768,0)
-TESTS += $(call test-name,65536,56)
+TESTS += $(call test-name,65536,0)

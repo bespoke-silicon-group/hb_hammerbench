@@ -6,7 +6,7 @@ include ../config.$(graph).mk
 
 # Hardware;
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
-NUMPODS?=64
+#NUMPODS?=64
 tile-x?=16
 tile-y?=8
 override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
@@ -58,6 +58,7 @@ RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_CCPPFLAGS += -DNUMPODS=$(NUMPODS)
 RISCV_CCPPFLAGS += -DEDGE=$(EDGE)
+RISCV_CCPPFLAGS += -DBATCH=$(BATCH)
 
 RISCV_TARGET_OBJECTS = kernel.rvo
 BSG_MANYCORE_KERNELS = main.riscv
