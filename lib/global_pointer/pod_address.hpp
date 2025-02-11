@@ -1,7 +1,7 @@
 #ifndef GLOBAL_POINTER_POD_ADDRESS_HPP
 #define GLOBAL_POINTER_POD_ADDRESS_HPP
 #include <bitmanip/bitmanip.hpp>
-
+#include <stdint.h>
 namespace bsg_global_pointer
 {
 /**
@@ -38,12 +38,26 @@ public:
     static constexpr unsigned pod_y_width = BSG_COORD_Y_WIDTH - tile_y_width;
     static constexpr unsigned bits = pod_x_width + pod_y_width;
 
+    static pod_address readPodAddrCSR() {
+        pod_address addr(0);
+        asm volatile ("csrr %0, 0x360" : "=r"(addr) :: "memory");
+        return addr;
+    }
+
+    static void writePodAddrCSR(pod_address addr) {
+        asm volatile ("csrw 0x360, %0" :: "r"(addr) : "memory");
+        return;
+    }
+
     pod_address(unsigned raw)
         : raw_(raw) {
     }
+
     pod_address()
         : raw_(0) {
+        *this = readPodAddrCSR();
     }
+
     unsigned pod_x() const {
         return phys_pod_x()-1;
     }
@@ -72,10 +86,10 @@ public:
     }
     
     union {
-        unsigned raw_; //!< raw pod address
+        unsigned short raw_; //!< raw pod address
         struct {
-            unsigned px_ : pod_x_width; //!< physical pod x
-            unsigned py_ : pod_y_width; //!< physical pod y
+            unsigned short px_ : pod_x_width; //!< physical pod x
+            unsigned short py_ : pod_y_width; //!< physical pod y
         };
     };
 };
@@ -108,16 +122,14 @@ public:
      * @brief gets the pod address in the CSR
      */
     pod_address get_pod_addr() {
-        pod_address addr(0);
-        asm volatile ("csrr %0, 0x360" : "=r"(addr) :: "memory");
-        return addr;
+        return pod_address::readPodAddrCSR();
     }
 
     /**
      * @brief sets the pod address in the CSR
      */
     void set_pod_addr(pod_address addr) {
-        asm volatile ("csrw 0x360, %0" :: "r"(addr) : "memory");
+        return pod_address::writePodAddrCSR(addr);
     }
 
     pod_address save_;

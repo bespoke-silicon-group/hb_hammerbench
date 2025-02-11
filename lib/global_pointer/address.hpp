@@ -18,6 +18,7 @@ class dram_address
  * @brief address
  */
 class address
+{
 };
 
 }
