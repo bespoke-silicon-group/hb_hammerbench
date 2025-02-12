@@ -29,6 +29,21 @@ public:
      */
     address() : ext_(), raw_(0) {}
 
+    /**
+     * @brief set the pod x of the address
+     */
+    address& set_pod_x(unsigned x) {
+        ext().set_pod_x(x);
+        return *this;
+    }
+
+    /**
+     * @brief set the pod y of the address
+     */
+    address& set_pod_y(unsigned y) {
+        ext().set_pod_y(y);
+        return *this;
+    }
 
     /**
      * @brief updates the value pointed to by the reference

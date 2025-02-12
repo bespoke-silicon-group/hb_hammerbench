@@ -103,6 +103,23 @@ public:
         return addr_.read<T>();
     }
 
+    /**
+     * @brief set the pod x of the reference
+     */
+    reference& set_pod_x(unsigned x) {
+        addr().set_pod_x(x);
+        return *this;
+    }
+
+    /**
+     * @brief set the pod y of the reference
+     */
+    reference& set_pod_y(unsigned y) {
+        addr().set_pod_y(y);
+        return *this;
+    }
+
+
     FIELD(address, addr); //!< the address information
 };
 }

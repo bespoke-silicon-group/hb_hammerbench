@@ -103,6 +103,22 @@ public:
         return reference<T>(ref_.addr() + (i * sizeof(T)));
     }
 
+    /**
+     * @brief set the pod x of the pointer
+     */
+    pointer<T>& set_pod_x(unsigned x) {
+        ref().set_pod_x(x);
+        return *this;
+    }
+
+    /**
+     * @brief set the pod y of the pointer
+     */
+    pointer<T>& set_pod_y(unsigned y) {
+        ref().set_pod_y(y);
+        return *this;
+    }
+
     FIELD(reference<T>, ref); //!< reference object
 };
 

@@ -94,10 +94,9 @@ extern "C" int multipod_pointer_t1()
         bsg_barrier_tile_group_init();
         bsg_barrier_tile_group_sync();
         {
-                address_ext ext;
-                ext.pod_addr().set_pod_x(0).set_pod_y(0);
+                address a_of_special(&g_special);
+                a_of_special.set_pod_x(0).set_pod_y(0);
 
-                address a_of_special(ext, &g_special);
                 unsigned old;
                 TEST_EQ_SAVE(UHEX, old, a_of_special.read<unsigned>(), OLDV);
                 TEST_EQ(UHEX, g_special, 0xdeadbeef);
@@ -122,11 +121,9 @@ extern "C" int multipod_pointer_t2()
         bsg_barrier_tile_group_init();
         bsg_barrier_tile_group_sync();
         {
-                address_ext ext;
-                ext.pod_addr().set_pod_x(0).set_pod_y(0);
+                reference<unsigned> r_of_special(&g_special);
+                r_of_special.set_pod_x(0).set_pod_y(0);
 
-                address a_of_special(ext, &g_special);                
-                reference<unsigned> r_of_special(a_of_special);
                 unsigned old;
                 TEST_EQ_SAVE(UHEX, old, r_of_special.read(), OLDV);
                 TEST_EQ(UHEX, g_special, BADV);
@@ -150,10 +147,8 @@ extern "C" int multipod_pointer_t3()
         bsg_barrier_tile_group_init();
         bsg_barrier_tile_group_sync();
         {
-                address_ext ext;
-                ext.pod_addr().set_pod_x(0).set_pod_y(0);
-                address a_of_special(ext, &g_special);
-                pointer<unsigned> p_of_special(a_of_special);
+                pointer<unsigned> p_of_special(&g_special);
+                p_of_special.set_pod_x(0).set_pod_y(0);
 
                 unsigned old;
                 TEST_EQ_SAVE(UHEX, old, *p_of_special, OLDV);
