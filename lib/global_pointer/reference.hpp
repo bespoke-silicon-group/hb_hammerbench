@@ -1,8 +1,8 @@
 #ifndef GLOBAL_POINTER_REFERENCE_HPP
 #define GLOBAL_POINTER_REFERENCE_HPP
-#include <global_pointer/address_ext.hpp>
 #include <stdint.h>
 #include <utility>
+#include <global_pointer/address.hpp>
 namespace bsg_global_pointer
 {
 /**
@@ -21,27 +21,27 @@ public:
     /**
      * @brief base constructor
      */
-    reference(address_ext ext, T* raw) : ext_(ext), raw_(raw) {}
+    reference(address addr): addr_(addr) {}
 
     /**
-     * @brief constructor using default extended address
+     * @brief default constructor
      */
-    reference(T* raw) : ext_(), raw_(raw) {}
-
-    /**
-     * @brief constructor using default extended address and null pointer
-     */
-    reference() : ext_(), raw_(nullptr) {}
+    reference() : addr_() {}
 
     /**
      * @brief copy constructor for argument passing
      */
-    reference(const reference& other) : ext_(other.ext_), raw_(other.raw_) {}
+    reference(const reference& other) : addr_(other.addr_) {}
 
     /**
      * @brief move constructor for return values
      */
-    reference(reference&& other) : ext_(other.ext_), raw_(other.raw_) {}
+    reference(reference&& other) : addr_(std::move(other.addr_)) {}
+
+    /**
+     * @brief destructor
+     */
+    ~reference() {}
 
     /**
      * @brief copy assignment operator
@@ -70,6 +70,7 @@ public:
         // problem, what if stack is in dram???
         // maybe we make this only valid for scalar types...
         write(other);
+        return *this;
     }
 
     /**
@@ -87,28 +88,17 @@ public:
     void write(const T& other) {
         // problem, what if stack is in dram???
         // maybe we make this only valid for scalar types...
-        register T wv = other;
-        {
-            pod_address_guard grd(ext_.pod_addr());
-            *raw_ = wv;
-        }
+        addr_.write(other);
     }
 
     /**
      * @brief reads the value pointed to by the reference
      */
     T read() const {
-        register T rv;
-        {
-            pod_address_guard grd(ext_.pod_addr());
-            rv = *raw_;
-        }
-        return rv;
+        return addr_.read<T>();
     }
 
-    FIELD(address_ext ,ext); //!< extended address information
-    FIELD(T*          ,raw); //!< the raw pointer
-
+    FIELD(address, addr); //!< the address information
 };
 }
 #endif

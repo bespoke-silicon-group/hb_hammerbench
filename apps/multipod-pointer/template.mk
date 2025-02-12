@@ -25,8 +25,10 @@ include parameters.mk
 include app_path.mk
 
 # Tile Group Dimensions
-TILE_GROUP_DIM_X ?= $(BSG_MACHINE_POD_TILES_X)
-TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_POD_TILES_Y)
+#TILE_GROUP_DIM_X ?= $(BSG_MACHINE_POD_TILES_X)
+#TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_POD_TILES_Y)
+TILE_GROUP_DIM_X ?= 1
+TILE_GROUP_DIM_Y ?= 1
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
@@ -35,7 +37,7 @@ vpath %.cpp $(APP_PATH)
 TEST_SOURCES = main.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
-CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
