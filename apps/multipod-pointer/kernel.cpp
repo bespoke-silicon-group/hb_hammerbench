@@ -31,7 +31,7 @@ void bsg_print_str(const char *str)
                 if (e != expect) {                                      \
                         bsg_print_str(__FILE__ ":" STRINGIFY(__LINE__) ": FAIL:  "#expr " != " #expect "\n"); \
                 }  else {                                               \
-                        bsg_print_str(__FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " != " #expect "\n"); \
+                        bsg_print_str(__FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " == " #expect "\n"); \
                 }                                                       \
         } while (0)
 
@@ -42,7 +42,7 @@ void bsg_print_str(const char *str)
                 if (e != expect) {                                      \
                         bsg_print_str(__FILE__ ":" STRINGIFY(__LINE__) ": FAIL:  "#expr " != " #expect "\n"); \
                 } else {                                                \
-                        bsg_print_str(__FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " != " #expect "\n"); \
+                        bsg_print_str(__FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " == " #expect "\n"); \
                 }                                                       \
         } while (0)
 
