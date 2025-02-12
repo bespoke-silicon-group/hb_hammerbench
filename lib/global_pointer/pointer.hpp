@@ -19,6 +19,11 @@ public:
     pointer(address addr) : ref_(addr) {}
 
     /**
+     * @brief constructor from address with default extended address
+     */
+    pointer(void* raw) : ref_(raw) {}
+
+    /**
      * @brief default constructor
      */
     pointer() : ref_() {}

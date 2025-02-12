@@ -24,6 +24,11 @@ public:
     reference(address addr): addr_(addr) {}
 
     /**
+     * @brief constructor from address with default extended address
+     */
+    reference(void* raw): addr_(raw) {}
+
+    /**
      * @brief default constructor
      */
     reference() : addr_() {}

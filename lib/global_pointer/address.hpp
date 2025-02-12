@@ -22,7 +22,7 @@ public:
     /**
      * @brief constructor using default extended address
      */
-    address(uintptr_t raw) : ext_(), raw_(raw) {}
+    address(void * raw) : ext_(), raw_(reinterpret_cast<uintptr_t>(raw)) {}
 
     /**
      * @brief constructor using default extended address and null pointer
