@@ -25,10 +25,10 @@ include parameters.mk
 include app_path.mk
 
 # Tile Group Dimensions
-#TILE_GROUP_DIM_X ?= $(BSG_MACHINE_POD_TILES_X)
-#TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_POD_TILES_Y)
-TILE_GROUP_DIM_X ?= 1
-TILE_GROUP_DIM_Y ?= 1
+TILE_GROUP_DIM_X ?= $(BSG_MACHINE_POD_TILES_X)
+TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_POD_TILES_Y)
+#TILE_GROUP_DIM_X ?= 1
+#TILE_GROUP_DIM_Y ?= 1
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
@@ -76,8 +76,15 @@ RISCV_CCPPFLAGS += -DBSG_POD_TILES_Y=$(BSG_MACHINE_POD_TILES_Y)
 RISCV_CCPPFLAGS += -DBSG_PODS_X=$(BSG_MACHINE_PODS_X)
 RISCV_CCPPFLAGS += -DBSG_PODS_Y=$(BSG_MACHINE_PODS_Y)
 
-RISCV_TARGET_OBJECTS = kernel.rvo
-BSG_MANYCORE_KERNELS = main.riscv
+CELLO_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/cello/*.cpp)
+CELLO_LIB_OBJECTS := $(CELLO_LIB_SOURCES:.cpp=.rvo)
+RISCV_TARGET_OBJECTS += $(CELLO_LIB_OBJECTS)
+debug:
+	@echo $(CELLO_LIB_SOURCES)
+	@echo $(CELLO_LIB_OBJECTS)
+
+RISCV_TARGET_OBJECTS += kernel.rvo
+BSG_MANYCORE_KERNELS  = main.riscv
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 ###############################################################################

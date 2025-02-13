@@ -24,6 +24,18 @@ int cello_hello_world_main(int argc, char *argv[])
     }
 
     BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&mc));
+    
+    hb_mc_device_foreach_pod_id(&mc, pod_id)
+    {
+            hb_mc_coordinate_t pod = hb_mc_index_to_coordinate(pod_id, mc.mc->config.pod_shape);
+            std::vector<uint32_t> argv = {pod.x, pod.y};
+            BSG_CUDA_CALL(hb_mc_device_pod_program_init(&mc, pod_id, program));
+            BSG_CUDA_CALL(hb_mc_device_pod_kernel_enqueue(&mc, pod_id,
+                                                          {1,1}, tg,
+                                                          "cello_start", argv.size(), argv.data()));
+    }
+
+    BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&mc));
 
     hb_mc_device_foreach_pod_id(&mc, pod_id)
     {
