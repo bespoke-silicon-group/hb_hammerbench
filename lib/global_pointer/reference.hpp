@@ -251,7 +251,8 @@ public:
     BSG_GLOBAL_POINTER_REFERENCE_INTERNAL(type)
 
 /**
- * generates a delegate method
+ * generates a delegate method. this can be used to coalesce multiple accesses
+ * without writing the samve value to pod address csr over and over again
  */
 #define BSG_GLOBAL_POINTER_REFERENCE_METHOD(type, method, return_type)  \
     public:                                                             \

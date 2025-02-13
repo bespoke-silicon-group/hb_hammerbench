@@ -152,6 +152,9 @@ class reference<pointer<T>>
         return this->read();
     }
 
+    /**
+     * @brief const arrow operator
+     */
     const pointer<T> operator->() const {
         return this->read();
     }

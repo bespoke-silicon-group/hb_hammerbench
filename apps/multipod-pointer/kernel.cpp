@@ -203,6 +203,7 @@ extern "C" int multipod_pointer_t3()
                 TEST_EQ(UDEC, p_of_foo->x(), 0);
                 TEST_EQ(UDEC, p_of_foo->y(), 0);
                 TEST_EQ(UDEC, p_of_foo->sum(), 0);
+                TEST_EQ(UDEC, p_of_foo->x()+p_of_foo->y(), p_of_foo->sum());
         }
         bsg_barrier_tile_group_sync();
         return 0;
