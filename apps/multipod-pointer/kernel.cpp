@@ -2,13 +2,34 @@
 #include "bsg_manycore.h"
 #include "bsg_set_tile_x_y.h"
 #include "bsg_cuda_lite_barrier.h"
-
+#include <array>
 
 using namespace bsg_global_pointer;
 
 __attribute__((section(".dram"))) unsigned g_pod_x = 0;
 __attribute__((section(".dram"))) unsigned g_pod_y = 0;
 __attribute__((section(".dram"))) unsigned g_special = 0;
+__attribute__((section(".dram"))) std::array<unsigned, 4> g_array;
+__attribute__((section(".dram"))) pointer<unsigned> g_ptr;
+
+struct foo {
+        FIELD(unsigned, x);
+        FIELD(unsigned, y);
+        unsigned sum() const { return x() + y(); }
+};
+
+__attribute__((section(".dram"))) foo g_foo;
+
+namespace bsg_global_pointer
+{
+        template <>
+        class reference<foo> {
+                BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(foo);
+                BSG_GLOBAL_POINTER_REFERENCE_FIELD(foo, x);
+                BSG_GLOBAL_POINTER_REFERENCE_FIELD(foo, y);
+                BSG_GLOBAL_POINTER_REFERENCE_METHOD_CONST(foo, sum, unsigned);
+        };
+}
 
 #define UDEC unsigned, "%u"
 #define UHEX unsigned, "%x"
@@ -56,9 +77,14 @@ extern "C" int setup(unsigned pod_x, unsigned pod_y)
         {
                 g_pod_x = pod_x;
                 g_pod_y = pod_y;
-
+                g_foo.x() = pod_x;
+                g_foo.y() = pod_y;
                 if (pod_x == 0 && pod_y == 0) {
                         g_special = OLDV;
+                        for (unsigned i = 0; i < g_array.size(); i++) {
+                                g_array[i] = i;
+                        }
+                        g_ptr = pointer<unsigned>(&g_special);
                 } else {
                         g_special = BADV;
                 }
@@ -160,6 +186,23 @@ extern "C" int multipod_pointer_t3()
 
                 *p_of_special = old;
                 TEST_EQ(UHEX, *p_of_special, OLDV);
+
+                pointer<unsigned> p_of_array(&g_array[0]);
+                p_of_array.set_pod_x(0).set_pod_y(0);
+                TEST_EQ(UDEC, p_of_array[0], 0);
+                TEST_EQ(UDEC, p_of_array[1], 1);
+                TEST_EQ(UDEC, p_of_array[2], 2);
+                TEST_EQ(UDEC, p_of_array[3], 3);
+
+                pointer<pointer<unsigned>> p_of_ptr(&g_ptr);
+                p_of_ptr.set_pod_x(0).set_pod_y(0);
+                TEST_EQ(UHEX, **p_of_ptr, OLDV);
+
+                pointer<foo> p_of_foo(&g_foo);
+                p_of_foo.set_pod_x(0).set_pod_y(0);
+                TEST_EQ(UDEC, p_of_foo->x(), 0);
+                TEST_EQ(UDEC, p_of_foo->y(), 0);
+                TEST_EQ(UDEC, p_of_foo->sum(), 0);
         }
         bsg_barrier_tile_group_sync();
         return 0;

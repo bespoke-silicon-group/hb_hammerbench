@@ -19,6 +19,12 @@ public:
         pod_addr().set_pod_y(y);
         return *this;
     }
+    unsigned pod_x() const {
+        return pod_addr().pod_x();
+    }
+    unsigned pod_y() const {
+        return pod_addr().pod_y();
+    }
     FIELD(pod_address, pod_addr);
 };
 }

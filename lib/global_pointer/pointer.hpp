@@ -124,8 +124,38 @@ public:
 
 /**
  * @brief specialize reference to a pointer
- * TODO
  */
+template <typename T>
+class reference<pointer<T>>
+{
+    BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(pointer<T>);
+    /**
+     * @brief dereference operator
+     */
+    reference<T> operator*() {
+        pointer<T> ptr = this->read();
+        return *ptr;
+    }
+
+    /**
+     * @brief const dereference operator
+     */
+    const reference<T> operator*() const {
+        pointer<T> ptr = read();
+        return *ptr;
+    }
+
+    /**
+     * @brief arrow operator
+     */
+    pointer<T> operator->() {
+        return this->read();
+    }
+
+    const pointer<T> operator->() const {
+        return this->read();
+    }
+};
 
 }
 #endif

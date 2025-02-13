@@ -46,6 +46,20 @@ public:
     }
 
     /**
+     * @brief get the pod x of the address
+     */
+    unsigned pod_x() const {
+        return ext().pod_x();
+    }
+
+    /**
+     * @brief get the pod y of the address
+     */
+    unsigned pod_y() const {
+        return ext().pod_y();
+    }
+
+    /**
      * @brief updates the value pointed to by the reference
      */
     template <typename T>
