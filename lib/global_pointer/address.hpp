@@ -17,12 +17,12 @@ public:
     /**
      * @brief base constructor
      */
-    address(address_ext ext, void* raw) : ext_(ext), raw_(reinterpret_cast<uintptr_t>(raw)) {}
+    address(address_ext ext, const void* raw) : ext_(ext), raw_(reinterpret_cast<uintptr_t>(raw)) {}
 
     /**
      * @brief constructor using default extended address
      */
-    address(void * raw) : ext_(), raw_(reinterpret_cast<uintptr_t>(raw)) {}
+    address(const void * raw) : ext_(), raw_(reinterpret_cast<uintptr_t>(raw)) {}
 
     /**
      * @brief constructor using default extended address and null pointer

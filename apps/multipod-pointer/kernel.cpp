@@ -173,8 +173,7 @@ extern "C" int multipod_pointer_t3()
         bsg_barrier_tile_group_init();
         bsg_barrier_tile_group_sync();
         {
-                pointer<unsigned> p_of_special(&g_special);
-                p_of_special.set_pod_x(0).set_pod_y(0);
+                pointer<unsigned> p_of_special = pointer<unsigned>::onPodXY(0, 0, &g_special);
 
                 unsigned old;
                 TEST_EQ_SAVE(UHEX, old, *p_of_special, OLDV);
@@ -187,19 +186,16 @@ extern "C" int multipod_pointer_t3()
                 *p_of_special = old;
                 TEST_EQ(UHEX, *p_of_special, OLDV);
 
-                pointer<unsigned> p_of_array(&g_array[0]);
-                p_of_array.set_pod_x(0).set_pod_y(0);
+                pointer<unsigned> p_of_array = pointer<unsigned>::onPodXY(0, 0, &g_array[0]);
                 TEST_EQ(UDEC, p_of_array[0], 0);
                 TEST_EQ(UDEC, p_of_array[1], 1);
                 TEST_EQ(UDEC, p_of_array[2], 2);
                 TEST_EQ(UDEC, p_of_array[3], 3);
 
-                pointer<pointer<unsigned>> p_of_ptr(&g_ptr);
-                p_of_ptr.set_pod_x(0).set_pod_y(0);
+                pointer<pointer<unsigned>> p_of_ptr = pointer<pointer<unsigned>>::onPodXY(0, 0, &g_ptr);
                 TEST_EQ(UHEX, **p_of_ptr, OLDV);
 
-                pointer<foo> p_of_foo(&g_foo);
-                p_of_foo.set_pod_x(0).set_pod_y(0);
+                pointer<foo> p_of_foo = pointer<foo>::onPodXY(0, 0, &g_foo);
                 TEST_EQ(UDEC, p_of_foo->x(), 0);
                 TEST_EQ(UDEC, p_of_foo->y(), 0);
                 TEST_EQ(UDEC, p_of_foo->sum(), 0);

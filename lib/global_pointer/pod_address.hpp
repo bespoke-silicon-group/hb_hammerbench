@@ -53,6 +53,11 @@ public:
         : raw_(raw) {
     }
 
+    pod_address(unsigned x, unsigned y) : raw_(0) {
+        set_pod_x(x);
+        set_pod_y(y);
+    }
+
     pod_address()
         : raw_(0) {
         *this = readPodAddrCSR();

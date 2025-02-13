@@ -26,7 +26,7 @@ public:
     /**
      * @brief constructor from address with default extended address
      */
-    reference(void* raw): addr_(raw) {}
+    reference(const void* raw): addr_(raw) {}
 
     /**
      * @brief default constructor

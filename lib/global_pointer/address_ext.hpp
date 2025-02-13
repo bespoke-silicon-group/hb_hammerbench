@@ -10,6 +10,7 @@ namespace bsg_global_pointer
 class address_ext
 {
 public:
+    address_ext(const pod_address &pod) : pod_addr_(pod) {}
     address_ext() : pod_addr_() {}
     address_ext &set_pod_x(unsigned x) {
         pod_addr().set_pod_x(x);

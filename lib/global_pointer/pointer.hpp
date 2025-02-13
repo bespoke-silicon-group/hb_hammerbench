@@ -21,7 +21,7 @@ public:
     /**
      * @brief constructor from address with default extended address
      */
-    pointer(void* raw) : ref_(raw) {}
+    pointer(const void* raw) : ref_(raw) {}
 
     /**
      * @brief default constructor
@@ -37,6 +37,14 @@ public:
      * @brief move constructor for return values
      */
     pointer(pointer&& other) : ref_(std::move(other.ref_)) {}
+
+    /**
+     * @brief make a global pointer from a local pointer and pod coordinates
+     */
+    static pointer<T> onPodXY(unsigned x, unsigned y, const T* ptr) {
+        return pointer<T>
+            (address(address_ext(pod_address(x,y)), ptr));
+    }
 
     /**
      * @brief copy assignment operator
