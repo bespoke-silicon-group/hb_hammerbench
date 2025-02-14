@@ -11,9 +11,10 @@
 #include <set>
 #include <fstream>
 #include <math.h>
-
+#include "hb_list.h"
 #define ALLOC_NAME "default_allocator"
 #define DRAM_LIST_NODES 16777216 // (=2**24)
+#define INIT_NUM_DRAM_NODES 16384
 
 void read_graph(int* ptr, std::string filename) {
   std::ifstream fh(filename);
@@ -203,7 +204,27 @@ int spgemm_multipod(int argc, char ** argv)
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_row+1)*sizeof(int), &d_C_col_count[pod]));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (num_row)*sizeof(int), &d_C_list_head[pod]));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (DRAM_LIST_NODES)*3*sizeof(int), &d_dram_nodes[pod]));
-    
+ 
+    // initialize DRAM nodes;
+    HBListNode* host_dram_nodes = (HBListNode*) malloc(INIT_NUM_DRAM_NODES*sizeof(HBListNode)*bsg_tiles_X*bsg_tiles_Y);
+    for (uint32_t tile_id = 0; tile_id < bsg_tiles_X*bsg_tiles_Y; tile_id++) {
+      for (uint32_t j = 0; j < INIT_NUM_DRAM_NODES; j++) {
+        uint32_t curr_node_id = j+(tile_id*INIT_NUM_DRAM_NODES);
+        if (j == INIT_NUM_DRAM_NODES-1) {
+          // tail;
+          host_dram_nodes[curr_node_id].col_idx = 0;
+          host_dram_nodes[curr_node_id].nnz = 0.0f;
+          host_dram_nodes[curr_node_id].next = (HBListNode*) 0;
+        } else {
+          uint32_t next_node_id = curr_node_id + 1;
+          HBListNode* next_node_ptr = (HBListNode*)  (((uint32_t) d_dram_nodes[pod]) + (next_node_id*sizeof(HBListNode)));
+          host_dram_nodes[curr_node_id].col_idx = 0;
+          host_dram_nodes[curr_node_id].nnz = 0.0f;
+          host_dram_nodes[curr_node_id].next = next_node_ptr;
+        }
+      }
+    }
+   
     // DMA transfer;
     printf("Transferring data: pod %d\n", pod);
     std::vector<hb_mc_dma_htod_t> htod_job;
@@ -221,6 +242,8 @@ int spgemm_multipod(int argc, char ** argv)
       device_C_col_count[i] = 0;
     }
     htod_job.push_back({d_C_col_count[pod], device_C_col_count, (num_row+1)*sizeof(int)});
+    // init dram node;
+    htod_job.push_back({d_dram_nodes[pod], host_dram_nodes, INIT_NUM_DRAM_NODES*sizeof(HBListNode)*bsg_tiles_X*bsg_tiles_Y});
     BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_job.data(), htod_job.size()));
 
 

@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct HBListNode_ {
   int col_idx;
   float nnz;
@@ -10,3 +14,7 @@ typedef struct HBList_ {
   HBListNode* head;
   HBListNode* tail;
 } HBList;
+
+#ifdef __cplusplus
+}
+#endif

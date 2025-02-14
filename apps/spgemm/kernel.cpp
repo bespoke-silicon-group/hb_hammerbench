@@ -13,6 +13,7 @@
 
 
 #define INIT_NUM_DRAM_NODES 16384
+//#define INIT_NUM_DRAM_NODES 8192
 #define NUM_DMEM_NODES 256
 #define LIST_NULL_PTR ((HBListNode*) 0)
 
@@ -158,6 +159,7 @@ extern "C" int kernel(
   int pod_id
 )
 {
+  if (__bsg_id == 0) bsg_print_int(0);
   bsg_barrier_tile_group_init();
   bsg_barrier_tile_group_sync();
   // Initialize amo variables + sum tree;
@@ -172,7 +174,9 @@ extern "C" int kernel(
   bsg_fence();
   bsg_barrier_tile_group_sync();
 
+
   // Initialize dram free nodes;
+/*
   list_init(&free_dram_nodes);
   int start_idx = bsg_amoadd(&g_free_node_q, INIT_NUM_DRAM_NODES);
   for (int i = 0; i < INIT_NUM_DRAM_NODES; i++) {
@@ -180,6 +184,10 @@ extern "C" int kernel(
     new_node->next = (HBListNode*) 0;
     list_append_back(&free_dram_nodes, new_node);
   }
+*/
+  free_dram_nodes.count = INIT_NUM_DRAM_NODES;
+  free_dram_nodes.head = &dram_nodes[INIT_NUM_DRAM_NODES*__bsg_id];
+  free_dram_nodes.tail = &dram_nodes[(INIT_NUM_DRAM_NODES*(__bsg_id+1))-1];
   bsg_fence();
 
   // Initialize free dmem nodes;
@@ -191,7 +199,7 @@ extern "C" int kernel(
   }
 
   // Multi-pod barrier;
-  bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  bsg_barrier_tile_group_sync();
   bsg_cuda_print_stat_kernel_start();
 
   // KERNEL START;
