@@ -159,7 +159,7 @@ extern "C" int kernel(
   int pod_id
 )
 {
-  if (__bsg_id == 0) bsg_print_int(0);
+  //if (__bsg_id == 0) bsg_print_int(0);
   bsg_barrier_tile_group_init();
   bsg_barrier_tile_group_sync();
   // Initialize amo variables + sum tree;
