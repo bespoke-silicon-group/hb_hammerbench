@@ -164,7 +164,7 @@ extern "C" int kernel(
   bsg_barrier_tile_group_sync();
   // Initialize amo variables + sum tree;
   if (__bsg_id == 0) {
-    g_free_node_q = 0;
+    g_free_node_q = NUM_TILES*INIT_NUM_DRAM_NODES;
     g_solve_q = 0;
     g_convert_q = 0;
     for (int i = 0; i < (2*NUM_TILES)-1; i++) {
