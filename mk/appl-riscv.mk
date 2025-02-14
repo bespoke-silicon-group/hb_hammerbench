@@ -68,6 +68,7 @@ ifeq ($(APPL_IMPL), APPL_IMPL_CELLO)
 endif
 
 # include riscv builddefs
+CRT_PATH := $(HB_HAMMERBENCH_PATH)/lib/appl
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 
 RISCV_LD = $(_RISCV_GXX)
