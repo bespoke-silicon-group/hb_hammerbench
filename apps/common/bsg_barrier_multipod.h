@@ -18,7 +18,7 @@ static inline void bsg_barrier_multipod(int pod_id, int num_pod_x, volatile int*
   // center tile;
   if ((__bsg_x == bsg_tiles_X/2) && (__bsg_y == bsg_tiles_Y/2)) {
     // send remote store to the done list;
-    volatile int* remote_done_ptr =  bsg_global_ptr((BSG_MACHINE_GLOBAL_X+(bsg_tiles_X/2)),
+    volatile int* remote_done_ptr =  bsg_global_ptr((0*BSG_MACHINE_GLOBAL_X+(bsg_tiles_X/2)),
                                                     (BSG_MACHINE_GLOBAL_Y+(bsg_tiles_Y/2)),
                                                     &done[pod_id]);
     *remote_done_ptr  = 1;
@@ -38,7 +38,7 @@ static inline void bsg_barrier_multipod(int pod_id, int num_pod_x, volatile int*
   
       // one every pod joins, wake up everyone;
       for (int px = 0; px < num_pod_x; px++) {
-        volatile int* remote_alert_ptr =  bsg_global_ptr((((1+px)*BSG_MACHINE_GLOBAL_X)+(bsg_tiles_X/2)),
+        volatile int* remote_alert_ptr =  bsg_global_ptr((((0+px)*BSG_MACHINE_GLOBAL_X)+(bsg_tiles_X/2)),
                                                          (BSG_MACHINE_GLOBAL_Y+(bsg_tiles_Y/2)),
                                                          (alert));
         *remote_alert_ptr = 1;
