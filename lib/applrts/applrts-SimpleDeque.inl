@@ -21,10 +21,10 @@ void SimpleDeque<T>::reset() {
   // this does not order anything
   bsg_amoswap(m_mutex_ptr, 0);
 
-  bsg_print_int((intptr_t)m_head_ptr);
-  bsg_print_int((intptr_t)m_tail_ptr);
-  bsg_print_int((intptr_t)m_array_end);
-  bsg_print_int((intptr_t)m_array_rp);
+  bsg_print_hexadecimal((intptr_t)m_head_ptr);
+  bsg_print_hexadecimal((intptr_t)m_tail_ptr);
+  bsg_print_hexadecimal((intptr_t)m_array_end);
+  bsg_print_hexadecimal((intptr_t)m_array_rp);
 }
 
 template <typename T>
