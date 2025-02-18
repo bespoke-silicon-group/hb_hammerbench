@@ -96,7 +96,8 @@ _start:
   # mbt: put stack at top of local memory
   # mbt fix for 4KB IMEM / 4KB DMEM
   la sp, _sp
-#if 0
+
+#if 1
   # Lin: hack sp to use remote pointer format        
   la t0, _sp
   lw t1, 40(zero) #0x28 bsg_y
