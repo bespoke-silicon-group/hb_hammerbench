@@ -58,12 +58,14 @@ void pop_front()
     l.pop_front();
     TEST_EQ(BOOL, l.empty(), true);
     TEST_EQ(PTR, l.front(), nullptr);
+
     util::list_item j;
     l.push_front(&i);
     l.push_front(&j);
     l.pop_front();
     TEST_EQ(PTR, l.front(), &i);
     TEST_EQ(PTR, l.back(), &i);
+
     l.pop_front();
     TEST_EQ(BOOL, l.empty(), true);
     TEST_EQ(PTR, l.front(), nullptr);
@@ -82,12 +84,14 @@ void pop_back()
     l.pop_back();
     TEST_EQ(BOOL, l.empty(), true);
     TEST_EQ(PTR, l.back(), nullptr);
+
     util::list_item j;
     l.push_back(&i);
     l.push_back(&j);
     l.pop_back();
     TEST_EQ(PTR, l.front(), &i);
     TEST_EQ(PTR, l.back(), &i);
+
     l.pop_back();
     TEST_EQ(BOOL, l.empty(), true);
     TEST_EQ(PTR, l.back(), nullptr);
