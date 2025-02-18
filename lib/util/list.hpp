@@ -14,6 +14,9 @@ public:
         , prev_(this) {
     }
 
+    /**
+     * @brief insert this in front of before_this
+     */
     void insert_in_front_of(item_ptr before_this) {
         this->next() = before_this;
         this->prev() = before_this->prev();
@@ -21,6 +24,9 @@ public:
         this->prev()->next() = this;
     }
 
+    /**
+     * @brief insert this before after_this
+     */
     void insert_in_back_of(item_ptr after_this) {
         this->prev() = after_this;
         this->next() = after_this->next();
@@ -28,6 +34,9 @@ public:
         this->prev()->next() = this;
     }
 
+    /**
+     * @brief remove from whichever list this is in
+     */
     void remove() {
         item_ptr n = this->next();
         item_ptr p = this->prev();

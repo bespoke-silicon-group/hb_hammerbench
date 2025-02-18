@@ -102,6 +102,28 @@ void pop_back()
     return;
 }
 
+struct item {
+public:
+    item(int _i, float _v) : i_(_i), v_(_v) {}
+    item() : i_(0), v_(0) {}
+    FIELD(int,   i);
+    FIELD(float, v);
+    FIELD(util::list_item, items);
+};
+
+void items()
+{
+    util::list l;
+    item i(1, 1.0);
+    item j(2, 2.0);
+    l.push_back(&i.items());
+    l.push_back(&j.items());
+
+    item *ip = container_of(l.front(), item, items_);
+    TEST_EQ(PTR, ip, &i);
+    TEST_EQ(SIZE, ip->i(), 1);
+}
+
 extern "C" int kernel()
 {
     empty_list();
@@ -109,5 +131,6 @@ extern "C" int kernel()
     push_back();
     pop_front();
     pop_back();
+    items();
     return 0;
 }
