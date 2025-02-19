@@ -39,8 +39,8 @@ public:
      */
     virtual size_t size() const { return sizeof(*this); }
 
-    FIELD(util::list, ready);
-    FIELD(cello::joiner::child, parent);
+    FIELD(util::list_item, queued);
+    FIELD(joiner::child, parent);
 };
 
 /**

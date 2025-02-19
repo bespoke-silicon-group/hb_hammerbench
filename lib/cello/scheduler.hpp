@@ -2,7 +2,12 @@
 #define CELLO_SCHEDULER_HPP
 #include <cello/task.hpp>
 #include <cello/joiner.hpp>
+#include <cello/config.hpp>
 namespace cello {
+/**
+ * @brief initialize the scheduler
+ */
+void scheduler_initialize(config *cfg);
 
 /**
  * detach a task from the current thread of execution

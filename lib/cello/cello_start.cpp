@@ -15,10 +15,13 @@ int cello_start(cello::config *config)
 {
     bsg_barrier_tile_group_init();
     bsg_barrier_tile_group_sync();
-    if (__bsg_id == 0) {
-        allocator_initialize(config);
-    }
+
+    allocator_initialize(config);
     bsg_barrier_tile_group_sync();
+    
+    scheduler_initialize(config);    
+    bsg_barrier_tile_group_sync();
+    
     if (__bsg_id == 0) {
         cello_main(0, nullptr);
         main_complete = 1;
