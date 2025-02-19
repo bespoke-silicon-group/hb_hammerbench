@@ -23,13 +23,13 @@ int lock()
         l.release();
     }
     bsg_barrier_tile_group_sync();
-    
+
     if (__bsg_id == 0)
     {
         TEST_EQ(INT, x, n * bsg_tiles_X * bsg_tiles_Y);  // assert lock works
         TEST_NEQ(INT, y, n * bsg_tiles_X * bsg_tiles_Y); // assert lock doesn't work just by accident
     }
-    bsg_barrier_tile_group_sync();    
+    bsg_barrier_tile_group_sync();
     return 0;
 }
 
@@ -53,14 +53,14 @@ int tile_lock()
         lp->release();
     }
     bsg_barrier_tile_group_sync();
-    
+
     if (__bsg_id == 0)
     {
         TEST_EQ(INT, x, n * bsg_tiles_X * bsg_tiles_Y);  // assert lock works
         TEST_NEQ(INT, y, n * bsg_tiles_X * bsg_tiles_Y); // assert lock doesn't work just by accident
     }
-    bsg_barrier_tile_group_sync();    
-    return 0;    
+    bsg_barrier_tile_group_sync();
+    return 0;
 }
 
 int lock_guard()
@@ -99,15 +99,53 @@ int tile_lock_guard()
         x += 1;
     }
     bsg_barrier_tile_group_sync();
-    
+
     if (__bsg_id == 0)
     {
         TEST_EQ(INT, x, n * bsg_tiles_X * bsg_tiles_Y);  // assert lock works
     }
-    bsg_barrier_tile_group_sync();    
-    return 0;        
+    bsg_barrier_tile_group_sync();
+    return 0;
 }
 
+struct Int {
+public:
+    Int() : v(0) {}
+    void add(int x) { v += x; }
+    int v;
+};
+
+template <typename Lock>
+class util::lockable<Int, Lock> {
+    UTIL_LOCKABLE_INTERNAL(Int, Lock);
+    UTIL_LOCKABLE_METHOD(Int, Lock, add);
+    UTIL_LOCKABLE_METHOD_UNSAFE(Int, Lock, add);
+};
+
+__attribute__((section(".dram")))
+static util::lockable<Int, util::lock> I, J;
+
+int lockable()
+{
+    bsg_barrier_tile_group_sync();
+    static constexpr int n = 100;
+    for (int i = 0; i < n; i++) {
+        I.add(1);
+    }
+    bsg_barrier_tile_group_sync();
+    for (int i = 0; i < n; i++) {
+        J.add_unsafe(1);
+    }
+
+    bsg_barrier_tile_group_sync();
+    if (__bsg_id == 0)
+    {
+        TEST_EQ(INT, I.data().v, n * bsg_tiles_X * bsg_tiles_Y);  // assert lock works
+        TEST_NEQ(INT, J.data().v, n * bsg_tiles_X * bsg_tiles_Y); // assert lock doesn't work just by accident
+    }
+    bsg_barrier_tile_group_sync();
+    return 0;
+}
 
 extern "C" int kernel()
 {
@@ -117,6 +155,7 @@ extern "C" int kernel()
     tile_lock();
     lock_guard();
     tile_lock_guard();
+    lockable();
     bsg_barrier_tile_group_sync();
     return 0;
 }

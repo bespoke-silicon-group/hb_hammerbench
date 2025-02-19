@@ -42,7 +42,7 @@ public:
      * @brief locked
      */
     std::atomic<int>& locked() { return locked_; }
-    
+
     std::atomic<int> locked_; //!< locked flag
 };
 
@@ -89,5 +89,94 @@ public:
     Lock &l_; //!< lock
 };
 
+/**
+ * @brief a tile lock guard, acquires lock on creation and releases on destruction
+ */
+template <typename T, typename Lock>
+class lockable
+{
+public:
+    template <typename... Args>
+    lockable(Args&&... args) : data_(std::forward<Args>(args)...) {}
+
+    FIELD(T, data); //!< data
+
+    Lock& lock() { return lock_; } //!< lock
+    const Lock& lock() const { return lock_; } //!< lock
+    Lock lock_; //!< lock
+};
+
+/**
+ * @brief internals for lockable specialization
+ */
+#define UTIL_LOCKABLE_INTERNAL(data_type, lock_type)    \
+    public:                                             \
+    template <typename... Args>                         \
+    lockable(Args&&... args) : data_(std::forward<Args>(args)...) {} \
+    FIELD(data_type, data);                             \
+    lock_type& lock() { return lock_; }                 \
+    const lock_type& lock() const { return lock_; }     \
+    lock_type lock_;
+
+/**
+ * @brief make delegate function for lockable
+ */
+#define UTIL_LOCKABLE_FUNCTION(data_type, lock_type, return_type, method) \
+    template <typename ...Args>                                         \
+    return_type method(Args&&... args) {                                \
+        return_type r;                                                  \
+        {                                                               \
+            util::lock_guard<lock_type> guard(lock_);                   \
+            r =  data_.method(std::forward<Args>(args)...);             \
+        }                                                               \
+        return r;                                                       \
+    }
+
+/**
+ * @brief make unsafe delegate function for lockable
+ */
+#define UTIL_LOCKABLE_FUNCTION_UNSAFE(data_type, lock_type, return_type, method) \
+    template <typename ...Args>                                         \
+    return_type method##_unsafe(Args&&... args) {                       \
+        return data_.method(std::forward<Args>(args)...);               \
+    }
+
+/**
+ * @brief make delegate methods for lockable
+ */
+#define UTIL_LOCKABLE_METHOD(data_type, lock_type, method)              \
+    template <typename ...Args>                                         \
+    void method(Args&&... args) {                                       \
+        util::lock_guard<lock_type> guard(lock_);                       \
+        data_.method(std::forward<Args>(args)...);                      \
+    }
+
+/**
+ * @brief make delegate methods for lockable
+ */
+#define UTIL_LOCKABLE_METHOD_UNSAFE(data_type, lock_type, method)       \
+    template <typename ...Args>                                         \
+    void method##_unsafe(Args&&... args) {                              \
+        data_.method(std::forward<Args>(args)...);                      \
+    }
+
+/**
+ * @brief make delegate methods for lockable
+ */
+#define UTIL_LOCKABLE_FUNCTION_CONST(data_type, lock_type, return_type, method) \
+    template <typename ...Args>                                         \
+    return_type method(Args&&... args) const {                          \
+        return data_.method(std::forward<Args>(args)...);               \
+    }
+
+/**
+ * @brief make delegate methods for lockable
+ */
+#define UTIL_LOCKABLE_METHOD_CONST(data_type, lock_type, method)        \
+    template <typename ...Args>                                         \
+    void method(Args&&... args) const {                                 \
+        data_.method(std::forward<Args>(args)...);                      \
+    }
 }
+
 #endif
