@@ -1,5 +1,6 @@
-#ifndef CELLO_HPP
-#define CELLO_HPP
-#include <cello/cello_start.hpp>
-#include <cello/cello_main.hpp>
+#ifndef CELLO_CELLO_HPP
+#define CELLO_CELLO_HPP
+#include <cello/start.hpp>
+#include <cello/main.hpp>
+#include <cello/invoke.hpp>
 #endif
