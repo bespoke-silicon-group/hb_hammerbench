@@ -1,4 +1,5 @@
 #ifndef CELLO_START_HPP
 #define CELLO_START_HPP
-extern "C" int cello_start();
+#include <cello/config.hpp>
+extern "C" int cello_start(cello::config *config);
 #endif

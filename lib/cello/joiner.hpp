@@ -41,6 +41,13 @@ public:
      */
     bool joined() const { return ready(); }
 
+    /**
+     * returns a created child
+     */
+    child make_child() {
+        return child(this);
+    }
+
     FIELD(int, ready);
 };
 

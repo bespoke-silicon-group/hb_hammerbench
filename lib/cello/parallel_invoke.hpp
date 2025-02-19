@@ -12,7 +12,7 @@ namespace cello
 template <typename F0, typename F1>
 void parallel_invoke(F0 &&f0, F1 &&f1)
 {
-    joiner j(1);
+    joiner j;
     task *t = new_task(f0, j);
     spawn(t);
     f1();

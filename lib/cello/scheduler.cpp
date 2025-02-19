@@ -1,4 +1,5 @@
 #include <cello/scheduler.hpp>
+#include <bsg_manycore.h>
 namespace cello
 {
 /**
@@ -6,6 +7,7 @@ namespace cello
  */
 void spawn(task * t)
 {
+    //    bsg_print_hexadecimal((unsigned)t);
     t->execute();
 }
 

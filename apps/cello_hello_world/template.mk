@@ -44,6 +44,7 @@ CXXDEFINES +=
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++11 $(FLAGS)
+CXXFLAGS += -I$(HB_HAMMERBENCH_PATH)/lib
 
 # compilation.mk defines rules for compilation of C/C++
 include $(EXAMPLES_PATH)/compilation.mk
@@ -79,6 +80,11 @@ RISCV_CCPPFLAGS += -DBSG_PODS_Y=$(BSG_MACHINE_PODS_Y)
 
 CELLO_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/cello/*.cpp)
 CELLO_LIB_OBJECTS := $(CELLO_LIB_SOURCES:.cpp=.rvo)
+#CELLO_LIB_OBJECTS := $(foreach obj,$(CELLO_LIB_OBJECTS),$(notdir $(obj)))
+RISCV_CCPPFLAGS += -fno-rtti
+RISCV_CCPPFLAGS += -lstdc++
+
+
 RISCV_TARGET_OBJECTS += $(CELLO_LIB_OBJECTS)
 debug:
 	@echo $(CELLO_LIB_SOURCES)
