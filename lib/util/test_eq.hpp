@@ -49,4 +49,9 @@
 #define TEST_EQ_SAVE(typefmt, save, expr, expect) _TEST_EQ_SAVE(typefmt, save, expr, expect)
 #define TEST_NEQ_SAVE(typefmt, save, expr, expect) _TEST_NEQ_SAVE(typefmt, save, expr, expect)
 
+#define PTR void*        ,"%p"
+#define INT int          ,"%d"
+#define UINT unsigned int,"%u"
+#define HINT unsigned int,"0x%x"
+
 #endif
