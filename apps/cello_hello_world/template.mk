@@ -80,7 +80,10 @@ RISCV_CCPPFLAGS += -DBSG_PODS_Y=$(BSG_MACHINE_PODS_Y)
 
 CELLO_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/cello/*.cpp)
 CELLO_LIB_OBJECTS := $(CELLO_LIB_SOURCES:.cpp=.rvo)
-#CELLO_LIB_OBJECTS := $(foreach obj,$(CELLO_LIB_OBJECTS),$(notdir $(obj)))
+CELLO_LIB_OBJECTS := $(foreach obj,$(CELLO_LIB_OBJECTS),$(notdir $(obj)))
+vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/cello
+vpath %.c   $(HB_HAMMERBENCH_PATH)/lib/cello/bsg_manycore
+
 RISCV_CCPPFLAGS += -fno-rtti
 RISCV_CCPPFLAGS += -lstdc++
 
