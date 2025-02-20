@@ -103,6 +103,8 @@ debug:
 RISCV_TARGET_OBJECTS += kernel.rvo
 BSG_MANYCORE_KERNELS  = main.riscv
 
+LINK_GEN_OPTS += --move_rodata_to_dmem
+
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 ###############################################################################
 # Execution flow
