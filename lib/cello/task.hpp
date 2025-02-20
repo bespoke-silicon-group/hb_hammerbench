@@ -21,7 +21,7 @@ public:
     /**
      * @brief constructor
      */
-    task(parent_ptr _parent) : parent_(_parent) {}
+    task() {}
 
     /**
      * @brief destructor
@@ -31,9 +31,7 @@ public:
     /**
      * @brief runs the task and joins with parent
      */
-    virtual void execute() {
-        parent().join();
-    }
+    virtual void execute() {}
 
     /**
      * @brief returns the size of this task
@@ -41,7 +39,6 @@ public:
     virtual size_t size() const { return sizeof(*this); }
 
     FIELD(util::list_item, queued);
-    FIELD(joiner::child, parent);
 };
 
 /**
@@ -53,7 +50,11 @@ public:
     /**
      * @brief constructor
      */
-    functor_task(F && f, parent_ptr p) : task(p), func(std::move(f)) {}
+    functor_task(F && f, parent_ptr p)
+        : task()
+        , parent_(p)
+        , func(std::move(f)) {
+    }
 
     /**
      * destructor
@@ -77,6 +78,7 @@ public:
     }
 
     typename std::remove_reference<F>::type func; //!< function lambda, no reference
+    FIELD(joiner::child, parent);
 };
 
 template <typename F>
