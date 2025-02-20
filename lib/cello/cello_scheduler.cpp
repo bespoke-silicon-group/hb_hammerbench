@@ -64,7 +64,7 @@ void schedule()
         auto *victim_queue = queue_of(victim_id);
         task * t = victim_queue->thief_pop();
         if (t) {
-            bsg_print_int(1000000 + __bsg_id * 1000 + victim_id);
+            //bsg_print_int(1000000 + __bsg_id * 1000 + victim_id);
             t->execute();
         }
     }
