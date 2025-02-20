@@ -14,6 +14,7 @@ namespace cello
 template <typename F0, typename F1>
 void parallel_invoke(F0 &&f0, F1 &&f1)
 {
+    using joiner = one_child_joiner;
     joiner j;
     joiner *jp = bsg_tile_group_remote_pointer<joiner>(__bsg_x, __bsg_y, &j);
     task *t = new_task(std::forward<F0>(f0), *jp);

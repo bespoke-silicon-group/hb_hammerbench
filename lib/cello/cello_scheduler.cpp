@@ -73,8 +73,8 @@ void schedule()
 /**
  * wait for a joiner to be ready
  */
-void wait(joiner * j)
+void wait(joiner_base * j)
 {
-    scheduler_loop([j](){ return j->ready(); });
+    scheduler_loop([j](){ return j->joined(); });
 }
 }

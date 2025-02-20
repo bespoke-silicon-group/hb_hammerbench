@@ -7,12 +7,21 @@ namespace cello
 {
 
 /**
- * @brief Joiner class
+ * @brief joiner base class
  */
-class joiner
+class joiner_base
 {
 public:
-    typedef joiner* joiner_ptr;
+    virtual bool joined() const = 0;
+};
+
+/**
+ * @brief Joiner class
+ */
+class one_child_joiner : public joiner_base
+{
+public:
+    typedef one_child_joiner* joiner_ptr;
 
     /**
      * @brief a child of this joiner
@@ -21,7 +30,6 @@ public:
     public:
         child(joiner_ptr p) : parent_(p) {}
         void join() {
-            //bsg_printf("join(): thread %d: joiner %p\n", __bsg_id, parent_);
             parent_->increment_ready_count();
         }
         FIELD(joiner_ptr, parent);        
@@ -30,7 +38,7 @@ public:
     /**
      * currently only one child supported
      */
-    joiner() : ready_(0) {}
+    one_child_joiner() : ready_(0) {}
 
     /**
      * signal that child has completed
@@ -42,7 +50,7 @@ public:
     /**
      * join has completed
      */
-    bool joined() const { return ready(); }
+    bool joined() const override { return ready(); }
 
     /**
      * returns a created child
@@ -54,5 +62,7 @@ public:
     FIELD(int, ready);
 };
 
+/**
+ */
 }
 #endif

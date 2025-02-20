@@ -18,7 +18,7 @@ void spawn(task *t);
 /**
  * wait for a joiner to be ready
  */
-void wait(joiner *j);
+void wait(joiner_base *j);
 
 /**
  * schedule work on this thread

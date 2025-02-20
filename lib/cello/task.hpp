@@ -16,8 +16,6 @@ namespace cello
 class task
 {
 public:
-    typedef joiner::child parent_ptr;
-
     /**
      * @brief constructor
      */
@@ -33,26 +31,21 @@ public:
      */
     virtual void execute() {}
 
-    /**
-     * @brief returns the size of this task
-     */
-    virtual size_t size() const { return sizeof(*this); }
-
     FIELD(util::list_item, queued);
 };
 
 /**
  * @brief Functor task
  */
-template <typename F>
-class functor_task : public task{
+template <typename F, typename Joiner>
+class functor_task : public task {
 public:
     /**
      * @brief constructor
      */
-    functor_task(F && f, parent_ptr p)
+    functor_task(F && f, Joiner & p)
         : task()
-        , parent_(p)
+        , parent_(p.make_child())
         , func(std::move(f)) {
     }
 
@@ -70,20 +63,21 @@ public:
     }
 
     void *operator new(size_t size) {
-        return allocate(sizeof(functor_task<F>));
+        return allocate(sizeof(functor_task<F, Joiner>));
     }
 
     void operator delete(void *p) {
-        deallocate(p, sizeof(functor_task<F>));
+        deallocate(p, sizeof(functor_task<F, Joiner>));
     }
 
     typename std::remove_reference<F>::type func; //!< function lambda, no reference
-    FIELD(joiner::child, parent);
+
+    FIELD(typename Joiner::child, parent);
 };
 
-template <typename F>
-inline task * new_task(F && f, joiner &j) {
-    return new functor_task<F>(std::forward<F>(f), j.make_child());
+template <typename F, typename Joiner>
+inline task * new_task(F && f, Joiner &j) {
+    return new functor_task<F, Joiner>(std::forward<F>(f), j);
 }
 
 }

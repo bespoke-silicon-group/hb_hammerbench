@@ -22,6 +22,7 @@ void recurse_scheduler(int depth)
         sched_mask |= (1 << __bsg_id);
         return;
     } else {
+        using joiner = one_child_joiner;
         joiner j;
         joiner *jp = bsg_tile_group_remote_pointer<joiner>(__bsg_x, __bsg_y, &j);
         task *t = new_task([=]() { recurse_scheduler(depth - 1); }, *jp);
