@@ -28,8 +28,6 @@ include app_path.mk
 # Tile Group Dimensions
 TILE_GROUP_DIM_X ?= $(BSG_MACHINE_POD_TILES_X)
 TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_POD_TILES_Y)
-#TILE_GROUP_DIM_X ?= 2
-#TILE_GROUP_DIM_Y ?= 1
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
