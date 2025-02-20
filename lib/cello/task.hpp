@@ -53,7 +53,7 @@ public:
     /**
      * @brief constructor
      */
-    functor_task(F && f, parent_ptr p) : task(p), func(f) {}
+    functor_task(F && f, parent_ptr p) : task(p), func(std::move(f)) {}
 
     /**
      * destructor
@@ -76,7 +76,7 @@ public:
         deallocate(p, sizeof(functor_task<F>));
     }
 
-    F func;
+    typename std::remove_reference<F>::type func; //!< function lambda, no reference
 };
 
 template <typename F>
