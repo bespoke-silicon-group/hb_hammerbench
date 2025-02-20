@@ -89,5 +89,5 @@ int cello_main(int argc, char *argv[])
     TEST_NEQ(INT, sched_mask  ,(1 << __bsg_id));
     TEST_NEQ(INT, invoke_mask ,(1 << __bsg_id));
     TEST_NEQ(INT, lvalue_mask ,(1 << __bsg_id));
-    return
+    return 0;
 }
