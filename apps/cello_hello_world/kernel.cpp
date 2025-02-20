@@ -70,6 +70,21 @@ void recurse_invoke_lvalue(int depth)
     recurser r(depth);
     r();
 }
+
+void recurse4(int depth)
+{
+    using namespace cello;
+    bsg_print_int(depth);
+    if (depth == 0) {
+        return;
+    } else {
+        parallel_invoke([=]() { recurse4(depth - 1); },
+                        [=]() { recurse4(depth - 1); },
+                        [=]() { recurse4(depth - 1); },
+                        [=]() { recurse4(depth - 1); });
+    }
+}
+
 int cello_main(int argc, char *argv[])
 {
     using namespace cello;
@@ -90,5 +105,7 @@ int cello_main(int argc, char *argv[])
     TEST_NEQ(INT, sched_mask  ,(1 << __bsg_id));
     TEST_NEQ(INT, invoke_mask ,(1 << __bsg_id));
     TEST_NEQ(INT, lvalue_mask ,(1 << __bsg_id));
+
+    recurse4(3);
     return 0;
 }

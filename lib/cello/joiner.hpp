@@ -63,6 +63,44 @@ public:
 };
 
 /**
+ * @brief joiner class with four children
  */
+class three_child_joiner : public joiner_base
+{
+public:
+    typedef three_child_joiner* joiner_ptr;
+    /**
+     * @brief a child of this joiner
+     */
+    class child {
+    public:
+        child(char* ready) : ready_(ready) {}
+        void join() {
+            *ready_ = -1;
+        }
+        char *ready_;
+    };
+
+    /**
+     * make a new child
+     */
+    child make_child() {
+        return child(&child_ready_[children_made_++]);
+    }
+
+    /**
+     * @brief check that all children have joined
+     */
+    bool joined() const override {
+        return ready_ & 0x00ffffff == 0x00ffffff;
+    }
+
+    union {
+        uint32_t ready_      = 0;
+        char     child_ready_[4];
+    };
+    unsigned children_made_ = 0;
+};
+
 }
 #endif
