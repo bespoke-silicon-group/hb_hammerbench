@@ -34,9 +34,29 @@ void recurse_invoke(int depth)
     }
 }
 
+struct recurser
+{
+    recurser(int depth) : depth_(depth) {}
+    void operator()()
+    {
+        using namespace cello;
+        bsg_print_int(depth_);
+        if (depth_ == 0) {
+            return;
+        } else {
+            recurser l(depth_ - 1), r(depth_ - 1);
+            recurser *lp = bsg_tile_group_remote_pointer<recurser>(__bsg_x, __bsg_y, &l);
+            recurser *rp = bsg_tile_group_remote_pointer<recurser>(__bsg_x, __bsg_y, &r);
+            parallel_invoke(*lp, *rp);
+        }
+    }
+    FIELD(int, depth);
+};
 int cello_main(int argc, char *argv[])
 {
     using namespace cello;
-    recurse_invoke(6);
+    //recurse_invoke(6);
+    recurser r(6);
+    r();
     return 0;
 }
