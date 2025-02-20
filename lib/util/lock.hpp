@@ -53,6 +53,13 @@ public:
 class tile_lock
 {
 public:
+    typedef tile_lock *lock_ptr;
+
+    /**
+     * @brief constructor
+     */
+    tile_lock();
+
     /**
      * @brief acquire the lock
      */
@@ -62,6 +69,8 @@ public:
      * @brief release the lock
      */
     void release();
+
+    FIELD(lock_ptr, global_this); //!< global this
 };
 
 /**

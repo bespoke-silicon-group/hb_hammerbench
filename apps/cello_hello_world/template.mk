@@ -26,10 +26,10 @@ include parameters.mk
 include app_path.mk
 
 # Tile Group Dimensions
-TILE_GROUP_DIM_X ?= $(BSG_MACHINE_POD_TILES_X)
-TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_POD_TILES_Y)
-#TILE_GROUP_DIM_X ?= 1
-#TILE_GROUP_DIM_Y ?= 1
+#TILE_GROUP_DIM_X ?= $(BSG_MACHINE_POD_TILES_X)
+#TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_POD_TILES_Y)
+TILE_GROUP_DIM_X ?= 2
+TILE_GROUP_DIM_Y ?= 1
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
@@ -84,11 +84,20 @@ CELLO_LIB_OBJECTS := $(foreach obj,$(CELLO_LIB_OBJECTS),$(notdir $(obj)))
 vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/cello
 vpath %.c   $(HB_HAMMERBENCH_PATH)/lib/cello/bsg_manycore
 
+UTIL_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/util/*.cpp)
+UTIL_LIB_OBJECTS := $(UTIL_LIB_SOURCES:.cpp=.rvo)
+UTIL_LIB_OBJECTS := $(foreach obj,$(UTIL_LIB_OBJECTS),$(notdir $(obj)))
+vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/util
+vpath %.c   $(HB_HAMMERBENCH_PATH)/lib/util/bsg_manycore
+
 RISCV_CCPPFLAGS += -fno-rtti
+RISCV_CCPPFLAGS += -fno-exceptions
 RISCV_CCPPFLAGS += -lstdc++
 
 
 RISCV_TARGET_OBJECTS += $(CELLO_LIB_OBJECTS)
+RISCV_TARGET_OBJECTS += $(UTIL_LIB_OBJECTS)
+
 debug:
 	@echo $(CELLO_LIB_SOURCES)
 	@echo $(CELLO_LIB_OBJECTS)

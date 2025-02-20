@@ -2,6 +2,8 @@
 #define CELLO_PARALLEL_INVOKE_HPP
 #include <cello/joiner.hpp>
 #include <cello/scheduler.hpp>
+#include <bsg_manycore.hpp>
+#include <bsg_tile_config_vars.h>
 namespace cello
 {
 /**
@@ -13,10 +15,11 @@ template <typename F0, typename F1>
 void parallel_invoke(F0 &&f0, F1 &&f1)
 {
     joiner j;
-    task *t = new_task(f0, j);
+    joiner *jp = bsg_tile_group_remote_pointer<joiner>(__bsg_x, __bsg_y, &j);
+    task *t = new_task(std::forward<F0>(f0), *jp);
     spawn(t);
     f1();
-    wait(&j);
+    wait(jp);
     delete t;
 }
 }

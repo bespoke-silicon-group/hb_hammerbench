@@ -7,6 +7,7 @@ namespace cello
 
 __attribute__((section(".dram")))
 std::atomic<uintptr_t> allocator_base;
+__attribute__((section(".dram")))
 uintptr_t allocator_end;
 
 /**

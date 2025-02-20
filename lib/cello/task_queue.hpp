@@ -13,15 +13,6 @@ namespace cello
 class task_queue
 {
 public:
-    /**
-     * @brief constructor
-     */
-    task_queue() {}
-
-    /**
-     * @brief destructor
-     */
-    ~task_queue() {}
 
     /**
      * @brief push a task onto the queue as the owner
@@ -34,16 +25,22 @@ public:
      * @brief pop a task from the queue as the owner
      */
     task * owner_pop() {
+        if (task_list().empty()) {
+            return nullptr;
+        }
         util::list_item*l = task_list().pop_front();
-        return l ? container_of(l, task, queued_) : nullptr;
+        return container_of(l, task, queued_);
     }
 
     /**
      * @brief  pop a task from the queue as a thief
      */
     task * thief_pop() {
+        if (task_list().empty()) {
+            return nullptr;
+        }
         util::list_item*l = task_list().pop_back();
-        return l ? container_of(l, task, queued_) : nullptr;
+        return container_of(l, task, queued_);
     }
 
     /**
@@ -54,16 +51,18 @@ public:
     }
 
     FIELD(util::list, task_list);
+    FIELD(util::tile_lock, lock);
 };
 }
 
 template <typename Lock>
 class util::lockable<cello::task_queue, Lock>
 {
+public:
     UTIL_LOCKABLE_INTERNAL(cello::task_queue, Lock);
     UTIL_LOCKABLE_METHOD(cello::task_queue, Lock, owner_push);
-    UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task *, owner_pop);
-    UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task *, thief_pop);
+    UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task*, owner_pop);
+    UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task*, thief_pop);
     UTIL_LOCKABLE_FUNCTION_CONST(cello::task_queue, Lock, bool, empty);
 };
 

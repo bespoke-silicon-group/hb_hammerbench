@@ -6,6 +6,7 @@
 #include <cello/allocator.hpp>
 #include <new>
 #include <utility>
+
 namespace cello
 {
 
@@ -80,7 +81,7 @@ public:
 
 template <typename F>
 inline task * new_task(F && f, joiner &j) {
-    return new functor_task<F>(f, j.make_child());
+    return new functor_task<F>(std::forward<F>(f), j.make_child());
 }
 
 }

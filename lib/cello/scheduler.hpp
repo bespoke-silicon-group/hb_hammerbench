@@ -3,6 +3,7 @@
 #include <cello/task.hpp>
 #include <cello/joiner.hpp>
 #include <cello/config.hpp>
+#include <bsg_manycore.h>
 namespace cello {
 /**
  * @brief initialize the scheduler

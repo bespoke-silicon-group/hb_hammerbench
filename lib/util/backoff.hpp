@@ -1,6 +1,7 @@
 #ifndef UTIL_BACKOFF_HPP
 #define UTIL_BACKOFF_HPP
 #include <algorithm>
+#include "bsg_manycore.h"
 namespace util
 {
 template <int MAX, typename Condition>

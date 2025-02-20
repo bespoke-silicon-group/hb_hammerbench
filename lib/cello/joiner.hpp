@@ -1,6 +1,8 @@
 #ifndef CELLO_JOINER_HPP
 #define CELLO_JOINER_HPP
 #include <util/class_field.hpp>
+#include <bsg_manycore.h>
+#include <bsg_tile_config_vars.h>
 namespace cello
 {
 
@@ -19,6 +21,7 @@ public:
     public:
         child(joiner_ptr p) : parent_(p) {}
         void join() {
+            //bsg_printf("join(): thread %d: joiner %p\n", __bsg_id, parent_);
             parent_->increment_ready_count();
         }
         FIELD(joiner_ptr, parent);        
