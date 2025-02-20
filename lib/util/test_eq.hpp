@@ -4,43 +4,59 @@
 #include <util/print_str.hpp>
 #define _TEST_EQ(type, fmt, expr, expect)                               \
     do {                                                                \
+        __attribute__((section(".dram")))                               \
+            static char fail_str[] = __FILE__ ":" STRINGIFY(__LINE__) ": FAIL:  "#expr " != " #expect "\n"; \
+        __attribute__((section(".dram")))                               \
+            static char pass_str[] = __FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " == " #expect "\n"; \
         type e = (expr);                                                \
         if (e != expect) {                                              \
-            util::print_str(__FILE__ ":" STRINGIFY(__LINE__) ": FAIL:  "#expr " != " #expect "\n"); \
+            util::print_str(fail_str);                                  \
         }  else {                                                       \
-            util::print_str(__FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " == " #expect "\n"); \
+            util::print_str(pass_str);                                  \
         }                                                               \
     } while (0)
 
 #define _TEST_NEQ(type, fmt, expr, expect)                               \
     do {                                                                \
+        __attribute__((section(".dram")))                               \
+            static char fail_str[] = __FILE__ ":" STRINGIFY(__LINE__) ": FAIL:  "#expr " == " #expect "\n"; \
+        __attribute__((section(".dram")))                               \
+            static char pass_str[] = __FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " != " #expect "\n"; \
         type e = (expr);                                                \
         if (e == expect) {                                              \
-            util::print_str(__FILE__ ":" STRINGIFY(__LINE__) ": FAIL:  "#expr " == " #expect "\n"); \
+            util::print_str(fail_str);                                  \
         }  else {                                                       \
-            util::print_str(__FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " != " #expect "\n"); \
+            util::print_str(pass_str);                                  \
         }                                                               \
     } while (0)
 
 #define _TEST_EQ_SAVE(type, fmt, save, expr, expect)                    \
     do {                                                                \
+        __attribute__((section(".dram")))                               \
+            static char fail_str[] = __FILE__ ":" STRINGIFY(__LINE__) ": FAIL:  "#expr " != " #expect "\n"; \
+        __attribute__((section(".dram")))                               \
+            static char pass_str[] = __FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " == " #expect "\n"; \
         type e = (expr);                                                \
         save = e;                                                       \
         if (e != expect) {                                              \
-            util::print_str(__FILE__ ":" STRINGIFY(__LINE__) ": FAIL:  "#expr " != " #expect "\n"); \
+            util::print_str(fail_str);                                  \
         } else {                                                        \
-            util::print_str(__FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " == " #expect "\n"); \
+            util::print_str(pass_str);                                  \
         }                                                               \
     } while (0)
 
-#define _TEST_NEQ_SAVE(type, fmt, save, expr, expect)                    \
+#define _TEST_NEQ_SAVE(type, fmt, save, expr, expect)                   \
     do {                                                                \
+        __attribute__((section(".dram")))                               \
+            static char fail_str[] = __FILE__ ":" STRINGIFY(__LINE__) ": FAIL:  "#expr " == " #expect "\n"; \
+        __attribute__((section(".dram")))                               \
+            static char pass_str[] = __FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " != " #expect "\n"; \
         type e = (expr);                                                \
         save = e;                                                       \
         if (e == expect) {                                              \
-            util::print_str(__FILE__ ":" STRINGIFY(__LINE__) ": FAIL:  "#expr " == " #expect "\n"); \
+            util::print_str(fail_str);                                  \
         } else {                                                        \
-            util::print_str(__FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " != " #expect "\n"); \
+            util::print_str(pass_str);                                  \
         }                                                               \
     } while (0)
 
