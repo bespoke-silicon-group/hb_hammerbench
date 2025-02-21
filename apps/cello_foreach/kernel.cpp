@@ -24,11 +24,11 @@ extern "C" int cello_main(int argc, char **argv)
 
     mask = (1 << __bsg_id);
     sum = 0;
-    // cello::foreach<cello::serial>(0, 64, [](int i) {
-    //     sum += i;
-    //     mask |= (1 << __bsg_id);
-    // });
-    // TEST_EQ(INT, sum, 2016);
-    // TEST_EQ(INT, mask, (1 << __bsg_id));
+    cello::foreach<cello::serial>(0, 64, [](int i) {
+        sum += i;
+        mask |= (1 << __bsg_id);
+    });
+    TEST_EQ(INT, sum, 2016);
+    TEST_EQ(INT, mask, (1 << __bsg_id));
     return 0;
 }
