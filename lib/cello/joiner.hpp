@@ -92,7 +92,7 @@ public:
      * @brief check that all children have joined
      */
     bool joined() const override {
-        return ready_ & 0x00ffffff == 0x00ffffff;
+        return ready_ == 0x00ffffff;
     }
 
     union {
