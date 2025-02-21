@@ -67,7 +67,7 @@ template <typename Idx, typename Body>
 void parallel_foreach(Idx begin, Idx end, Idx step, Body &&body)
 {
     loop_info<Idx> info(begin, end, step);
-    parallel_foreach(info, std::forward(body));
+    parallel_foreach(info, std::forward<Body>(body));
 }
 
 }
