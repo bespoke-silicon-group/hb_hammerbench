@@ -15,12 +15,23 @@ template <cello::Schedule sched = parallel, typename Idx, typename Body>
 void foreach(Idx begin, Idx end, Idx step, Body &&body)
 {
     if (sched == parallel) {
-        parallel_foreach(begin, end, step, std::forward(body));
+        parallel_foreach(begin, end, step, std::forward<Body>(body));
     } else {
         for (Idx i = begin; i < end; i += step) {
             body(i);
         }
     }
+}
+/**
+ * @brief foreach
+ * @param begin
+ * @param end
+ * @param body
+ */
+template <cello::Schedule sched = parallel, typename Idx, typename Body>
+void foreach(Idx begin, Idx end, Body &&body)
+{
+    foreach<sched>(begin, end, 1, std::forward<Body>(body));
 }
 }
 #endif

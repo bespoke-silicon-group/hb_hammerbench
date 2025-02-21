@@ -4,4 +4,5 @@
 #include <cello/main.hpp>
 #include <cello/invoke.hpp>
 #include <cello/foreach.hpp>
+#include <cello/foreach_block.hpp>
 #endif
