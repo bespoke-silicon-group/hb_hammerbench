@@ -1,5 +1,6 @@
 #include <cello/cello.hpp>
 #include <util/test_eq.hpp>
+#include <util/statics.hpp>
 #include "bsg_manycore.h"
 
 extern "C" void setup()
@@ -7,8 +8,7 @@ extern "C" void setup()
     return;
 }
 
-__attribute__((section(".dram")))
-int fib_n = 0, fib_result = 0, fib_expect = 0;
+DRAM(int) fib_n = 0, fib_result = 0, fib_expect = 0;
 
 
 int fib(int n)

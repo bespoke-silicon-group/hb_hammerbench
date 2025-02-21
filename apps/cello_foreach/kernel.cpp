@@ -1,14 +1,15 @@
 #include <cello/cello.hpp>
 #include <atomic>
 #include <util/test_eq.hpp>
+#include <util/statics.hpp>
 
 extern "C" int setup()
 {
     return 0;
 }
 
-__attribute__((section(".dram")))
-std::atomic<int> sum, mask;
+
+DRAM(std::atomic<int>) sum, mask;
 
 extern "C" int cello_main(int argc, char **argv)
 {
