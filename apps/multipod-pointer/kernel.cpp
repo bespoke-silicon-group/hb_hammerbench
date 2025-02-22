@@ -2,6 +2,8 @@
 #include "bsg_manycore.h"
 #include "bsg_set_tile_x_y.h"
 #include "bsg_cuda_lite_barrier.h"
+#include "bsg_manycore.hpp"
+#include <util/test_eq.hpp>
 #include <array>
 
 using namespace bsg_global_pointer;
@@ -11,6 +13,9 @@ __attribute__((section(".dram"))) unsigned g_pod_y = 0;
 __attribute__((section(".dram"))) unsigned g_special = 0;
 __attribute__((section(".dram"))) std::array<unsigned, 4> g_array;
 __attribute__((section(".dram"))) pointer<unsigned> g_ptr;
+
+__attribute__((section(".dmem"))) unsigned l_pod_x = 0;
+__attribute__((section(".dmem"))) unsigned l_pod_y = 0;
 
 struct foo {
         FIELD(unsigned, x);
@@ -31,50 +36,18 @@ namespace bsg_global_pointer
         };
 }
 
-#define UDEC unsigned, "%u"
-#define UHEX unsigned, "%x"
-
 #define NEWV -1
 #define OLDV 0xcafebabe
 #define BADV 0xdeadbeef
 
-void bsg_print_str(const char *str)
-{
-        while (*str) { bsg_putchar(*str++); }
-}
-
-#define STRINGIFY_(x) #x
-#define STRINGIFY(x) STRINGIFY_(x)
-
-#define _TEST_EQ(type, fmt, expr, expect)                               \
-        do {                                                            \
-                type e = (expr);                                        \
-                if (e != expect) {                                      \
-                        bsg_print_str(__FILE__ ":" STRINGIFY(__LINE__) ": FAIL:  "#expr " != " #expect "\n"); \
-                }  else {                                               \
-                        bsg_print_str(__FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " == " #expect "\n"); \
-                }                                                       \
-        } while (0)
-
-#define _TEST_EQ_SAVE(type, fmt, save, expr, expect)                    \
-        do {                                                            \
-                type e = (expr);                                        \
-                save = e;                                               \
-                if (e != expect) {                                      \
-                        bsg_print_str(__FILE__ ":" STRINGIFY(__LINE__) ": FAIL:  "#expr " != " #expect "\n"); \
-                } else {                                                \
-                        bsg_print_str(__FILE__ ":" STRINGIFY(__LINE__) ": PASS:  "#expr " == " #expect "\n"); \
-                }                                                       \
-        } while (0)
-
-#define TEST_EQ(typefmt, expr, expect) _TEST_EQ(typefmt, expr, expect)
-#define TEST_EQ_SAVE(typefmt, save, expr, expect) _TEST_EQ_SAVE(typefmt, save, expr, expect)
 
 extern "C" int setup(unsigned pod_x, unsigned pod_y)
 {
         bsg_barrier_tile_group_init();
         bsg_barrier_tile_group_sync();
         {
+                l_pod_x = pod_x;
+                l_pod_y = pod_y;
                 g_pod_x = pod_x;
                 g_pod_y = pod_y;
                 g_foo.x() = pod_x;
@@ -203,4 +176,27 @@ extern "C" int multipod_pointer_t3()
         }
         bsg_barrier_tile_group_sync();
         return 0;
+}
+
+/**
+ * test global dmem pointer
+ */
+extern "C" int multipod_pointer_t4()
+{
+    bsg_barrier_tile_group_init();
+    bsg_barrier_tile_group_sync();
+    {
+        unsigned *lpx = bsg_tile_group_remote_pointer<unsigned>(0, 0, &l_pod_x);
+        unsigned *lpy = bsg_tile_group_remote_pointer<unsigned>(0, 0, &l_pod_y);
+        pod_address addr{0};
+        addr.set_pod_x(0).set_pod_y(0);
+        {
+            pod_address_guard grd(addr);
+            TEST_EQ(UDEC, *lpx, 0);
+            TEST_EQ(UDEC, *lpy, 0);
+        }
+        TEST_NEQ(UDEC, *lpx+*lpy, 0);
+    }
+    bsg_barrier_tile_group_sync();
+    return 0;
 }

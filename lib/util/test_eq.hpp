@@ -69,5 +69,7 @@
 #define INT int          ,"%d"
 #define UINT unsigned int,"%u"
 #define HINT unsigned int,"0x%x"
+#define UDEC unsigned int,"%u"
+#define UHEX unsigned int,"0x%x"
 
 #endif

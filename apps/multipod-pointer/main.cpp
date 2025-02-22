@@ -49,6 +49,12 @@ int multipod_pointer_main(int argc, char *argv[])
 
     BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&mc));
 
+    BSG_CUDA_CALL(hb_mc_device_pod_kernel_enqueue(&mc, 1,
+                                                  {1,1}, tg,
+                                                  "multipod_pointer_t4", 0, {}));
+
+    BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&mc));
+
     hb_mc_device_foreach_pod_id(&mc, pod_id)
     {
             BSG_CUDA_CALL(hb_mc_device_pod_program_finish(&mc, pod_id));
