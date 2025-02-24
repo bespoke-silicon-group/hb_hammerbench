@@ -3,12 +3,6 @@
 #include <util/test_eq.hpp>
 #include <util/statics.hpp>
 
-extern "C" int setup()
-{
-    return 0;
-}
-
-
 DRAM(std::atomic<int>) sum, mask;
 
 extern "C" int cello_main(int argc, char **argv)

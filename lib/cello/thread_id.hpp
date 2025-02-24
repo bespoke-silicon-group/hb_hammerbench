@@ -5,7 +5,7 @@
 #include <cello/config.hpp>
 namespace cello {
 namespace my {
-extern int __bsg_pod_x, __bsg_pod_y, __bsg_pod_id;
+extern int __bsg_pod_x, __bsg_pod_y, __bsg_pod_id, __bsg_absolute_id;
 
 /**
  * @brief get the x coordinate of my pod
@@ -38,6 +38,12 @@ static inline int num_pods_y() {
     return bsg_pods_Y;
 }
 /**
+ * @brief get the number of pods
+ */
+static inline int num_pods() {
+    return bsg_pods_X * bsg_pods_Y;
+}
+/**
  * @brief get the x coordinate of my tile in the pod
  */
 static inline int tile_x() {
@@ -66,6 +72,18 @@ static inline int num_tiles_x() {
  */
 static inline int num_tiles_y() {
     return bsg_tiles_Y;
+}
+/**
+ * @brief get the number of tiles in the pod
+ */
+static inline int num_tiles() {
+    return bsg_tiles_X * bsg_tiles_Y;
+}
+/**
+ * @brief get the absolute id
+ */
+static inline int id() {
+    return __bsg_absolute_id;
 }
 }
 

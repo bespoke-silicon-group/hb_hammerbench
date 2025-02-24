@@ -16,14 +16,8 @@ int program::init(int argc, char **argv) {
     hb_mc_pod_id_t pod_id;
     hb_mc_device_foreach_pod_id(&this->mc, pod_id)
     {
-        hb_mc_coordinate_t pod = hb_mc_index_to_coordinate(pod_id, this->mc.mc->config.pod_shape);
-        std::vector<uint32_t> argv = {pod.x, pod.y};
         BSG_CUDA_CALL(hb_mc_device_pod_program_init(&this->mc, pod_id, program));
-        BSG_CUDA_CALL(hb_mc_device_pod_kernel_enqueue(&this->mc, pod_id,
-                                                      {1,1}, this->tg,
-                                                      "setup", argv.size(), argv.data()));
     }
-    BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&this->mc));
     return 0;
 }
 
@@ -57,9 +51,18 @@ int program::sync_input() {
 
 int program::run() {
     hb_mc_pod_id_t pod_id;
+    std::vector<uint32_t> argv = {cfg_ptr};
     hb_mc_device_foreach_pod_id(&this->mc, pod_id)
     {
-        std::vector<uint32_t> argv = {cfg_ptr};
+        BSG_CUDA_CALL(hb_mc_device_pod_kernel_enqueue(&this->mc, pod_id,
+                                                      {1,1}, this->tg,
+                                                      "cello_setup", argv.size(), argv.data()));
+    }
+
+    BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&this->mc));
+
+    hb_mc_device_foreach_pod_id(&this->mc, pod_id)
+    {
         BSG_CUDA_CALL(hb_mc_device_pod_kernel_enqueue(&this->mc, pod_id,
                                                       {1,1}, this->tg,
                                                       "cello_start", argv.size(), argv.data()));

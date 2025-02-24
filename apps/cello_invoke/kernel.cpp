@@ -4,10 +4,6 @@
 #include <util/test_eq.hpp>
 #include <util/statics.hpp>
 
-extern "C" int setup(unsigned pod_x, unsigned pod_y)
-{
-    return 0;
-}
 
 DRAM(std::atomic<int>) sched_ctr, invoke_ctr, lvalue_ctr;
 DRAM(std::atomic<int>) sched_mask, invoke_mask, lvalue_mask;

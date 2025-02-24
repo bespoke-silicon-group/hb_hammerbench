@@ -3,11 +3,6 @@
 #include <util/statics.hpp>
 #include "bsg_manycore.h"
 
-extern "C" void setup()
-{
-    return;
-}
-
 DRAM(int) fib_n = 0, fib_result = 0, fib_expect = 0;
 
 
