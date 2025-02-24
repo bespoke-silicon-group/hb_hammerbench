@@ -1,6 +1,7 @@
 #ifndef CELLO_TASK_QUEUE_HPP
 #define CELLO_TASK_QUEUE_HPP
 #include <cello/task.hpp>
+#include <cello/pointer.hpp>
 #include <util/list.hpp>
 #include <util/class_field.hpp>
 #include <util/lock.hpp>
@@ -64,6 +65,18 @@ public:
     UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task*, owner_pop);
     UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task*, thief_pop);
     UTIL_LOCKABLE_FUNCTION_CONST(cello::task_queue, Lock, bool, empty);
+};
+
+template <typename Lock>
+class bsg_global_pointer::reference<util::lockable<cello::task_queue, Lock>>
+{
+public:
+    using type = util::lockable<cello::task_queue, Lock>;
+    BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(type);
+    BSG_GLOBAL_POINTER_REFERENCE_METHOD(type, owner_push);
+    BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(type, owner_pop, cello::task*);
+    BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(type, thief_pop, cello::task*);
+    BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(type, empty, bool);
 };
 
 #endif

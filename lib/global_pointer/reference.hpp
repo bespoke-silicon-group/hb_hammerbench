@@ -254,7 +254,7 @@ public:
  * generates a delegate method. this can be used to coalesce multiple accesses
  * without writing the samve value to pod address csr over and over again
  */
-#define BSG_GLOBAL_POINTER_REFERENCE_METHOD(type, method, return_type)  \
+#define BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(type, method, return_type)  \
     public:                                                             \
     return_type method() {                                              \
         type *p = reinterpret_cast<type*>(addr().raw());                \
@@ -265,7 +265,7 @@ public:
         }                                                               \
         return r;                                                       \
     }
-#define BSG_GLOBAL_POINTER_REFERENCE_METHOD_CONST(type, method, return_type) \
+#define BSG_GLOBAL_POINTER_REFERENCE_FUNCTION_CONST(type, method, return_type) \
     public:                                                             \
     return_type method() const {                                        \
         type *p = reinterpret_cast<type*>(addr().raw());                \
@@ -275,6 +275,26 @@ public:
             r = p->method();                                            \
         }                                                               \
         return r;                                                       \
+    }
+#define BSG_GLOBAL_POINTER_REFERENCE_METHOD(type, method)               \
+    public:                                                             \
+    void method() {                                                     \
+        type *p = reinterpret_cast<type*>(addr().raw());                \
+        {                                                               \
+            pod_address_guard grd(addr().ext().pod_addr());             \
+            p->method();                                                \
+        }                                                               \
+        return;                                                         \
+    }
+#define BSG_GLOBAL_POINTER_REFERENCE_METHOD_CONST(type, method)         \
+    public:                                                             \
+    void method() const {                                               \
+        type *p = reinterpret_cast<type*>(addr().raw());                \
+        {                                                               \
+            pod_address_guard grd(addr().ext().pod_addr());             \
+            p->method();                                                \
+        }                                                               \
+        return;                                                         \
     }
 
 /**

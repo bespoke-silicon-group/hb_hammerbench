@@ -1,16 +1,19 @@
 #include <util/lock.hpp>
 #include <util/list.hpp>
+#include <util/statics.hpp>
 #include <cello/scheduler.hpp>
 #include <cello/task_queue.hpp>
 #include <cello/task.hpp>
+#include <cello/thread_id.hpp>
+#include <cello/pointer.hpp>
+#include <global_pointer/global_pointer.hpp>
 #include <bsg_manycore.h>
 #include <bsg_manycore.hpp>
 #include <bsg_tile_config_vars.h>
 namespace cello
 {
 
-__attribute__((section(".dmem")))
-int scheduler_seed = 0;
+DMEM(int) scheduler_seed = 0;
 
 // Not great in terms of randomness, but should be faster than rand()
 inline int fast_random()
@@ -21,15 +24,22 @@ inline int fast_random()
 
 using queue = util::lockable<task_queue, util::tile_lock>;
 
-__attribute__((section(".dmem")))
-queue my_queue;
+DMEM(queue) my_queue;
 
-__attribute__((section(".dmem")))
-queue *my_queue_ptr = &my_queue;
+DMEM(queue *) my_queue_ptr = &my_queue;
 
-queue *queue_of(int id)
+global_pointer<queue> queue_of(int id)
 {
-    return bsg_tile_group_remote_pointer<queue>(id % bsg_tiles_X, id / bsg_tiles_X, &my_queue);
+    int pod, pod_x, pod_y, tile, tile_x, tile_y;
+    pod    = id / my::num_tiles();
+    tile   = id % my::num_tiles();
+    pod_x  = pod % my::num_pods_x();
+    pod_y  = pod / my::num_pods_x();
+    tile_x = tile % my::num_tiles_x();
+    tile_y = tile / my::num_tiles_x();
+    queue *lcl = bsg_tile_group_remote_pointer<queue>(tile_x, tile_y, &my_queue);
+    global_pointer<queue> glbl = global_pointer<queue>::onPodXY(pod_x, pod_y, lcl);
+    return glbl;
 }
 
 /**
@@ -37,8 +47,8 @@ queue *queue_of(int id)
  */
 void scheduler_initialize(config *cfg)
 {
-    scheduler_seed = __bsg_id;
-    my_queue_ptr = bsg_tile_group_remote_pointer<queue>(__bsg_x, __bsg_y, &my_queue);
+    scheduler_seed = my::tile_id();
+    my_queue_ptr = bsg_tile_group_remote_pointer<queue>(my::tile_x(), my::tile_y(), &my_queue);
     new (my_queue_ptr) queue;
 }
 
@@ -60,8 +70,8 @@ void schedule()
     if (t) {
         t->execute();
     } else {
-        int victim_id = fast_random() % (bsg_tiles_X * bsg_tiles_Y);
-        auto *victim_queue = queue_of(victim_id);
+        int victim_id = fast_random() % my::num_tiles();
+        auto victim_queue = queue_of(victim_id);
         task * t = victim_queue->thief_pop();
         if (t) {
             //bsg_print_int(1000000 + __bsg_id * 1000 + victim_id);

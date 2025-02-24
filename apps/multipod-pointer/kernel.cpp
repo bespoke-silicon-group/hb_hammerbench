@@ -32,7 +32,7 @@ namespace bsg_global_pointer
                 BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(foo);
                 BSG_GLOBAL_POINTER_REFERENCE_FIELD(foo, x);
                 BSG_GLOBAL_POINTER_REFERENCE_FIELD(foo, y);
-                BSG_GLOBAL_POINTER_REFERENCE_METHOD_CONST(foo, sum, unsigned);
+                BSG_GLOBAL_POINTER_REFERENCE_FUNCTION_CONST(foo, sum, unsigned);
         };
 }
 
