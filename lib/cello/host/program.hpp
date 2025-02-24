@@ -76,8 +76,8 @@ public:
     hb_mc_dimension_t tg = {bsg_tiles_X, bsg_tiles_Y}; //!< tile group dimensions
     std::vector<std::vector<hb_mc_dma_htod_t>> jobs_in; //!< dma jobs
     std::vector<std::vector<hb_mc_dma_dtoh_t>> jobs_out; //!< dma jobs
+    std::vector<cello::config> cfgs; //!< configurations
     hb_mc_eva_t cfg_ptr = 0; //!< config pointer
-    cello::config cfg;
 };
 }
 /**
