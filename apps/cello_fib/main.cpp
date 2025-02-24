@@ -56,7 +56,9 @@ int cello_hello_world_main(int argc, char *argv[])
             cello::config cfg;
             cfg.dram_buffer_size() = 16*1024*1024;
             BSG_CUDA_CALL(hb_mc_device_pod_malloc(&mc, pod_id, cfg.dram_buffer_size(), &cfg.dram_buffer()));
-            
+            cfg.pod_x() = pod.x;
+            cfg.pod_y() = pod.y;
+
             hb_mc_eva_t cfg_ptr;
             BSG_CUDA_CALL(hb_mc_device_pod_malloc(&mc, pod_id, sizeof(cello::config), &cfg_ptr));
 

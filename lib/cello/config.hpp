@@ -10,6 +10,8 @@ namespace cello
 class config
 {
 public:
+    FIELD(int, pod_x); //!< pod x
+    FIELD(int, pod_y); //!< pod y
     FIELD(uint32_t, dram_buffer); //!< dram buffer
     FIELD(uint32_t, dram_buffer_size); //!< dram buffer size
 };

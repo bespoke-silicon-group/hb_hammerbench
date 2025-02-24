@@ -1,0 +1,3 @@
+#ifndef CELLO_FAST_RANDOM_HPP
+#define CELLO_FAST_RANDOM_HPP
+#endif
