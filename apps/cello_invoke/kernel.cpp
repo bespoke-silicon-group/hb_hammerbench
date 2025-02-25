@@ -66,11 +66,15 @@ void recurse_invoke_lvalue(int depth)
     r();
 }
 
+DRAM(std::atomic<int>) ctr4, mask4;
+
 void recurse4(int depth)
 {
     using namespace cello;
     bsg_print_int(depth);
     if (depth == 0) {
+        ctr4++;
+        mask4 |= (1 << __bsg_id);
         return;
     } else {
         parallel_invoke([=]() { recurse4(depth - 1); },
@@ -89,6 +93,8 @@ int cello_main(int argc, char *argv[])
     sched_mask = 0;
     invoke_mask = 0;
     lvalue_mask = 0;
+    ctr4 = 0;
+    mask4 = 0;
     recurse_scheduler(3);
     recurse_invoke(3);
     recurse_invoke_lvalue(3);
@@ -100,7 +106,8 @@ int cello_main(int argc, char *argv[])
     TEST_NEQ(INT, sched_mask  ,(1 << __bsg_id));
     TEST_NEQ(INT, invoke_mask ,(1 << __bsg_id));
     TEST_NEQ(INT, lvalue_mask ,(1 << __bsg_id));
-
     recurse4(3);
+    TEST_EQ(INT, ctr4, 4*4*4);
+    TEST_NEQ(INT, mask4, (1 << __bsg_id));
     return 0;
 }
