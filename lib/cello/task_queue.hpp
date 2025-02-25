@@ -75,7 +75,16 @@ public:
     BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(type);
     BSG_GLOBAL_POINTER_REFERENCE_METHOD(type, owner_push);
     BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(type, owner_pop, cello::task*);
-    BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(type, thief_pop, cello::task*);
+    cello::global_pointer<cello::task> thief_pop() {
+        type*p = reinterpret_cast<type*>(addr().raw());
+        cello::task *r;
+        {
+            pod_address_guard grd(addr().ext().pod_addr());
+            r = p->thief_pop();
+        }
+        return cello::global_pointer<cello::task>::withExtAddr(addr().ext(), r);
+    }
+    //BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(type, thief_pop, cello::task*);
     BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(type, empty, bool);
 };
 

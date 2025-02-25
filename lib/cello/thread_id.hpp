@@ -85,6 +85,12 @@ static inline int num_tiles() {
 static inline int id() {
     return __bsg_absolute_id;
 }
+/**
+ * @brief get the number of tiles in the system
+ */
+static inline int num_tiles_total() {
+    return bsg_tiles_X * bsg_tiles_Y * bsg_pods_X * bsg_pods_Y;
+}
 }
 
 /**

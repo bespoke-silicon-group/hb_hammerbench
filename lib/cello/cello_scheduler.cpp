@@ -70,10 +70,10 @@ void schedule()
     if (t) {
         t->execute();
     } else {
-        int victim_id = fast_random() % my::num_tiles();
+        int victim_id = fast_random() % my::num_tiles_total();
         auto victim_queue = queue_of(victim_id);
-        task * t = victim_queue->thief_pop();
-        if (t) {
+        auto t = victim_queue->thief_pop();
+        if (!is_null(t)) {
             //bsg_print_int(1000000 + __bsg_id * 1000 + victim_id);
             t->execute();
         }

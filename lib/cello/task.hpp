@@ -4,12 +4,12 @@
 #include <util/class_field.hpp>
 #include <cello/joiner.hpp>
 #include <cello/allocator.hpp>
+#include <cello/pointer.hpp>
 #include <new>
 #include <utility>
 
 namespace cello
 {
-
 /**
  * @brief Task class
  */
@@ -79,6 +79,11 @@ template <typename F, typename Joiner>
 inline task * new_task(F && f, Joiner &j) {
     return new functor_task<F, Joiner>(std::forward<F>(f), j);
 }
-
 }
+
+template <>
+class bsg_global_pointer::reference<cello::task> {
+    BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(cello::task);
+    BSG_GLOBAL_POINTER_REFERENCE_METHOD(cello::task, execute);
+};
 #endif

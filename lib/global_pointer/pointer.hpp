@@ -47,6 +47,13 @@ public:
     }
 
     /**
+     * @brief make a global pointer from a local pointer and an extended address
+     */
+    static pointer<T> withExtAddr(const address_ext& ext, const T* ptr) {
+        return pointer<T>(address(ext, ptr));
+    }
+
+    /**
      * @brief copy assignment operator
      */
     pointer& operator=(const pointer& other) {
