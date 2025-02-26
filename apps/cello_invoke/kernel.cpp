@@ -34,8 +34,12 @@ void recurse_scheduler(int depth)
 void recurse_invoke(int depth)
 {
     using namespace cello;
-    //bsg_print_int(depth);
+    bsg_print_int(depth);
     if (depth == 0) {
+        bsg_global_pointer::pod_address paddr;
+        paddr.set_pod_x(0);
+        paddr.set_pod_y(0);
+        bsg_global_pointer::pod_address_guard grd(paddr);        
         invoke_ctr++;
         invoke_mask |= (1 << my::id());
         return;
@@ -51,8 +55,12 @@ struct recurser
     void operator()()
     {
         using namespace cello;
-        //bsg_print_int(depth_);
+        bsg_print_int(depth_);
         if (depth_ == 0) {
+            bsg_global_pointer::pod_address paddr;
+            paddr.set_pod_x(0);
+            paddr.set_pod_y(0);
+            bsg_global_pointer::pod_address_guard grd(paddr);                    
             lvalue_ctr++;
             lvalue_mask |= (1 << my::id());
             return;
@@ -75,8 +83,12 @@ DRAM(std::atomic<int>) ctr4, mask4;
 void recurse4(int depth)
 {
     using namespace cello;
-    //bsg_print_int(depth);
+    bsg_print_int(depth);
     if (depth == 0) {
+        bsg_global_pointer::pod_address paddr;
+        paddr.set_pod_x(0);
+        paddr.set_pod_y(0);
+        bsg_global_pointer::pod_address_guard grd(paddr);            
         ctr4++;
         mask4 |= (1 << my::id());
         return;
@@ -100,18 +112,16 @@ int cello_main(int argc, char *argv[])
     ctr4 = 0;
     mask4 = 0;
     recurse_scheduler(3);
-    //recurse_invoke(3);
-    //recurse_invoke_lvalue(3);
-    // check that the right number of leafs were reached
     TEST_EQ(INT, sched_ctr  ,8);
-    //TEST_EQ(INT, invoke_ctr ,8);
-    //TEST_EQ(INT, lvalue_ctr ,8);
-    // check that more than this thread participated
     TEST_NEQ(INT, sched_mask  ,(1 << my::id()));
-    //TEST_NEQ(INT, invoke_mask ,(1 << __bsg_id));
-    //TEST_NEQ(INT, lvalue_mask ,(1 << __bsg_id));
-    // recurse4(3);
-    // TEST_EQ(INT, ctr4, 4*4*4);
-    // TEST_NEQ(INT, mask4, (1 << __bsg_id));
+    recurse_invoke(3);
+    TEST_EQ(INT, invoke_ctr ,8);
+    TEST_NEQ(INT, invoke_mask ,(1 << my::id()));
+    recurse_invoke_lvalue(3);
+    TEST_EQ(INT, lvalue_ctr ,8);
+    TEST_NEQ(INT, lvalue_mask ,(1 << my::id()));    
+    recurse4(3);
+    TEST_EQ(INT, ctr4, 4*4*4);
+    TEST_NEQ(INT, mask4, (1 << my::id()));
     return 0;
 }
