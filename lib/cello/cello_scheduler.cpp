@@ -28,15 +28,21 @@ DMEM(queue) my_queue;
 
 DMEM(queue *) my_queue_ptr = &my_queue;
 
-global_pointer<queue> queue_of(int id)
+void decode_id(int id, int &pod, int &pod_x, int &pod_y, int &tile, int &tile_x, int &tile_y)
 {
-    int pod, pod_x, pod_y, tile, tile_x, tile_y;
     pod    = id / my::num_tiles();
     tile   = id % my::num_tiles();
     pod_x  = pod % my::num_pods_x();
     pod_y  = pod / my::num_pods_x();
     tile_x = tile % my::num_tiles_x();
-    tile_y = tile / my::num_tiles_x();
+    tile_y = tile / my::num_tiles_x();    
+}
+
+global_pointer<queue> queue_of(int id)
+{
+    int pod, pod_x, pod_y, tile, tile_x, tile_y;
+    decode_id(id, pod, pod_x, pod_y, tile, tile_x, tile_y);
+
     queue *lcl = bsg_tile_group_remote_pointer<queue>(tile_x, tile_y, &my_queue);
     global_pointer<queue> glbl = global_pointer<queue>::onPodXY(pod_x, pod_y, lcl);
     return glbl;
@@ -60,6 +66,28 @@ void spawn(task * t)
     my_queue_ptr->owner_push(t);
 }
 
+void execute_task(int victim_id, task * t)
+{
+    t->execute();
+}
+
+void execute_task(int victim_id, global_pointer<task> t)
+{
+    int pod, pod_x, pod_y, tile, tile_x, tile_y;
+    decode_id(victim_id, pod, pod_x, pod_y, tile, tile_x, tile_y);
+    if (pod != my::pod_id()) {
+        task *lcl = reinterpret_cast<task*>(allocate(t->size()));
+        bsg_global_pointer::memcpy
+            (reinterpret_cast<char*>(lcl)
+             ,bsg_global_pointer::pointer_cast<char, task>(t)
+             ,t->size()
+             );
+        lcl->execute();
+        deallocate(lcl, t->size());
+    }else {
+        t->execute();
+    }
+}
 
 /**
  * schedule work on this thread
@@ -74,8 +102,8 @@ void schedule()
         auto victim_queue = queue_of(victim_id);
         auto t = victim_queue->thief_pop();
         if (!is_null(t)) {
-            //bsg_print_int(1000000 + __bsg_id * 1000 + victim_id);
-            t->execute();
+            //bsg_print_int(1000000 + victim_id*1000 + my::id());            
+            execute_task(victim_id, t);
         }
     }
 }
@@ -85,6 +113,10 @@ void schedule()
  */
 void wait(joiner_base * j)
 {
-    scheduler_loop([j](){ return j->joined(); });
+    //bsg_print_hexadecimal((unsigned)j);
+    scheduler_loop([j](){
+        return j->joined();
+    });
+    //bsg_print_hexadecimal((unsigned)j | 0x10000000);    
 }
 }

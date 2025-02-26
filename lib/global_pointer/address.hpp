@@ -30,6 +30,34 @@ public:
     address() : ext_(), raw_(0) {}
 
     /**
+     * @brief copy constructor
+     */
+    address(const address& other) : ext_(other.ext_), raw_(other.raw_) {}
+
+    /**
+     * @brief move constructor
+     */
+    address(address&& other) : ext_(other.ext_), raw_(other.raw_) {}
+
+    /**
+     * @brief copy assignment
+     */
+    address& operator=(const address& other) {
+        ext_ = other.ext_;
+        raw_ = other.raw_;
+        return *this;
+    }
+
+    /**
+     * @brief move assignment
+     */
+    address& operator=(address&& other) {
+        ext_ = other.ext_;
+        raw_ = other.raw_;
+        return *this;
+    }
+
+    /**
      * @brief set the pod x of the address
      */
     address& set_pod_x(unsigned x) {

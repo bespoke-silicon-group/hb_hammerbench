@@ -147,7 +147,7 @@ public:
     /**                                                                 \
      * @brief move constructor for return values                        \
      */                                                                 \
-    reference(reference&& other) : addr_(std::move(other.addr_)) {}     \
+    reference(reference&& other) : addr_(other.addr_) {}                \
     /**                                                                 \
      * @brief destructor                                                \
      */                                                                 \

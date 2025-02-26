@@ -31,6 +31,13 @@ public:
      */
     virtual void execute() {}
 
+    /**
+     * @brief returns the size of the task
+     */
+    virtual size_t size() const {
+        return sizeof(*this);
+    }
+
     FIELD(util::list_item, queued);
 };
 
@@ -62,6 +69,13 @@ public:
         parent().join();
     }
 
+    /**
+     * @brief returns the size of the task
+     */
+    virtual size_t size() const {
+        return sizeof(*this);
+    }    
+
     void *operator new(size_t size) {
         return allocate(sizeof(functor_task<F, Joiner>));
     }
@@ -85,5 +99,6 @@ template <>
 class bsg_global_pointer::reference<cello::task> {
     BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(cello::task);
     BSG_GLOBAL_POINTER_REFERENCE_METHOD(cello::task, execute);
+    BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(cello::task, size, size_t);
 };
 #endif

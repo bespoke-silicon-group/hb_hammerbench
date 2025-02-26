@@ -36,7 +36,7 @@ public:
     /**
      * @brief move constructor for return values
      */
-    pointer(pointer&& other) : ref_(std::move(other.ref_)) {}
+    pointer(pointer&& other) : ref_(other.ref_) {}
 
     /**
      * @brief make a global pointer from a local pointer and pod coordinates
@@ -65,7 +65,7 @@ public:
      * @brief move assignment operator
      */
     pointer& operator=(pointer&& other) {
-        ref_.addr() = std::move(other.ref_.addr());
+        ref_.addr() = other.ref_.addr();
         return *this;
     }
 
@@ -175,5 +175,9 @@ class reference<pointer<T>>
     }
 };
 
+template <typename To, typename From>
+pointer<To> pointer_cast(const pointer<From>& from) {
+    return pointer<To>(from.ref().addr());
+}
 }
 #endif

@@ -39,13 +39,15 @@ public:
     static constexpr unsigned bits = pod_x_width + pod_y_width;
 
     static pod_address readPodAddrCSR() {
-        pod_address addr(0);
-        asm volatile ("csrr %0, 0x360" : "=r"(addr) :: "memory");
+        unsigned raw;
+        asm volatile ("csrr %0, 0x360" : "=r"(raw) :: "memory");
+        pod_address addr(raw);
         return addr;
     }
 
     static void writePodAddrCSR(pod_address addr) {
-        asm volatile ("csrw 0x360, %0" :: "r"(addr) : "memory");
+        unsigned raw = addr.raw_;
+        asm volatile ("csrw 0x360, %0" :: "r"(raw) : "memory");
         return;
     }
 
@@ -63,6 +65,24 @@ public:
         *this = readPodAddrCSR();
     }
 
+    pod_address(const pod_address & other)
+        : raw_(other.raw_) {
+    }
+
+    pod_address(pod_address && other)
+        : raw_(other.raw_) {
+    }
+
+    pod_address & operator=(const pod_address & other) {
+        raw_ = other.raw_;
+        return *this;
+    }
+
+    pod_address & operator=(pod_address && other) {
+        raw_ = other.raw_;
+        return *this;
+    }
+    
     unsigned pod_x() const {
         return phys_pod_x()-1;
     }
