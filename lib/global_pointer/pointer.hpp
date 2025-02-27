@@ -126,12 +126,20 @@ public:
         return *this;
     }
 
+    unsigned pod_x() const {
+        return ref().pod_x();
+    }
+
     /**
      * @brief set the pod y of the pointer
      */
     pointer<T>& set_pod_y(unsigned y) {
         ref().set_pod_y(y);
         return *this;
+    }
+
+    unsigned pod_y() const {
+        return ref().pod_y();
     }
 
     FIELD(reference<T>, ref); //!< reference object

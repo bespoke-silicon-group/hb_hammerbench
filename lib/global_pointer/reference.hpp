@@ -41,7 +41,7 @@ public:
     /**
      * @brief move constructor for return values
      */
-    reference(reference&& other) : addr_(std::move(other.addr_)) {}
+    reference(reference&& other) : addr_(other.addr_) {}
 
     /**
      * @brief destructor
@@ -112,11 +112,25 @@ public:
     }
 
     /**
+     * @brief get the pod x of the reference
+     */
+    unsigned pod_x() const {
+        return addr().pod_x();
+    }
+
+    /**
      * @brief set the pod y of the reference
      */
     reference& set_pod_y(unsigned y) {
         addr().set_pod_y(y);
         return *this;
+    }
+
+    /**
+     * @brief get the pod y of the reference
+     */
+    unsigned pod_y() const {
+        return addr().pod_y();
     }
 
 
@@ -237,6 +251,18 @@ public:
     reference& set_pod_y(unsigned y) {                                  \
         addr().set_pod_y(y);                                            \
         return *this;                                                   \
+    }                                                                   \
+    /**                                                                 \
+     * @brief get the pod x of the reference                            \
+     */                                                                 \
+    unsigned pod_x() const {                                            \
+        return addr().pod_x();                                          \
+    }                                                                   \
+    /**                                                                 \
+     * @brief get the pod y of the reference                            \
+     */                                                                 \
+    unsigned pod_y() const {                                            \
+        return addr().pod_y();                                          \
     }                                                                   \
     FIELD(address, addr); //!< the address information
 
