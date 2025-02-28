@@ -95,9 +95,10 @@ public:
         // problem, what if stack is in dram???
         // maybe we make this only valid for scalar types...
         register T wv = other;
+        register T* ptr = reinterpret_cast<T*>(raw_);
         {
             pod_address_guard grd(ext_.pod_addr());
-            *reinterpret_cast<T*>(raw_) = wv;
+            *ptr = wv;
         }
     }
 
@@ -107,9 +108,10 @@ public:
     template <typename T>
     T read() const {
         register T rv;
+        register T* ptr = reinterpret_cast<T*>(raw_);
         {
             pod_address_guard grd(ext_.pod_addr());
-            rv = *reinterpret_cast<T*>(raw_);
+            rv = *ptr;
         }
         return rv;
     }
