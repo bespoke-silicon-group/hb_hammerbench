@@ -21,12 +21,12 @@ public:
     /**
      * @brief base constructor
      */
-    reference(address addr): addr_(addr) {}
+    explicit reference(address addr): addr_(addr) {}
 
     /**
      * @brief constructor from address with default extended address
      */
-    reference(const void* raw): addr_(raw) {}
+    explicit reference(const void* raw): addr_(raw) {}
 
     /**
      * @brief default constructor
