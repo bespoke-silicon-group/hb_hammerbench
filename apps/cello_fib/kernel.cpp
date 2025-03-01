@@ -15,13 +15,12 @@ int fib(int n)
         int x, y, *xp, *yp;
         xp = bsg_tile_group_remote_pointer<int>(cello::my::tile_x(), cello::my::tile_y(), &x);
         yp = bsg_tile_group_remote_pointer<int>(cello::my::tile_x(), cello::my::tile_y(), &y);
-        bsg_global_pointer::pointer<int> xg, yg;
-        xg = bsg_global_pointer::pointer<int>::onPodXY(cello::my::pod_x(), cello::my::pod_y(), xp);
-        yg = bsg_global_pointer::pointer<int>::onPodXY(cello::my::pod_x(), cello::my::pod_y(), yp);
+        bsg_global_pointer::reference<int> xg = *bsg_global_pointer::pointer<int>::onPodXY(cello::my::pod_x(), cello::my::pod_y(), xp);
+        bsg_global_pointer::reference<int> yg = *bsg_global_pointer::pointer<int>::onPodXY(cello::my::pod_x(), cello::my::pod_y(), yp);
         cello::parallel_invoke([=]() mutable {
-            *xg = fib(n - 1);
+            xg = fib(n - 1);
         }, [=]() mutable {
-            *yg = fib(n - 2);
+            yg = fib(n - 2);
         });
         return x+y;
     }
