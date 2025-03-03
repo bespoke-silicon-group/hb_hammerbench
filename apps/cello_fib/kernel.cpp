@@ -12,11 +12,9 @@ int fib(int n)
     if (n <= 1) {
         return n;
     } else {
-        int x, y, *xp, *yp;
-        xp = bsg_tile_group_remote_pointer<int>(cello::my::tile_x(), cello::my::tile_y(), &x);
-        yp = bsg_tile_group_remote_pointer<int>(cello::my::tile_x(), cello::my::tile_y(), &y);
-        bsg_global_pointer::reference<int> xg = *bsg_global_pointer::pointer<int>::onPodXY(cello::my::pod_x(), cello::my::pod_y(), xp);
-        bsg_global_pointer::reference<int> yg = *bsg_global_pointer::pointer<int>::onPodXY(cello::my::pod_x(), cello::my::pod_y(), yp);
+        int x, y;
+        bsg_global_pointer::reference<int> xg = *cello::addressof_localvar(x);
+        bsg_global_pointer::reference<int> yg = *cello::addressof_localvar(y);
         cello::parallel_invoke([=]() mutable {
             xg = fib(n - 1);
         }, [=]() mutable {

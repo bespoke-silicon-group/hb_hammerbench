@@ -47,7 +47,9 @@ public:
 
     static void writePodAddrCSR(pod_address addr) {
         unsigned raw = addr.raw_;
-        asm volatile ("csrw 0x360, %0" :: "r"(raw) : "memory");
+        asm volatile ("fence; "
+                      "csrw 0x360, %0"
+                      :: "r"(raw) : "memory");
         return;
     }
 
