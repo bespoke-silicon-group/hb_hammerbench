@@ -16,6 +16,16 @@ void scheduler_initialize(config *cfg);
 void spawn(task *t);
 
 /**
+ * delegate a task to a pod
+ */
+void delegate(int pod_x, int pod_y, task *t);
+
+/**
+ * delegate a task to a pod
+ */
+void delegate(int pod, task *t);
+
+/**
  * wait for a joiner to be ready
  */
 void wait(joiner_base *j);

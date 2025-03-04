@@ -23,10 +23,18 @@ inline int fast_random()
 }
 
 using queue = util::lockable<task_queue, util::tile_lock>;
+using pod_queue  = util::lockable<task_queue, util::lock>;
 
+/**
+ *  my queue
+ */
 DMEM(queue) my_queue;
-
 DMEM(queue *) my_queue_ptr = &my_queue;
+
+/**
+ *  my pods queue
+ */
+DRAM(pod_queue) my_pods_queue;
 
 void decode_id(int id, int &pod, int &pod_x, int &pod_y, int &tile, int &tile_x, int &tile_y)
 {
@@ -56,6 +64,9 @@ void scheduler_initialize(config *cfg)
     scheduler_seed = my::tile_id();
     my_queue_ptr = bsg_tile_group_remote_pointer<queue>(my::tile_x(), my::tile_y(), &my_queue);
     new (my_queue_ptr) queue;
+    if (my::tile_id() == 0) {
+        new (&my_pods_queue) pod_queue;
+    }
 }
 
 /**
