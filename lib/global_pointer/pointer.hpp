@@ -36,7 +36,7 @@ public:
     /**
      * @brief move constructor for return values
      */
-    pointer(pointer&& other) : ref_(std::move(other.ref_)) {}
+    pointer(pointer&& other) : ref_(other.ref_) {}
 
     /**
      * @brief make a global pointer from a local pointer and pod coordinates
@@ -44,6 +44,13 @@ public:
     static pointer<T> onPodXY(unsigned x, unsigned y, const T* ptr) {
         return pointer<T>
             (address(address_ext(pod_address(x,y)), ptr));
+    }
+
+    /**
+     * @brief make a global pointer from a local pointer and an extended address
+     */
+    static pointer<T> withExtAddr(const address_ext& ext, const T* ptr) {
+        return pointer<T>(address(ext, ptr));
     }
 
     /**
@@ -58,7 +65,7 @@ public:
      * @brief move assignment operator
      */
     pointer& operator=(pointer&& other) {
-        ref_.addr() = std::move(other.ref_.addr());
+        ref_.addr() = other.ref_.addr();
         return *this;
     }
 
@@ -119,12 +126,20 @@ public:
         return *this;
     }
 
+    unsigned pod_x() const {
+        return ref().pod_x();
+    }
+
     /**
      * @brief set the pod y of the pointer
      */
     pointer<T>& set_pod_y(unsigned y) {
         ref().set_pod_y(y);
         return *this;
+    }
+
+    unsigned pod_y() const {
+        return ref().pod_y();
     }
 
     FIELD(reference<T>, ref); //!< reference object
@@ -168,5 +183,9 @@ class reference<pointer<T>>
     }
 };
 
+template <typename To, typename From>
+pointer<To> pointer_cast(const pointer<From>& from) {
+    return pointer<To>(from.ref().addr());
+}
 }
 #endif

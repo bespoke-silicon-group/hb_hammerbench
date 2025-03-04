@@ -3,6 +3,9 @@
 #include <util/class_field.hpp>
 #include <bsg_manycore.h>
 #include <bsg_tile_config_vars.h>
+#include <cstdint>
+#include <cello/pointer.hpp>
+#include <cello/thread_id.hpp>
 namespace cello
 {
 
@@ -15,25 +18,17 @@ public:
     virtual bool joined() const = 0;
 };
 
+// forward declarations   
+class   single_child;
+class  triplet_child;
+
 /**
  * @brief Joiner class
  */
 class one_child_joiner : public joiner_base
 {
 public:
-    typedef one_child_joiner* joiner_ptr;
-
-    /**
-     * @brief a child of this joiner
-     */
-    class child {
-    public:
-        child(joiner_ptr p) : parent_(p) {}
-        void join() {
-            parent_->increment_ready_count();
-        }
-        FIELD(joiner_ptr, parent);        
-    };
+    typedef single_child child;
 
     /**
      * currently only one child supported
@@ -44,6 +39,7 @@ public:
      * signal that child has completed
      */
     void increment_ready_count() {
+        //bsg_print_hexadecimal((unsigned)this | 0x40000000);
         ready() = 1;
     }
 
@@ -55,11 +51,48 @@ public:
     /**
      * returns a created child
      */
-    child make_child() {
-        return child(this);
+    single_child make_child();
+
+    FIELD(int, ready); //!< ready flag
+};
+}
+
+/**
+ * @brief specialization of global_pointer::reference for one_child_joiner
+ */
+template <>
+class bsg_global_pointer::reference<cello::one_child_joiner> {
+public:
+    BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(cello::one_child_joiner);
+    void increment_ready_count();
+    //BSG_GLOBAL_POINTER_REFERENCE_METHOD(cello::one_child_joiner, increment_ready_count);
+};
+
+namespace cello
+{
+/**
+ * @brief an only child of a joiner
+ */
+class single_child {
+public:
+    /**
+     * @brief constructor
+     */
+    single_child(const global_pointer<one_child_joiner> &p) : parent_(p) {}
+    single_child() = default;
+    single_child(const single_child&) = default;
+    single_child& operator=(const single_child&) = default;
+    single_child(single_child&&) = default;
+    single_child& operator=(single_child&&) = default;
+    
+    /**
+     * @brief join with parent
+     */
+    void join() {
+        parent()->increment_ready_count();
     }
 
-    FIELD(int, ready);
+    FIELD(global_pointer<one_child_joiner>, parent); //!< pointer to parent
 };
 
 /**
@@ -68,25 +101,11 @@ public:
 class three_child_joiner : public joiner_base
 {
 public:
-    typedef three_child_joiner* joiner_ptr;
-    /**
-     * @brief a child of this joiner
-     */
-    class child {
-    public:
-        child(char* ready) : ready_(ready) {}
-        void join() {
-            *ready_ = -1;
-        }
-        char *ready_;
-    };
-
+    typedef triplet_child child;
     /**
      * make a new child
      */
-    child make_child() {
-        return child(&child_ready_[children_made_++]);
-    }
+    child make_child();
 
     /**
      * @brief check that all children have joined
@@ -99,8 +118,22 @@ public:
         uint32_t ready_      = 0;
         char     child_ready_[4];
     };
+
     unsigned children_made_ = 0;
 };
+
+/**
+ * @brief a child of this joiner
+ */
+class triplet_child {
+public:
+    triplet_child(global_pointer<char> ready) : ready_(ready) {}
+    void join() {
+        *ready_ = -1;
+    }
+    global_pointer<char> ready_;
+};
+
 
 }
 #endif

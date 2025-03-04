@@ -5,4 +5,6 @@
 #include <cello/invoke.hpp>
 #include <cello/foreach.hpp>
 #include <cello/foreach_block.hpp>
+#include <cello/thread_id.hpp>
+#include <cello/threads.hpp>
 #endif

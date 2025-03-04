@@ -17,17 +17,45 @@ public:
     /**
      * @brief base constructor
      */
-    address(address_ext ext, const void* raw) : ext_(ext), raw_(reinterpret_cast<uintptr_t>(raw)) {}
+    explicit address(address_ext ext, const void* raw) : ext_(ext), raw_(reinterpret_cast<uintptr_t>(raw)) {}
 
     /**
      * @brief constructor using default extended address
      */
-    address(const void * raw) : ext_(), raw_(reinterpret_cast<uintptr_t>(raw)) {}
+    explicit address(const void * raw) : ext_(), raw_(reinterpret_cast<uintptr_t>(raw)) {}
 
     /**
      * @brief constructor using default extended address and null pointer
      */
     address() : ext_(), raw_(0) {}
+
+    /**
+     * @brief copy constructor
+     */
+    address(const address& other) : ext_(other.ext_), raw_(other.raw_) {}
+
+    /**
+     * @brief move constructor
+     */
+    address(address&& other) : ext_(other.ext_), raw_(other.raw_) {}
+
+    /**
+     * @brief copy assignment
+     */
+    address& operator=(const address& other) {
+        ext_ = other.ext_;
+        raw_ = other.raw_;
+        return *this;
+    }
+
+    /**
+     * @brief move assignment
+     */
+    address& operator=(address&& other) {
+        ext_ = other.ext_;
+        raw_ = other.raw_;
+        return *this;
+    }
 
     /**
      * @brief set the pod x of the address
@@ -67,9 +95,10 @@ public:
         // problem, what if stack is in dram???
         // maybe we make this only valid for scalar types...
         register T wv = other;
+        register T* ptr = reinterpret_cast<T*>(raw_);
         {
             pod_address_guard grd(ext_.pod_addr());
-            *reinterpret_cast<T*>(raw_) = wv;
+            *ptr = wv;
         }
     }
 
@@ -79,9 +108,10 @@ public:
     template <typename T>
     T read() const {
         register T rv;
+        register T* ptr = reinterpret_cast<T*>(raw_);
         {
             pod_address_guard grd(ext_.pod_addr());
-            rv = *reinterpret_cast<T*>(raw_);
+            rv = *ptr;
         }
         return rv;
     }

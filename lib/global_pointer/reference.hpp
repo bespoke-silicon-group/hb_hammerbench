@@ -21,12 +21,12 @@ public:
     /**
      * @brief base constructor
      */
-    reference(address addr): addr_(addr) {}
+    explicit reference(address addr): addr_(addr) {}
 
     /**
      * @brief constructor from address with default extended address
      */
-    reference(const void* raw): addr_(raw) {}
+    explicit reference(const void* raw): addr_(raw) {}
 
     /**
      * @brief default constructor
@@ -41,7 +41,7 @@ public:
     /**
      * @brief move constructor for return values
      */
-    reference(reference&& other) : addr_(std::move(other.addr_)) {}
+    reference(reference&& other) : addr_(other.addr_) {}
 
     /**
      * @brief destructor
@@ -112,11 +112,25 @@ public:
     }
 
     /**
+     * @brief get the pod x of the reference
+     */
+    unsigned pod_x() const {
+        return addr().pod_x();
+    }
+
+    /**
      * @brief set the pod y of the reference
      */
     reference& set_pod_y(unsigned y) {
         addr().set_pod_y(y);
         return *this;
+    }
+
+    /**
+     * @brief get the pod y of the reference
+     */
+    unsigned pod_y() const {
+        return addr().pod_y();
     }
 
 
@@ -147,7 +161,7 @@ public:
     /**                                                                 \
      * @brief move constructor for return values                        \
      */                                                                 \
-    reference(reference&& other) : addr_(std::move(other.addr_)) {}     \
+    reference(reference&& other) : addr_(other.addr_) {}                \
     /**                                                                 \
      * @brief destructor                                                \
      */                                                                 \
@@ -238,6 +252,18 @@ public:
         addr().set_pod_y(y);                                            \
         return *this;                                                   \
     }                                                                   \
+    /**                                                                 \
+     * @brief get the pod x of the reference                            \
+     */                                                                 \
+    unsigned pod_x() const {                                            \
+        return addr().pod_x();                                          \
+    }                                                                   \
+    /**                                                                 \
+     * @brief get the pod y of the reference                            \
+     */                                                                 \
+    unsigned pod_y() const {                                            \
+        return addr().pod_y();                                          \
+    }                                                                   \
     FIELD(address, addr); //!< the address information
 
 /**
@@ -254,7 +280,7 @@ public:
  * generates a delegate method. this can be used to coalesce multiple accesses
  * without writing the samve value to pod address csr over and over again
  */
-#define BSG_GLOBAL_POINTER_REFERENCE_METHOD(type, method, return_type)  \
+#define BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(type, method, return_type)  \
     public:                                                             \
     return_type method() {                                              \
         type *p = reinterpret_cast<type*>(addr().raw());                \
@@ -265,7 +291,7 @@ public:
         }                                                               \
         return r;                                                       \
     }
-#define BSG_GLOBAL_POINTER_REFERENCE_METHOD_CONST(type, method, return_type) \
+#define BSG_GLOBAL_POINTER_REFERENCE_FUNCTION_CONST(type, method, return_type) \
     public:                                                             \
     return_type method() const {                                        \
         type *p = reinterpret_cast<type*>(addr().raw());                \
@@ -275,6 +301,26 @@ public:
             r = p->method();                                            \
         }                                                               \
         return r;                                                       \
+    }
+#define BSG_GLOBAL_POINTER_REFERENCE_METHOD(type, method)               \
+    public:                                                             \
+    void method() {                                                     \
+        type *p = reinterpret_cast<type*>(addr().raw());                \
+        {                                                               \
+            pod_address_guard grd(addr().ext().pod_addr());             \
+            p->method();                                                \
+        }                                                               \
+        return;                                                         \
+    }
+#define BSG_GLOBAL_POINTER_REFERENCE_METHOD_CONST(type, method)         \
+    public:                                                             \
+    void method() const {                                               \
+        type *p = reinterpret_cast<type*>(addr().raw());                \
+        {                                                               \
+            pod_address_guard grd(addr().ext().pod_addr());             \
+            p->method();                                                \
+        }                                                               \
+        return;                                                         \
     }
 
 /**

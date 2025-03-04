@@ -4,10 +4,6 @@
 #include <util/test_eq.hpp>
 #include <util/statics.hpp>
 
-extern "C" int setup(unsigned pod_x, unsigned pod_y)
-{
-    return 0;
-}
 
 DRAM(std::atomic<int>) sched_ctr, invoke_ctr, lvalue_ctr;
 DRAM(std::atomic<int>) sched_mask, invoke_mask, lvalue_mask;
@@ -17,8 +13,12 @@ void recurse_scheduler(int depth)
     using namespace cello;
     bsg_print_int(depth);
     if (depth == 0) {
+        bsg_global_pointer::pod_address paddr;
+        paddr.set_pod_x(0);
+        paddr.set_pod_y(0);
+        bsg_global_pointer::pod_address_guard grd(paddr);
         sched_ctr++;
-        sched_mask |= (1 << __bsg_id);
+        sched_mask |= (1 << my::id());
         return;
     } else {
         using joiner = one_child_joiner;
@@ -36,8 +36,12 @@ void recurse_invoke(int depth)
     using namespace cello;
     bsg_print_int(depth);
     if (depth == 0) {
+        bsg_global_pointer::pod_address paddr;
+        paddr.set_pod_x(0);
+        paddr.set_pod_y(0);
+        bsg_global_pointer::pod_address_guard grd(paddr);        
         invoke_ctr++;
-        invoke_mask |= (1 << __bsg_id);
+        invoke_mask |= (1 << my::id());
         return;
     } else {
         parallel_invoke([=]() { recurse_invoke(depth - 1); },
@@ -53,8 +57,12 @@ struct recurser
         using namespace cello;
         bsg_print_int(depth_);
         if (depth_ == 0) {
+            bsg_global_pointer::pod_address paddr;
+            paddr.set_pod_x(0);
+            paddr.set_pod_y(0);
+            bsg_global_pointer::pod_address_guard grd(paddr);                    
             lvalue_ctr++;
-            lvalue_mask |= (1 << __bsg_id);
+            lvalue_mask |= (1 << my::id());
             return;
         } else {
             recurser c(depth_ - 1);
@@ -70,11 +78,19 @@ void recurse_invoke_lvalue(int depth)
     r();
 }
 
+DRAM(std::atomic<int>) ctr4, mask4;
+
 void recurse4(int depth)
 {
     using namespace cello;
     bsg_print_int(depth);
     if (depth == 0) {
+        bsg_global_pointer::pod_address paddr;
+        paddr.set_pod_x(0);
+        paddr.set_pod_y(0);
+        bsg_global_pointer::pod_address_guard grd(paddr);            
+        ctr4++;
+        mask4 |= (1 << my::id());
         return;
     } else {
         parallel_invoke([=]() { recurse4(depth - 1); },
@@ -93,18 +109,19 @@ int cello_main(int argc, char *argv[])
     sched_mask = 0;
     invoke_mask = 0;
     lvalue_mask = 0;
+    ctr4 = 0;
+    mask4 = 0;
     recurse_scheduler(3);
-    recurse_invoke(3);
-    recurse_invoke_lvalue(3);
-    // check that the right number of leafs were reached
     TEST_EQ(INT, sched_ctr  ,8);
+    TEST_NEQ(INT, sched_mask  ,(1 << my::id()));
+    recurse_invoke(3);
     TEST_EQ(INT, invoke_ctr ,8);
+    TEST_NEQ(INT, invoke_mask ,(1 << my::id()));
+    recurse_invoke_lvalue(3);
     TEST_EQ(INT, lvalue_ctr ,8);
-    // check that more than this thread participated
-    TEST_NEQ(INT, sched_mask  ,(1 << __bsg_id));
-    TEST_NEQ(INT, invoke_mask ,(1 << __bsg_id));
-    TEST_NEQ(INT, lvalue_mask ,(1 << __bsg_id));
-
+    TEST_NEQ(INT, lvalue_mask ,(1 << my::id()));    
     recurse4(3);
+    TEST_EQ(INT, ctr4, 4*4*4);
+    TEST_NEQ(INT, mask4, (1 << my::id()));
     return 0;
 }

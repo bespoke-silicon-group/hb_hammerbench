@@ -4,12 +4,12 @@
 #include <util/class_field.hpp>
 #include <cello/joiner.hpp>
 #include <cello/allocator.hpp>
+#include <cello/pointer.hpp>
 #include <new>
 #include <utility>
 
 namespace cello
 {
-
 /**
  * @brief Task class
  */
@@ -30,6 +30,13 @@ public:
      * @brief runs the task and joins with parent
      */
     virtual void execute() {}
+
+    /**
+     * @brief returns the size of the task
+     */
+    virtual size_t size() const {
+        return sizeof(*this);
+    }
 
     FIELD(util::list_item, queued);
 };
@@ -62,6 +69,13 @@ public:
         parent().join();
     }
 
+    /**
+     * @brief returns the size of the task
+     */
+    virtual size_t size() const {
+        return sizeof(*this);
+    }    
+
     void *operator new(size_t size) {
         return allocate(sizeof(functor_task<F, Joiner>));
     }
@@ -79,6 +93,12 @@ template <typename F, typename Joiner>
 inline task * new_task(F && f, Joiner &j) {
     return new functor_task<F, Joiner>(std::forward<F>(f), j);
 }
-
 }
+
+template <>
+class bsg_global_pointer::reference<cello::task> {
+    BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(cello::task);
+    BSG_GLOBAL_POINTER_REFERENCE_METHOD(cello::task, execute);
+    BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(cello::task, size, size_t);
+};
 #endif

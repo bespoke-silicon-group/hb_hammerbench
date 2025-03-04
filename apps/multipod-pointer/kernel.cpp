@@ -32,7 +32,7 @@ namespace bsg_global_pointer
                 BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(foo);
                 BSG_GLOBAL_POINTER_REFERENCE_FIELD(foo, x);
                 BSG_GLOBAL_POINTER_REFERENCE_FIELD(foo, y);
-                BSG_GLOBAL_POINTER_REFERENCE_METHOD_CONST(foo, sum, unsigned);
+                BSG_GLOBAL_POINTER_REFERENCE_FUNCTION_CONST(foo, sum, unsigned);
         };
 }
 
@@ -196,6 +196,65 @@ extern "C" int multipod_pointer_t4()
             TEST_EQ(UDEC, *lpy, 0);
         }
         TEST_NEQ(UDEC, *lpx+*lpy, 0);
+    }
+    bsg_barrier_tile_group_sync();
+    return 0;
+}
+
+/**
+ * test global pointer constructors and move operators
+ */
+extern "C" int multipod_pointer_t5()
+{
+    bsg_barrier_tile_group_init();
+    bsg_barrier_tile_group_sync();
+    {
+        pod_address addr;
+        TEST_NEQ(UDEC, addr.pod_x()+addr.pod_y(), 0);
+        {
+            pod_address addr_c = addr;
+            pod_address addr_m = std::move(addr);
+            TEST_EQ(UDEC, addr.pod_x()+addr.pod_y(), addr_c.pod_x()+addr_c.pod_y());
+            TEST_EQ(UDEC, addr.pod_x()+addr.pod_y(), addr_m.pod_x()+addr_m.pod_y());
+        }
+        {
+            pod_address addr_c(addr);
+            pod_address addr_m(std::move(addr));
+            TEST_EQ(UDEC, addr.pod_x()+addr.pod_y(), addr_c.pod_x()+addr_c.pod_y());
+            TEST_EQ(UDEC, addr.pod_x()+addr.pod_y(), addr_m.pod_x()+addr_m.pod_y());
+        }
+    }
+    {
+        address addr;
+        TEST_NEQ(UDEC, addr.pod_x()+addr.pod_y(), 0);
+        {
+            address addr_c = addr;
+            address addr_m = std::move(addr);
+            TEST_EQ(UDEC, addr.pod_x()+addr.pod_y(), addr_c.pod_x()+addr_c.pod_y());
+            TEST_EQ(UDEC, addr.pod_x()+addr.pod_y(), addr_m.pod_x()+addr_m.pod_y());
+        }
+        {
+            address addr_c(addr);
+            address addr_m(std::move(addr));
+            TEST_EQ(UDEC, addr.pod_x()+addr.pod_y(), addr_c.pod_x()+addr_c.pod_y());
+            TEST_EQ(UDEC, addr.pod_x()+addr.pod_y(), addr_m.pod_x()+addr_m.pod_y());
+        }
+    }
+    {
+        pointer<unsigned> p_of_special(&g_special);
+        TEST_NEQ(UDEC, p_of_special.ref().addr().pod_x()+p_of_special.ref().addr().pod_y(), 0);
+        {
+            pointer<unsigned> p_of_special_c = p_of_special;
+            pointer<unsigned> p_of_special_m = std::move(p_of_special);
+            TEST_EQ(UDEC, p_of_special.ref().addr().pod_x()+p_of_special.ref().addr().pod_y(), p_of_special_c.ref().addr().pod_x()+p_of_special_c.ref().addr().pod_y());
+            TEST_EQ(UDEC, p_of_special.ref().addr().pod_x()+p_of_special.ref().addr().pod_y(), p_of_special_m.ref().addr().pod_x()+p_of_special_m.ref().addr().pod_y());
+        }
+        {
+            pointer<unsigned> p_of_special_c(p_of_special);
+            pointer<unsigned> p_of_special_m(std::move(p_of_special));
+            TEST_EQ(UDEC, p_of_special.ref().addr().pod_x()+p_of_special.ref().addr().pod_y(), p_of_special_c.ref().addr().pod_x()+p_of_special_c.ref().addr().pod_y());
+            TEST_EQ(UDEC, p_of_special.ref().addr().pod_x()+p_of_special.ref().addr().pod_y(), p_of_special_m.ref().addr().pod_x()+p_of_special_m.ref().addr().pod_y());
+        }
     }
     bsg_barrier_tile_group_sync();
     return 0;
