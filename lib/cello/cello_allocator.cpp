@@ -1,7 +1,8 @@
 #include <cello/allocator.hpp>
+#include <cello/thread_id.hpp>
 #include <atomic>
 #include <bsg_manycore.h>
-#include <bsg_cuda_lite_barrier.h>
+
 namespace cello
 {
 
@@ -14,7 +15,7 @@ uintptr_t allocator_end;
  * @brief Initialize allocator
  */
 void allocator_initialize(config *cfg) {
-    if (__bsg_id == 0) {
+    if (my::tile_id() == 0) {
         allocator_base = cfg->dram_buffer();
         allocator_end = allocator_base + cfg->dram_buffer_size();
     }

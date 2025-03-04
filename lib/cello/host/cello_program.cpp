@@ -44,7 +44,9 @@ int program::sync_input() {
     hb_mc_device_foreach_pod_id(&this->mc, pod_id)
     {
         // this is broken but i'll fix it later
-        BSG_CUDA_CALL(hb_mc_device_pod_dma_to_device(&this->mc, pod_id, jobs_in[pod_id].data(), jobs_in[pod_id].size()));
+        BSG_CUDA_CALL(hb_mc_device_set_default_pod(&this->mc, pod_id));
+        BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&this->mc, jobs_in[pod_id].data(), jobs_in[pod_id].size()));
+        //BSG_CUDA_CALL(hb_mc_device_pod_dma_to_device(&this->mc, pod_id, jobs_in[pod_id].data(), jobs_in[pod_id].size()));
     }
     return 0;
 }
