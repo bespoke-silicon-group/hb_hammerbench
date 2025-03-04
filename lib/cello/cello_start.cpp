@@ -25,6 +25,7 @@ int cello_setup(cello::config *config)
     allocator_initialize(config);
     bsg_barrier_tile_group_sync();
     scheduler_initialize(config);
+    bsg_barrier_tile_group_sync();
     bsg_barrier_tile_group_sync();    
     return 0;
 }
