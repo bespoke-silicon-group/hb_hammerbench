@@ -142,6 +142,20 @@ public:
         return ref().pod_y();
     }
 
+    /**
+     * @brief equality operator
+     */
+    bool operator==(const pointer<T>& other) const {
+        return ref_.addr() == other.ref_.addr();
+    }
+
+    /**
+     * @brief inequality operator
+     */
+    bool operator!=(const pointer<T>& other) const {
+        return !(*this == other);
+    }
+
     FIELD(reference<T>, ref); //!< reference object
 };
 

@@ -123,6 +123,20 @@ public:
         return address(ext_, reinterpret_cast<void*>(raw_ + off));
     }
 
+    /**
+     * @brief subtract operator
+     */
+    address operator-(uintptr_t off) const {
+        return address(ext_, reinterpret_cast<void*>(raw_ - off));
+    }
+
+    /**
+     * @brief equality operator
+     */
+    bool operator==(const address& other) const {
+        return ext_ == other.ext_ && raw_ == other.raw_;
+    }
+
     FIELD(address_ext ,ext); //!< extended address information
     FIELD(uintptr_t   ,raw); //!< the raw pointer
 };

@@ -26,6 +26,9 @@ public:
     unsigned pod_y() const {
         return pod_addr().pod_y();
     }
+    bool operator==(const address_ext &other) const {
+        return pod_addr() == other.pod_addr();
+    }
     FIELD(pod_address, pod_addr);
 };
 }

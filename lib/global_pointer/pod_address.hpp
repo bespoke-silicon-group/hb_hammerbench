@@ -111,7 +111,11 @@ public:
     pod_address & set_pod_y(unsigned y) {
         return set_phys_pod_y((y<<1)+1);
     }
-    
+
+    bool operator==(const pod_address & other) const {
+        return raw_ == other.raw_;
+    }
+
     union {
         unsigned short raw_; //!< raw pod address
         struct {
