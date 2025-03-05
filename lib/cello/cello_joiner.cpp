@@ -33,6 +33,7 @@ triplet_child three_child_joiner::make_child() {
 }
 
 nth_child n_child_joiner::make_child() {
+    children_++;
     return nth_child(global_pointer<n_child_joiner>::onPodXY(my::pod_x(), my::pod_y(), this));
 }
 

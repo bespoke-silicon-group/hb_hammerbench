@@ -161,7 +161,7 @@ public:
 namespace cello
 {
 /**
- * @brief a child of this joiner
+ * @brief a child with unknown number of siblings
  */
 class nth_child {
 public:
