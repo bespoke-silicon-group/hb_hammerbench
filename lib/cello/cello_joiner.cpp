@@ -32,16 +32,22 @@ triplet_child three_child_joiner::make_child() {
     return triplet_child(global_pointer<char>(&this->child_ready_[children_made_++]));
 }
 
+nth_child n_child_joiner::make_child() {
+    return nth_child(global_pointer<n_child_joiner>::onPodXY(my::pod_x(), my::pod_y(), this));
+}
+
 }
 
 void bsg_global_pointer::reference<cello::one_child_joiner>::increment_ready_count() {
-    cello::one_child_joiner *p = reinterpret_cast<cello::one_child_joiner*>(addr().raw());
-    pod_address pod_addr = pod_address::readPodAddrCSR();
-    // bsg_printf("%d: increment_ready_count: %u %u %p\n"
-    //            , cello::my::id()
-    //            , pod_addr.pod_x()
-    //            , pod_addr.pod_y()
-    //            , addr().raw());
+    register cello::one_child_joiner *p = reinterpret_cast<cello::one_child_joiner*>(addr().raw());
+    {
+        pod_address_guard grd(addr().ext().pod_addr());
+        p->increment_ready_count();
+    }
+}
+
+void bsg_global_pointer::reference<cello::n_child_joiner>::increment_ready_count() {
+    register cello::n_child_joiner *p = reinterpret_cast<cello::n_child_joiner*>(addr().raw());
     {
         pod_address_guard grd(addr().ext().pod_addr());
         p->increment_ready_count();

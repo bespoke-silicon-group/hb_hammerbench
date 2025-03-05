@@ -4,8 +4,10 @@
 #include <bsg_manycore.h>
 #include <bsg_tile_config_vars.h>
 #include <cstdint>
+#include <atomic>
 #include <cello/pointer.hpp>
 #include <cello/thread_id.hpp>
+#include <cello/allocator.hpp>
 namespace cello
 {
 
@@ -21,6 +23,7 @@ public:
 // forward declarations   
 class   single_child;
 class  triplet_child;
+class      nth_child;
 
 /**
  * @brief Joiner class
@@ -94,7 +97,84 @@ public:
 
     FIELD(global_pointer<one_child_joiner>, parent); //!< pointer to parent
 };
+}
 
+namespace cello
+{
+/**
+ * @brief joiner class with n children
+ */
+class n_child_joiner : public joiner_base
+{
+public:
+    typedef nth_child child;
+
+    /**
+     * constructor
+     */
+    n_child_joiner()
+        : ready_(nullptr) {
+        ready_ = reinterpret_cast<decltype(ready_)>(cello::allocate(sizeof(*ready_)));
+        ready_->store(0);
+    }
+
+    /**
+     * destructor
+     */
+    ~n_child_joiner() {
+        cello::deallocate(ready_, sizeof(*ready_));
+    }
+
+    /**
+     * make a new child
+     */
+    child make_child();
+
+    /**
+     * signal that child has completed
+     */
+    void increment_ready_count() {
+        ready_->fetch_add(1, std::memory_order_release);
+    }
+
+    /**
+     * @brief check that all children have joined
+     */
+    bool joined() const override {
+        return ready_->load() == children_;
+    }
+    std::atomic<int>* ready_;
+    int children_ = 0;
+};
+}
+
+/**
+ * @brief specialization of global_pointer::reference for n_child_joiner
+ */
+template <>
+class bsg_global_pointer::reference<cello::n_child_joiner> {
+public:
+    BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(cello::n_child_joiner);
+    void increment_ready_count();
+};
+
+namespace cello
+{
+/**
+ * @brief a child of this joiner
+ */
+class nth_child {
+public:
+    nth_child(global_pointer<n_child_joiner> parent) : parent_(parent) {}
+    void join() {
+        parent_->increment_ready_count();
+    }
+    global_pointer<n_child_joiner> parent_;
+};
+}
+
+namespace cello
+{
 /**
  * @brief joiner class with four children
  */
@@ -133,7 +213,5 @@ public:
     }
     global_pointer<char> ready_;
 };
-
-
 }
 #endif
