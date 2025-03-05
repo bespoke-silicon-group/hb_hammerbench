@@ -2,6 +2,7 @@
 #define GLOBAL_POINTER_REFERENCE_HPP
 #include <stdint.h>
 #include <utility>
+#include <stddef.h>
 #include <global_pointer/address.hpp>
 namespace bsg_global_pointer
 {
