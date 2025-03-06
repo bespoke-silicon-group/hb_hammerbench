@@ -6,7 +6,7 @@ void delegate_scheduler(int to_id) {
     joiner j;
     joiner *jp = bsg_tile_group_remote_pointer<joiner>(__bsg_x, __bsg_y, &j);
     task *t = new_task([]() {
-        bsg_printf("Hello from tile %d: pod_x=%d, pod_y=%d, tile_x=%d, tile_y=%d\n"
+        bsg_printf("Hello from tile %2d: pod_x=%2d, pod_y=%2d, tile_x=%2d, tile_y=%2d\n"
                    , my::id()
                    , my::pod_x()
                    , my::pod_y()
