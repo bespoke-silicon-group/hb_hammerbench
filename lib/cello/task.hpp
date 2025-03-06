@@ -38,6 +38,21 @@ public:
         return sizeof(*this);
     }
 
+    /**
+     * @brief returns a new task
+     */
+    void *operator new(size_t size) {
+        return allocate(size);
+    }
+
+    /**
+     * @brief deletes the task
+     */
+    void operator delete(void *p) {
+        task* t = reinterpret_cast<task*>(p);
+        deallocate(p, t->size());
+    }
+
     FIELD(util::list_item, queued);
 };
 

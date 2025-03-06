@@ -21,6 +21,11 @@ void spawn(task *t);
 void delegate(int id, task *t);
 
 /**
+ * delegate a task to a pod
+ */
+void delegate_pod(int pod_id, task *t);
+
+/**
  * wait for a joiner to be ready
  */
 void wait(joiner_base *j);

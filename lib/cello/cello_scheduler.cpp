@@ -107,12 +107,28 @@ void execute_task(int victim_id, global_pointer<task> t)
     }
 }
 
+
+/**
+ * delegate a task to a tile
+ */
 void delegate(int delegate_id, task *t)
 {
     auto delegate_tasks = delegates_of(delegate_id);
     global_pointer<task> glbl = global_pointer<task>::onPodXY(my::pod_x(), my::pod_y(), t);
     delegate_tasks->delegater_push(glbl);
 }
+
+/**
+ * delegate a task to a pod
+ */
+void delegate_pod(int pod_id, task *t)
+{
+    // select a random tile in the pod
+    int tile = fast_random() % my::num_tiles();
+    tile += pod_id * my::num_tiles();
+    delegate(tile, t);
+}
+
 
 /**
  * schedule work on this thread
@@ -124,6 +140,7 @@ void schedule()
     t = my_delegates_ptr->owner_pop();
     if (t) {
         t->execute();
+        delete t;
         return;
     }
     // 2. check local tasks

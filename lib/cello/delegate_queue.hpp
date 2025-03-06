@@ -91,6 +91,9 @@ class bsg_global_pointer::reference<util::lockable<cello::delegate_queue, Lock>>
                      );
                 queue->delegater_push(dst_task);
             }
+            // delete the original task, since it has been moved
+            cello::task *native_ptr = reinterpret_cast<cello::task*>(tp.ref().addr().raw());
+            delete native_ptr;
         }
     }
     
