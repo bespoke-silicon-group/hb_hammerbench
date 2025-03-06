@@ -21,15 +21,10 @@ void delegate_scheduler(int to_id) {
 
 int cello_main(int argc, char **argv) {
     using namespace cello;
-    bsg_printf("num_tiles_x() = %d\n", my::num_tiles_x());
-    bsg_printf("num_tiles_y() = %d\n", my::num_tiles_y());
-    bsg_printf("num_tiles() = %d\n", my::num_tiles());
-    bsg_printf("num_pods_x() = %d\n", my::num_pods_x());
-    bsg_printf("num_pods_y() = %d\n", my::num_pods_y());
-    bsg_printf("num_pods() = %d\n", my::num_pods());
     delegate_scheduler(my::id());
     delegate_scheduler(my::id() + 1);
     delegate_scheduler(my::num_tiles() - 1);
     delegate_scheduler(my::num_tiles());
+    delegate_scheduler(my::num_tiles_total() - 1);
     return 0;
 }
