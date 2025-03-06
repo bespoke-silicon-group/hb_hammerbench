@@ -52,7 +52,6 @@ public:
     }
 
     FIELD(util::list, task_list);
-    FIELD(util::tile_lock, lock);
 };
 }
 

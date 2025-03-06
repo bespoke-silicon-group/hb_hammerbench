@@ -6,6 +6,7 @@
 #include <cello/task.hpp>
 #include <cello/thread_id.hpp>
 #include <cello/pointer.hpp>
+#include <cello/delegate_queue.hpp>
 #include <global_pointer/global_pointer.hpp>
 #include <bsg_manycore.h>
 #include <bsg_manycore.hpp>
@@ -22,19 +23,16 @@ inline int fast_random()
     return ( scheduler_seed >> 16 ) & 0x7FFF;
 }
 
-using queue = util::lockable<task_queue, util::tile_lock>;
-using pod_queue  = util::lockable<task_queue, util::lock>;
+using work_queue = util::lockable<task_queue, util::tile_lock>;
+using del_queue  = util::lockable<delegate_queue, util::lock>;
 
 /**
  *  my queue
  */
-DMEM(queue) my_queue;
-DMEM(queue *) my_queue_ptr = &my_queue;
-
-/**
- *  my pods queue
- */
-DRAM(pod_queue) my_pods_queue;
+DMEM(work_queue) my_tasks;
+DMEM(work_queue *) my_tasks_ptr = &my_tasks;
+DMEM(del_queue) my_delegates;
+DMEM(del_queue *) my_delegates_ptr = &my_delegates;
 
 void decode_id(int id, int &pod, int &pod_x, int &pod_y, int &tile, int &tile_x, int &tile_y)
 {
@@ -46,13 +44,23 @@ void decode_id(int id, int &pod, int &pod_x, int &pod_y, int &tile, int &tile_x,
     tile_y = tile / my::num_tiles_x();    
 }
 
-global_pointer<queue> queue_of(int id)
+global_pointer<work_queue> tasks_of(int id)
 {
     int pod, pod_x, pod_y, tile, tile_x, tile_y;
     decode_id(id, pod, pod_x, pod_y, tile, tile_x, tile_y);
 
-    queue *lcl = bsg_tile_group_remote_pointer<queue>(tile_x, tile_y, &my_queue);
-    global_pointer<queue> glbl = global_pointer<queue>::onPodXY(pod_x, pod_y, lcl);
+    work_queue *lcl = bsg_tile_group_remote_pointer<work_queue>(tile_x, tile_y, &my_tasks);
+    global_pointer<work_queue> glbl = global_pointer<work_queue>::onPodXY(pod_x, pod_y, lcl);
+    return glbl;
+}
+
+global_pointer<del_queue> delegates_of(int id)
+{
+    int pod, pod_x, pod_y, tile, tile_x, tile_y;
+    decode_id(id, pod, pod_x, pod_y, tile, tile_x, tile_y);
+
+    del_queue *lcl = bsg_tile_group_remote_pointer<del_queue>(tile_x, tile_y, &my_delegates);
+    global_pointer<del_queue> glbl = global_pointer<del_queue>::onPodXY(pod_x, pod_y, lcl);
     return glbl;
 }
 
@@ -62,11 +70,10 @@ global_pointer<queue> queue_of(int id)
 void scheduler_initialize(config *cfg)
 {
     scheduler_seed = my::tile_id();
-    my_queue_ptr = bsg_tile_group_remote_pointer<queue>(my::tile_x(), my::tile_y(), &my_queue);
-    new (my_queue_ptr) queue;
-    if (my::tile_id() == 0) {
-        new (&my_pods_queue) pod_queue;
-    }
+    my_tasks_ptr = bsg_tile_group_remote_pointer<work_queue>(my::tile_x(), my::tile_y(), &my_tasks);
+    new (my_tasks_ptr) work_queue;
+    my_delegates_ptr = bsg_tile_group_remote_pointer<del_queue>(my::tile_x(), my::tile_y(), &my_delegates);
+    new (my_delegates_ptr) delegate_queue;
 }
 
 /**
@@ -74,7 +81,7 @@ void scheduler_initialize(config *cfg)
  */
 void spawn(task * t)
 {
-    my_queue_ptr->owner_push(t);
+    my_tasks_ptr->owner_push(t);
 }
 
 void execute_task(int victim_id, task * t)
@@ -100,22 +107,38 @@ void execute_task(int victim_id, global_pointer<task> t)
     }
 }
 
+void delegate(int delegate_id, task *t)
+{
+    auto delegate_tasks = delegates_of(delegate_id);
+    global_pointer<task> glbl = global_pointer<task>::onPodXY(my::pod_x(), my::pod_y(), t);
+    delegate_tasks->delegater_push(glbl);
+}
+
 /**
  * schedule work on this thread
  */
 void schedule()
 {
-    task * t = my_queue_ptr->owner_pop();
+    task *t = nullptr;
+    // 1. check delegates
+    t = my_delegates_ptr->owner_pop();
     if (t) {
         t->execute();
-    } else {
-        int victim_id = fast_random() % my::num_tiles_total();
-        auto victim_queue = queue_of(victim_id);
-        auto t = victim_queue->thief_pop();
-        if (!is_null(t)) {
-            //bsg_print_int(1000000 + victim_id*1000 + my::id());            
-            execute_task(victim_id, t);
-        }
+        return;
+    }
+    // 2. check local tasks
+    t = my_tasks_ptr->owner_pop();
+    if (t) {
+        t->execute();
+        return;
+    }
+    // 3. steal work
+    int victim_id = fast_random() % my::num_tiles_total();
+    auto victim_tasks = tasks_of(victim_id);
+    auto stolen = victim_tasks->thief_pop();
+    if (!is_null(stolen)) {
+        //bsg_print_int(1000000 + victim_id*1000 + my::id());            
+        execute_task(victim_id, stolen);
     }
 }
 

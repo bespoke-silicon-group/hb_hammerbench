@@ -16,14 +16,9 @@ void scheduler_initialize(config *cfg);
 void spawn(task *t);
 
 /**
- * delegate a task to a pod
+ * delegate a task to a tile
  */
-void delegate(int pod_x, int pod_y, task *t);
-
-/**
- * delegate a task to a pod
- */
-void delegate(int pod, task *t);
+void delegate(int id, task *t);
 
 /**
  * wait for a joiner to be ready

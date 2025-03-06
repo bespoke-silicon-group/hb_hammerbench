@@ -99,6 +99,6 @@ template <>
 class bsg_global_pointer::reference<cello::task> {
     BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(cello::task);
     BSG_GLOBAL_POINTER_REFERENCE_METHOD(cello::task, execute);
-    BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(cello::task, size, size_t);
+    BSG_GLOBAL_POINTER_REFERENCE_FUNCTION_CONST(cello::task, size, size_t);
 };
 #endif
