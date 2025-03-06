@@ -45,5 +45,20 @@ static inline global_pointer<T> addressof_globalvar(T& t) {
     return global_pointer<T>::onPodXY(my::pod_x(), my::pod_y(), p);
 }
 
+/**
+ * @brief return the global pointer of a reference
+ */
+template <typename T>
+static inline global_pointer<T> addressof(bsg_global_pointer::reference<T> ref) {
+    return global_pointer<T>(ref.addr());
+}
+
+/**
+ * @brief return the global pointer of a reference
+ */
+template <typename T>
+static inline global_pointer<const T> addressof(bsg_global_pointer::reference<const T> ref) {
+    return global_pointer<const T>(ref.addr());
+}
 }
 #endif
