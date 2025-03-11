@@ -245,6 +245,54 @@ int delegate_on_pod_multi() {
     return 0;
 }
 
+DRAM(test_mask) on_every_pod_mask;
+int on_every_pod()
+{
+    using namespace cello;
+    using joiner = n_child_joiner;
+    joiner j;
+    joiner *jp = bsg_tile_group_remote_pointer<joiner>(__bsg_x, __bsg_y, &j);
+    unsigned expect_pod = 0;
+    expect_pod = (1 << my::num_pods()) - 1;
+    on_every_pod(jp, []() {
+#ifdef TRACE
+        bsg_printf("on_every_pod: tile %2d: pod_x=%2d, pod_y=%2d, tile_x=%2d, tile_y=%2d\n"
+                   , my::id()
+                   , my::pod_x()
+                   , my::pod_y()
+                   , my::tile_x()
+                   , my::tile_y()
+                   );
+#endif
+        on_every_pod_mask.update();
+    });
+    wait(&j);
+    TEST_EQ(INT, on_every_pod_mask.pod, expect_pod);
+    return 0;
+}
+
+DRAM(test_mask) on_every_pod_mask_sync;
+int on_every_pod_sync()
+{
+    using namespace cello;
+    unsigned expect_pod = 0;
+    expect_pod = (1 << my::num_pods()) - 1;
+    on_every_pod([]() {
+#ifdef TRACE
+        bsg_printf("on_every_pod_sync: tile %2d: pod_x=%2d, pod_y=%2d, tile_x=%2d, tile_y=%2d\n"
+                   , my::id()
+                   , my::pod_x()
+                   , my::pod_y()
+                   , my::tile_x()
+                   , my::tile_y()
+                   );
+#endif
+        on_every_pod_mask_sync.update();
+    });
+    TEST_EQ(INT, on_every_pod_mask_sync.pod, expect_pod);
+    return 0;
+}
+
 int cello_main(int argc, char **argv) {
     using namespace cello;
 
@@ -260,5 +308,7 @@ int cello_main(int argc, char **argv) {
     delegate_pod_scheduler_multi();
     delegate_on_pod();
     delegate_on_pod_multi();
+    on_every_pod();
+    on_every_pod_sync();
     return 0;
 }
