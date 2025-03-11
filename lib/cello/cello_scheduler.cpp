@@ -50,7 +50,7 @@ global_pointer<work_queue> tasks_of(int id)
     decode_id(id, pod, pod_x, pod_y, tile, tile_x, tile_y);
 
     work_queue *lcl = bsg_tile_group_remote_pointer<work_queue>(tile_x, tile_y, &my_tasks);
-    global_pointer<work_queue> glbl = global_pointer<work_queue>::onPodXY(pod_x, pod_y, lcl);
+    global_pointer<work_queue> glbl = global_pointer<work_queue>::onPodXY(my::pod_x(), my::pod_y(), lcl);
     return glbl;
 }
 
@@ -150,7 +150,7 @@ void schedule()
         return;
     }
     // 3. steal work
-    int victim_id = fast_random() % my::num_tiles_total();
+    int victim_id = fast_random() % my::num_tiles();
     auto victim_tasks = tasks_of(victim_id);
     auto stolen = victim_tasks->thief_pop();
     if (!is_null(stolen)) {
