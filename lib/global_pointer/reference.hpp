@@ -4,6 +4,9 @@
 #include <utility>
 #include <stddef.h>
 #include <global_pointer/address.hpp>
+#ifdef HOST
+#include <stdexcept>
+#endif
 namespace bsg_global_pointer
 {
 /**
@@ -297,6 +300,7 @@ public:
     BSG_GLOBAL_POINTER_REFERENCE_READ_WRITE_TRIVIAL(type)       \
     BSG_GLOBAL_POINTER_REFERENCE_INTERNAL(type)
 
+#ifndef HOST
 /**
  * generates a delegate method. this can be used to coalesce multiple accesses
  * without writing the samve value to pod address csr over and over again
@@ -343,6 +347,28 @@ public:
         }                                                               \
         return;                                                         \
     }
+#else
+#define BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(type, method, return_type)  \
+    public:                                                             \
+    return_type method() {                                              \
+        throw std::runtime_error("Not implemented on host");            \
+    }
+#define BSG_GLOBAL_POINTER_REFERENCE_FUNCTION_CONST(type, method, return_type) \
+    public:                                                             \
+    return_type method() const {                                        \
+        throw std::runtime_error("Not implemented on host");            \
+    }
+#define BSG_GLOBAL_POINTER_REFERENCE_METHOD(type, method)               \
+    public:                                                             \
+    void method() {                                                     \
+        throw std::runtime_error("Not implemented on host");            \
+    }
+#define BSG_GLOBAL_POINTER_REFERENCE_METHOD_CONST(type, method)         \
+    public:                                                             \
+    void method() const {                                               \
+        throw std::runtime_error("Not implemented on host");            \
+    }
+#endif
 
 /**
  * generates accessors for a data member
