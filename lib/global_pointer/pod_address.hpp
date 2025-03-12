@@ -187,7 +187,7 @@ public:
         return pod_.x == other.pod_.x && pod_.y == other.pod_.y;
     }
 
-    hb_mc_coordinate_t pod_; //!< pod coordinate
+    hb_mc_coordinate_t pod_ = {0,0}; //!< pod coordinate
 };
 #endif
 

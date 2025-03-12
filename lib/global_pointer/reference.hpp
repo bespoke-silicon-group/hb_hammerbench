@@ -24,10 +24,17 @@ public:
      */
     explicit reference(address addr): addr_(addr) {}
 
+#ifndef HOST
     /**
      * @brief constructor from address with default extended address
      */
     explicit reference(const void* raw): addr_(raw) {}
+#endif
+
+    /**
+     * @brief from intptr
+     */
+    explicit reference(uintptr raw): addr_(raw) {}
 
     /**
      * @brief default constructor
@@ -138,6 +145,16 @@ public:
     FIELD(address, addr); //!< the address information
 };
 
+#ifndef HOST
+#define BSG_GLOBAL_POINTER_REFERENCE_VOIDP_CONSTRUCTOR(type)            \
+    /**                                                                 \
+     * @brief constructor from address with default extended address    \
+     */                                                                 \
+    reference(const void* raw): addr_(raw) {}
+#else
+#define BSG_GLOBAL_POINTER_REFERENCE_VOIDP_CONSTRUCTOR(type)
+#endif
+
 /**
  * generates the default constructors for the reference class
  */
@@ -147,10 +164,13 @@ public:
      * @brief base constructor                                          \
      */                                                                 \
     reference(address addr): addr_(addr) {}                             \
+                                                                        \
+    BSG_GLOBAL_POINTER_REFERENCE_VOIDP_CONSTRUCTOR(type)                \
+                                                                        \
     /**                                                                 \
-     * @brief constructor from address with default extended address    \
+     * @brief from intptr                                               \
      */                                                                 \
-    reference(const void* raw): addr_(raw) {}                           \
+    reference(uintptr raw): addr_(raw) {}                               \
     /**                                                                 \
      * @brief default constructor                                       \
      */                                                                 \

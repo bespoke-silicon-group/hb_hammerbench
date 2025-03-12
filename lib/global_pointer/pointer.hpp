@@ -18,10 +18,17 @@ public:
      */
     pointer(address addr) : ref_(addr) {}
 
+#ifndef HOST
     /**
      * @brief constructor from address with default extended address
      */
     pointer(const void* raw) : ref_(raw) {}
+#endif
+
+    /**
+     * @brief constructor from uintptr
+     */
+    pointer(uintptr raw) : ref_(raw) {}
 
     /**
      * @brief default constructor
