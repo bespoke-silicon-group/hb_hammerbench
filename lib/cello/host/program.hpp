@@ -1,8 +1,10 @@
 #ifndef CELLO_HOST_PROGRAM_HPP
 #define CELLO_HOST_PROGRAM_HPP
+
 #include <bsg_manycore_cuda.h>
 #include <bsg_manycore.h>
 #include <bsg_manycore_regression.h>
+#include <global_pointer/global_pointer.hpp>
 #include <cello/config.hpp>
 #include <vector>
 namespace cello

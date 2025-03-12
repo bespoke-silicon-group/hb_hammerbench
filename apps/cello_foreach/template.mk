@@ -35,13 +35,20 @@ vpath %.cpp $(APP_PATH)
 # TEST_SOURCES is a list of source files that need to be compiled
 CELLO_HOST_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/cello/host/*.cpp)
 CELLO_HOST_LIB_SOURCES := $(foreach src,$(CELLO_HOST_LIB_SOURCES),$(notdir $(src)))
+GLOBAL_POINTER_HOST_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/global_pointer/host/*.cpp)
+GLOBAL_POINTER_HOST_LIB_SOURCES := $(foreach src,$(GLOBAL_POINTER_HOST_LIB_SOURCES),$(notdir $(src)))
+
 vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/cello/host
 vpath %.c   $(HB_HAMMERBENCH_PATH)/lib/cello/host
+vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/global_pointer/host
+vpath %.c   $(HB_HAMMERBENCH_PATH)/lib/global_pointer/host
 
 TEST_SOURCES := $(CELLO_HOST_LIB_SOURCES)
+TEST_SOURCES += $(GLOBAL_POINTER_HOST_LIB_SOURCES)
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+DEFINES += -DHOST
 CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable

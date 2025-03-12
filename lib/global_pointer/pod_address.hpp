@@ -2,8 +2,12 @@
 #define GLOBAL_POINTER_POD_ADDRESS_HPP
 #include <bitmanip/bitmanip.hpp>
 #include <stdint.h>
+#ifdef HOST
+#include <global_pointer/host/device.hpp>
+#endif
 namespace bsg_global_pointer
 {
+#ifndef HOST
 /**
  * need to be defined at compile time
  */
@@ -124,6 +128,68 @@ public:
         };
     };
 };
+#else
+
+/**
+ * @brief pod address class
+ */
+class pod_address
+{
+public:
+    pod_address(hb_mc_coordinate_t coord)
+        : pod_(coord) {
+    }
+
+    pod_address(unsigned x, unsigned y) {
+        set_pod_x(x);
+        set_pod_y(y);
+    }
+
+    pod_address() {}
+
+    pod_address(const pod_address & other)
+        : pod_(other.pod_) {
+    }
+
+    pod_address(pod_address && other)
+        : pod_(other.pod_) {
+    }
+
+    pod_address & operator=(const pod_address & other) {
+        pod_ = other.pod_;
+        return *this;
+    }
+
+    pod_address & operator=(pod_address && other) {
+        pod_ = other.pod_;
+        return *this;
+    }
+
+    unsigned pod_x() const {
+        return pod_.x;
+    }
+
+    unsigned pod_y() const {
+        return pod_.y;
+    }
+
+    pod_address & set_pod_x(unsigned x) {
+        pod_.x = x;
+        return *this;
+    }
+
+    pod_address & set_pod_y(unsigned y) {
+        pod_.y = y;
+        return *this;
+    }
+
+    bool operator==(const pod_address & other) const {
+        return pod_.x == other.pod_.x && pod_.y == other.pod_.y;
+    }
+
+    hb_mc_coordinate_t pod_; //!< pod coordinate
+};
+#endif
 
 /**
  * @brief
@@ -152,6 +218,7 @@ public:
     /**
      * @brief gets the pod address in the CSR
      */
+#ifndef HOST
     pod_address get_pod_addr() {
         return pod_address::readPodAddrCSR();
     }
@@ -162,7 +229,18 @@ public:
     void set_pod_addr(pod_address addr) {
         return pod_address::writePodAddrCSR(addr);
     }
+#else
+    pod_address get_pod_addr() {
+        return pod_address{hb_mc_index_to_coordinate(the_device->default_pod_id, the_device->mc->config.pods)};
+    }
 
+    /**
+     * @brief sets the pod address in the CSR
+     */
+    void set_pod_addr(pod_address addr) {
+        the_device->default_pod_id = hb_mc_coordinate_to_index(addr.pod_, the_device->mc->config.pods);
+    }
+#endif
     pod_address save_;
 };
 

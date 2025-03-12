@@ -35,15 +35,23 @@ vpath %.cpp $(APP_PATH)
 TEST_SOURCES = main.cpp
 CELLO_HOST_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/cello/host/*.cpp)
 CELLO_HOST_LIB_SOURCES := $(foreach src,$(CELLO_HOST_LIB_SOURCES),$(notdir $(src)))
+GLOBAL_POINTER_HOST_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/global_pointer/host/*.cpp)
+GLOBAL_POINTER_HOST_LIB_SOURCES := $(foreach src,$(GLOBAL_POINTER_HOST_LIB_SOURCES),$(notdir $(src)))
+
 vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/cello/host
 vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/cello/host
+vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/global_pointer/host
+vpath %.c   $(HB_HAMMERBENCH_PATH)/lib/global_pointer/host
+
 TEST_SOURCES += $(CELLO_HOST_LIB_SOURCES)
+TEST_SOURCES += $(GLOBAL_POINTER_HOST_LIB_SOURCES)
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
+DEFINES += -DHOST
 CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CXXDEFINES +=
 
-FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
+FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable $(DEFINES)
 FLAGS    += -I$(HB_HAMMERBENCH_PATH)/lib
 FLAGS    += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CFLAGS   += -std=c99 $(FLAGS)
@@ -71,6 +79,12 @@ include $(EXAMPLES_PATH)/link.mk
 RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+RISCV_CCPPFLAGS += -DBSG_COORD_X_WIDTH=$(BSG_MACHINE_NOC_COORD_X_WIDTH)
+RISCV_CCPPFLAGS += -DBSG_COORD_Y_WIDTH=$(BSG_MACHINE_NOC_COORD_Y_WIDTH)
+RISCV_CCPPFLAGS += -DBSG_POD_TILES_X=$(BSG_MACHINE_POD_TILES_X)
+RISCV_CCPPFLAGS += -DBSG_POD_TILES_Y=$(BSG_MACHINE_POD_TILES_Y)
+RISCV_CCPPFLAGS += -DBSG_PODS_X=$(BSG_MACHINE_PODS_X)
+RISCV_CCPPFLAGS += -DBSG_PODS_Y=$(BSG_MACHINE_PODS_Y)
 RISCV_CCPPFLAGS += -fno-rtti
 RISCV_CCPPFLAGS += -fno-exceptions
 RISCV_CCPPFLAGS += -I$(HB_HAMMERBENCH_PATH)/lib

@@ -7,7 +7,7 @@ program::program() {}
 int program::init(int argc, char **argv) {
     char *program = argv[1];
     BSG_CUDA_CALL(hb_mc_device_init(&this->mc, "cello_program", 0));
-
+    bsg_global_pointer::the_device = &this->mc;
     jobs_in.resize(this->mc.num_pods);
     jobs_out.resize(this->mc.num_pods);
     cfgs.resize(this->mc.num_pods);
