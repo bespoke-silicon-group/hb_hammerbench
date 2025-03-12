@@ -4,6 +4,9 @@
 #include <utility>
 #include <stddef.h>
 #include <global_pointer/address.hpp>
+#ifdef HOST
+#include <stdexcept>
+#endif
 namespace bsg_global_pointer
 {
 /**
@@ -24,10 +27,17 @@ public:
      */
     explicit reference(address addr): addr_(addr) {}
 
+#ifndef HOST
     /**
      * @brief constructor from address with default extended address
      */
     explicit reference(const void* raw): addr_(raw) {}
+#endif
+
+    /**
+     * @brief from intptr
+     */
+    explicit reference(uintptr raw): addr_(raw) {}
 
     /**
      * @brief default constructor
@@ -138,6 +148,16 @@ public:
     FIELD(address, addr); //!< the address information
 };
 
+#ifndef HOST
+#define BSG_GLOBAL_POINTER_REFERENCE_VOIDP_CONSTRUCTOR(type)            \
+    /**                                                                 \
+     * @brief constructor from address with default extended address    \
+     */                                                                 \
+    reference(const void* raw): addr_(raw) {}
+#else
+#define BSG_GLOBAL_POINTER_REFERENCE_VOIDP_CONSTRUCTOR(type)
+#endif
+
 /**
  * generates the default constructors for the reference class
  */
@@ -147,10 +167,13 @@ public:
      * @brief base constructor                                          \
      */                                                                 \
     reference(address addr): addr_(addr) {}                             \
+                                                                        \
+    BSG_GLOBAL_POINTER_REFERENCE_VOIDP_CONSTRUCTOR(type)                \
+                                                                        \
     /**                                                                 \
-     * @brief constructor from address with default extended address    \
+     * @brief from intptr                                               \
      */                                                                 \
-    reference(const void* raw): addr_(raw) {}                           \
+    reference(uintptr raw): addr_(raw) {}                               \
     /**                                                                 \
      * @brief default constructor                                       \
      */                                                                 \
@@ -277,6 +300,7 @@ public:
     BSG_GLOBAL_POINTER_REFERENCE_READ_WRITE_TRIVIAL(type)       \
     BSG_GLOBAL_POINTER_REFERENCE_INTERNAL(type)
 
+#ifndef HOST
 /**
  * generates a delegate method. this can be used to coalesce multiple accesses
  * without writing the samve value to pod address csr over and over again
@@ -323,6 +347,28 @@ public:
         }                                                               \
         return;                                                         \
     }
+#else
+#define BSG_GLOBAL_POINTER_REFERENCE_FUNCTION(type, method, return_type)  \
+    public:                                                             \
+    return_type method() {                                              \
+        throw std::runtime_error("Not implemented on host");            \
+    }
+#define BSG_GLOBAL_POINTER_REFERENCE_FUNCTION_CONST(type, method, return_type) \
+    public:                                                             \
+    return_type method() const {                                        \
+        throw std::runtime_error("Not implemented on host");            \
+    }
+#define BSG_GLOBAL_POINTER_REFERENCE_METHOD(type, method)               \
+    public:                                                             \
+    void method() {                                                     \
+        throw std::runtime_error("Not implemented on host");            \
+    }
+#define BSG_GLOBAL_POINTER_REFERENCE_METHOD_CONST(type, method)         \
+    public:                                                             \
+    void method() const {                                               \
+        throw std::runtime_error("Not implemented on host");            \
+    }
+#endif
 
 /**
  * generates accessors for a data member
