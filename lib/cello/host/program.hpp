@@ -74,6 +74,14 @@ public:
      */
     hb_mc_eva_t find(const char*symbol);
 
+    /**
+     * @brief find a symbol
+     */
+    template <typename T>
+    bsg_global_pointer::pointer<T> find(const char*symbol) {
+        return bsg_global_pointer::pointer<T>(find(symbol));
+    }
+
     hb_mc_device_t mc; //!< manycore device
     hb_mc_dimension_t tg = {bsg_tiles_X, bsg_tiles_Y}; //!< tile group dimensions
     std::vector<std::vector<hb_mc_dma_htod_t>> jobs_in; //!< dma jobs

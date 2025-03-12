@@ -6,7 +6,7 @@ class program : public cello::program {
 public:
     int input() override {
         cello::program::input();
-        data_ptr = bsg_global_pointer::pointer<data_t>(find("data"));
+        data_ptr = find<data_t>("data");
         hb_mc_pod_id_t pod_id;
         hb_mc_device_foreach_pod_id(&mc, pod_id) {
             hb_mc_coordinate_t pod = hb_mc_index_to_coordinate(pod_id, mc.mc->config.pods);
