@@ -51,6 +51,11 @@ public:
     int sync_output();
 
     /**
+     * @brief check output
+     */
+    virtual int check_output();
+
+    /**
      * @brief finalize the program
      */
     int fini();
@@ -63,8 +68,9 @@ public:
         BSG_CUDA_CALL(input());
         BSG_CUDA_CALL(sync_input());
         BSG_CUDA_CALL(run());
-        BSG_CUDA_CALL(sync_output());
         BSG_CUDA_CALL(output());
+        BSG_CUDA_CALL(sync_output());
+        BSG_CUDA_CALL(check_output());
         BSG_CUDA_CALL(fini());
         return 0;
     }

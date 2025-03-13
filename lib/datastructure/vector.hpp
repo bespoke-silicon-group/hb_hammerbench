@@ -131,53 +131,149 @@ public:
 namespace datastructure
 {
 /**
- * @brief A class for initializing a vector
+ * @brief A class that is meant to mirror a vector on the device from the host
  */
 template <typename T, size_t STRIDE = 1>
-class vector_initializer
+class vector_host_mirror
 {
 public:
-    using vector_type = vector<T, STRIDE>;
+    using vector_type = datastructure::vector<T, STRIDE>;
+
+    VECTOR_INDEX_METHODS(vector_host_mirror);
+
+    T& at(size_t i) {
+        hb_mc_coordinate_t pod = {.x=pod_x(i), .y=pod_y(i)};
+        hb_mc_pod_id_t pod_id = hb_mc_coordinate_to_index(pod, bsg_global_pointer::the_device->mc->config.pods);
+        return data[pod_id][lcl(i)];
+    }
+
+    const T& at(size_t i) const {
+        hb_mc_coordinate_t pod = {.x=pod_x(i), .y=pod_y(i)};
+        hb_mc_pod_id_t pod_id = hb_mc_coordinate_to_index(pod, bsg_global_pointer::the_device->mc->config.pods);
+        return data[pod_id][lcl(i)];
+    }
+    
     /**
-     * @brief Initialize the vector
-     * @param vptr The vector to initialize
-     * @param dptr The device to initialize the vector on
+     * @brief Construct a vector_host_mirror from a vector
+     * @param vptr A pointer to the vector to mirror
      */
-    int init(bsg_global_pointer::pointer<vector_type> vptr,
-              const std::vector<T>& data,
-              hb_mc_device_t *dptr,
-              std::vector<std::vector<hb_mc_dma_htod_t>>& jobs_in) {
+    vector_host_mirror(bsg_global_pointer::pointer<vector_type> vptr) : vptr(vptr) {
+        data.resize(bsg_global_pointer::the_device->num_pods);
+    }
+    
+    /**
+     * @brief Free memory on the device and set the size to 0
+     */
+    int clear_device() {
+        hb_mc_pod_id_t pod_id;
+        hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
+            hb_mc_eva_t eva = vptr->data();
+            BSG_CUDA_CALL(hb_mc_device_pod_free(bsg_global_pointer::the_device, pod_id, eva));
+            vptr->data() = 0;
+            vptr->size() = 0;
+        }
+        return 0;
+    }
+
+    /**
+     * @brief Free memory on the host and set the size to 0
+     */
+    int clear_host() {
+        for (auto & v :data) {
+            v.clear();
+        }
+        size = 0;
+        return 0;
+    }
+
+    /**
+     * @brief Initialize the device from the host
+     *
+     * Set the size to that of the host and allocate memory on the device
+     */
+    int init_device_from_host() {
+        clear_device();
+        hb_mc_pod_id_t pod_id;
+        hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
+            hb_mc_eva_t eva;
+            BSG_CUDA_CALL(hb_mc_device_pod_malloc(bsg_global_pointer::the_device, pod_id, data[pod_id].size() * sizeof(T), &eva));
+            hb_mc_coordinate_t pod = hb_mc_index_to_coordinate(pod_id, bsg_global_pointer::the_device->mc->config.pods);
+            vptr.set_pod_x(pod.x)
+                .set_pod_y(pod.y);
+            vptr->data() = eva;
+            vptr->size() = size;
+        }
+        return 0;
+    }
+
+    /**
+     * @brief Initialize the host from the device
+     *
+     * Set the size to that of the device and allocate memory on the host
+     */
+    int init_host_from_device() {
+        clear_host();
+        size = vptr->size();
+        size_t sz = (size + bsg_global_pointer::the_device->num_pods - 1) / bsg_global_pointer::the_device->num_pods;
+        for (auto & v : data) {
+            v.resize(sz);
+        }
+        return 0;
+    }
+
+    /**
+     * @brief Initialize the host from a vector
+     * @param init_data The vector to initialize from
+     */
+    int init_host_from(const std::vector<T> & init_data) {
+        size = init_data.size();
+        
+        size_t sz = (size + bsg_global_pointer::the_device->num_pods - 1) / bsg_global_pointer::the_device->num_pods;
+        data.resize(bsg_global_pointer::the_device->num_pods);
+        for (auto & v : data) {
+            v.resize(sz);
+        }
+
+        for (size_t i = 0; i < size; i++) {
+            at(i) = init_data[i];
+        }
+
+        return 0;
+    }
+
+    /**
+     * @brief Synchronize the device with the host
+     */
+    int sync_device(std::vector<std::vector<hb_mc_dma_htod_t>> & jobs_in) {
+        clear_device();
+        init_device_from_host();
 
         hb_mc_pod_id_t pod_id;
-        hb_mc_device_foreach_pod_id(dptr, pod_id) {
-            hb_mc_coordinate_t pod = hb_mc_index_to_coordinate(pod_id, dptr->mc->config.pods);
-            vptr.set_pod_x(pod.x).set_pod_y(pod.y);
-            vptr->size() = data.size();
-            hb_mc_eva_t dp;
-            BSG_CUDA_CALL(hb_mc_device_pod_malloc(dptr, pod_id, data.size() * sizeof(T), &dp));
-            vptr->data() = dp;
-        }
-
-        io_data.resize(dptr->num_pods);
-
-        for (size_t i = 0; i < data.size(); i++) {
-            bsg_global_pointer::pointer<T> p = vptr->at_ptr(i);
-            hb_mc_coordinate_t pod = { .x = p.pod_x(), .y = p.pod_y() };
-            pod_id = hb_mc_coordinate_to_index(pod, dptr->mc->config.pods);
-            io_data[pod_id].push_back(data[i]);
-        }
-        
-        hb_mc_device_foreach_pod_id(dptr, pod_id) {
-            hb_mc_eva_t dst = vptr->data();
+        hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
             jobs_in[pod_id].push_back({
-                    dst,
-                    io_data[pod_id].data(),
-                    io_data[pod_id].size() * sizeof(T),
+                    vptr->data(), data[pod_id].data(), data[pod_id].size() * sizeof(T)
             });
         }
         return 0;
     }
-    std::vector<std::vector<T>> io_data; //!< The data to initialize the vector with
+
+    /**
+     * @brief Synchronize the host with the device
+     */
+    int sync_host(std::vector<std::vector<hb_mc_dma_dtoh_t>> & jobs_out) {
+        clear_host();
+        init_host_from_device();
+        hb_mc_pod_id_t pod_id;
+        hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
+            jobs_out[pod_id].push_back({vptr->data(), data[pod_id].data(), data[pod_id].size() * sizeof(T)});
+        }
+        return 0;
+    }
+
+
+    bsg_global_pointer::pointer<vector_type> vptr;
+    std::vector<std::vector<T>> data;
+    size_t size = 0;
 };
 }
 #endif
