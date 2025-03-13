@@ -45,11 +45,20 @@ public:
      */
     pointer(pointer&& other) : ref_(other.ref_) {}
 
+#ifndef HOST
     /**
      * @brief make a global pointer from a local pointer and pod coordinates
      */
     static pointer<T> onPodXY(unsigned x, unsigned y, const T* ptr) {
         return pointer<T>
+            (address(address_ext(pod_address(x,y)), ptr));
+    }
+#endif
+    /**
+     * @brief make a global pointer from a local intpointer and pod coordinates
+     */
+    static pointer<int> onPodXY(unsigned x, unsigned y, uintptr ptr) {
+        return pointer<int>
             (address(address_ext(pod_address(x,y)), ptr));
     }
 

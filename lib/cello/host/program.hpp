@@ -51,6 +51,11 @@ public:
     int sync_output();
 
     /**
+     * @brief check output
+     */
+    virtual int check_output();
+
+    /**
      * @brief finalize the program
      */
     int fini();
@@ -63,8 +68,9 @@ public:
         BSG_CUDA_CALL(input());
         BSG_CUDA_CALL(sync_input());
         BSG_CUDA_CALL(run());
-        BSG_CUDA_CALL(sync_output());
         BSG_CUDA_CALL(output());
+        BSG_CUDA_CALL(sync_output());
+        BSG_CUDA_CALL(check_output());
         BSG_CUDA_CALL(fini());
         return 0;
     }
@@ -80,6 +86,20 @@ public:
     template <typename T>
     bsg_global_pointer::pointer<T> find(const char*symbol) {
         return bsg_global_pointer::pointer<T>(find(symbol));
+    }
+
+    /**
+     * @brief pod id to coordinate
+     */
+    hb_mc_coordinate_t pod_id_to_coord(int pod_id) {
+        return hb_mc_index_to_coordinate(pod_id, mc.mc->config.pods);
+    }
+
+    /**
+     * @brief coordinate to pod id
+     */
+    hb_mc_pod_id_t pod_coord_to_id(hb_mc_coordinate_t coord) {
+        return hb_mc_coordinate_to_index(coord, mc.mc->config.pods);
     }
 
     hb_mc_device_t mc; //!< manycore device
