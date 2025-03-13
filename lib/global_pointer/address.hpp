@@ -4,7 +4,9 @@
 #include <util/class_field.hpp>
 #include <global_pointer/intptr.hpp>
 #include <global_pointer/address_ext.hpp>
-
+#ifdef HOST
+#include <stdexcept>
+#endif
 namespace bsg_global_pointer
 {
 
@@ -139,7 +141,10 @@ public:
         register T* ptr = reinterpret_cast<T*>(raw_);
         {
             pod_address_guard grd(ext_.pod_addr());
-            hb_mc_device_memcpy_to_device(the_device, raw_, &wv, sizeof(T));
+            int r = hb_mc_device_memcpy_to_device(the_device, raw_, &wv, sizeof(T));
+            if (r != HB_MC_SUCCESS) {
+                throw std::runtime_error("address::write(): hb_mc_device_memcpy_to_device failed");
+            }
         }
     }
 
@@ -152,7 +157,10 @@ public:
         register T* ptr = reinterpret_cast<T*>(raw_);
         {
             pod_address_guard grd(ext_.pod_addr());
-            hb_mc_device_memcpy_to_host(the_device, &rv, raw_, sizeof(T));
+            int r = hb_mc_device_memcpy_to_host(the_device, &rv, raw_, sizeof(T));
+            if (r != HB_MC_SUCCESS) {
+                throw std::runtime_error("address::read(): hb_mc_device_memcpy_to_host failed");
+            }
         }
         return rv;
     }

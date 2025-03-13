@@ -1,0 +1,18 @@
+#include <cello/host/cello.hpp>
+#include <global_pointer/global_pointer.hpp>
+
+class program : public cello::program {
+public:
+    int input() override {
+        cello::program::input();
+        return 0;
+    }
+    int output() override {
+        cello::program::output();
+        return 0;
+    }
+};
+
+cello::program *make_program() {
+    return new program();
+}

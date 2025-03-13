@@ -82,6 +82,20 @@ public:
         return bsg_global_pointer::pointer<T>(find(symbol));
     }
 
+    /**
+     * @brief pod id to coordinate
+     */
+    hb_mc_coordinate_t pod_id_to_coord(int pod_id) {
+        return hb_mc_index_to_coordinate(pod_id, mc.mc->config.pods);
+    }
+
+    /**
+     * @brief coordinate to pod id
+     */
+    hb_mc_pod_id_t pod_coord_to_id(hb_mc_coordinate_t coord) {
+        return hb_mc_coordinate_to_index(coord, mc.mc->config.pods);
+    }
+
     hb_mc_device_t mc; //!< manycore device
     hb_mc_dimension_t tg = {bsg_tiles_X, bsg_tiles_Y}; //!< tile group dimensions
     std::vector<std::vector<hb_mc_dma_htod_t>> jobs_in; //!< dma jobs
