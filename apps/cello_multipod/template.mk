@@ -15,7 +15,7 @@ HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 REPLICANT_PATH := $(shell cd $(HB_HAMMERBENCH_PATH)/.. && git rev-parse --show-toplevel)
 BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X1Y2_ruche_X4Y2_hbm
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
-
+include $(HB_HAMMERBENCH_PATH)/mk/cello.mk
 
 ###############################################################################
 # Host code compilation flags and flow
@@ -32,27 +32,13 @@ vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
 
 # TEST_SOURCES is a list of source files that need to be compiled
-TEST_SOURCES = main.cpp
-CELLO_HOST_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/cello/host/*.cpp)
-CELLO_HOST_LIB_SOURCES := $(foreach src,$(CELLO_HOST_LIB_SOURCES),$(notdir $(src)))
-GLOBAL_POINTER_HOST_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/global_pointer/host/*.cpp)
-GLOBAL_POINTER_HOST_LIB_SOURCES := $(foreach src,$(GLOBAL_POINTER_HOST_LIB_SOURCES),$(notdir $(src)))
-
-vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/cello/host
-vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/cello/host
-vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/global_pointer/host
-vpath %.c   $(HB_HAMMERBENCH_PATH)/lib/global_pointer/host
-
-TEST_SOURCES += $(CELLO_HOST_LIB_SOURCES)
-TEST_SOURCES += $(GLOBAL_POINTER_HOST_LIB_SOURCES)
+TEST_SOURCES += main.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
-DEFINES += -DHOST
 CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable $(DEFINES)
-FLAGS    += -I$(HB_HAMMERBENCH_PATH)/lib
 FLAGS    += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++11 $(FLAGS)
@@ -75,34 +61,12 @@ include $(EXAMPLES_PATH)/link.mk
 
 # BSG_MANYCORE_KERNELS is a list of manycore executables that should
 # be built before executing.
-
 RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
-RISCV_CCPPFLAGS += -DBSG_COORD_X_WIDTH=$(BSG_MACHINE_NOC_COORD_X_WIDTH)
-RISCV_CCPPFLAGS += -DBSG_COORD_Y_WIDTH=$(BSG_MACHINE_NOC_COORD_Y_WIDTH)
-RISCV_CCPPFLAGS += -DBSG_POD_TILES_X=$(BSG_MACHINE_POD_TILES_X)
-RISCV_CCPPFLAGS += -DBSG_POD_TILES_Y=$(BSG_MACHINE_POD_TILES_Y)
-RISCV_CCPPFLAGS += -DBSG_PODS_X=$(BSG_MACHINE_PODS_X)
-RISCV_CCPPFLAGS += -DBSG_PODS_Y=$(BSG_MACHINE_PODS_Y)
-RISCV_CCPPFLAGS += -fno-rtti
-RISCV_CCPPFLAGS += -fno-exceptions
-RISCV_CCPPFLAGS += -I$(HB_HAMMERBENCH_PATH)/lib
 
-CELLO_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/cello/*.cpp)
-CELLO_LIB_SOURCES := $(foreach src,$(CELLO_LIB_SOURCES),$(notdir $(src)))
-CELLO_LIB_OBJECTS := $(CELLO_LIB_SOURCES:.cpp=.rvo)
-UTIL_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/util/*.cpp)
-UTIL_LIB_SOURCES := $(foreach src,$(UTIL_LIB_SOURCES),$(notdir $(src)))
-UTIL_LIB_OBJECTS := $(UTIL_LIB_SOURCES:.cpp=.rvo)
-vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/util
-vpath %.c   $(HB_HAMMERBENCH_PATH)/lib/util
-vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/cello
-vpath %.c   $(HB_HAMMERBENCH_PATH)/lib/cello
 
-RISCV_TARGET_OBJECTS = kernel.rvo
-RISCV_TARGET_OBJECTS += $(CELLO_LIB_OBJECTS)
-RISCV_TARGET_OBJECTS += $(UTIL_LIB_OBJECTS)
+RISCV_TARGET_OBJECTS += kernel.rvo
 BSG_MANYCORE_KERNELS = main.riscv
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
