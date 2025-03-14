@@ -16,6 +16,11 @@
 
 namespace datastructure
 {
+#ifdef HOST
+template <typename T, size_t STRIDE>
+class vector_host_mirror;
+#endif
+
 template <typename T, size_t STRIDE = 1>
 class vector
 {
@@ -39,7 +44,8 @@ public:
     using value_gpointer = bsg_global_pointer::pointer<T>;
     using value_greference = bsg_global_pointer::reference<T>;
     using value_gconstpointer = bsg_global_pointer::pointer<const T>;
-    using value_gconstreference = bsg_global_pointer::reference<const T>;    
+    using value_gconstreference = bsg_global_pointer::reference<const T>;
+    using mirror_type = vector_host_mirror<T, STRIDE>;
 #endif
     
 #ifndef HOST
@@ -54,28 +60,31 @@ public:
             size_t step = STRIDE * num_pods();
             size_t end = size();
             cello::foreach(start, end, step, [this, f](size_t i){
-                f(i, this->local(i));
+                size_t start = i;
+                size_t stop = i + STRIDE;
+                if (stop > size()) {
+                    stop = size();
+                }
+                for (size_t j = start; j < stop; j++) {
+                    f(j, this->local(j));
+                }
             });
         });
         wait(&j);
     }
 
     value_reference local(size_t i) {
-        using namespace cello;        
-        size_t lcl = (i / (STRIDE * num_pods()));
-        return data()[lcl];
+        return data()[lcl(i)];
     }
 
     value_constreference local(size_t i) const {
-        using namespace cello;        
-        size_t lcl = (i / (STRIDE * num_pods()));
-        return data()[lcl];
+        return data()[lcl(i)];
     }
 #endif
 
 #define VECTOR_INDEX_METHODS(type)                                      \
     size_t pod(size_t i) const {                                        \
-        return i % (STRIDE * datastructure::num_pods());                \
+        return (i % (STRIDE * datastructure::num_pods())) / STRIDE;     \
     }                                                                   \
     int pod_x(size_t i) const {                                         \
         return pod(i) % datastructure::num_pods_x();                    \
@@ -84,7 +93,8 @@ public:
         return pod(i) / datastructure::num_pods_x();                    \
     }                                                                   \
     size_t lcl(size_t i) const {                                        \
-        return i / (STRIDE * datastructure::num_pods());                \
+        return STRIDE*(i / (datastructure::num_pods()*STRIDE))          \
+            +  i % STRIDE;                                              \
     }                                                                   \
     
 #define VECTOR_AT_METHODS(type)                                         \

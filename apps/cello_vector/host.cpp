@@ -2,13 +2,14 @@
 #include <global_pointer/global_pointer.hpp>
 #include <datastructure/vector.hpp>
 #include <memory>
+#include "common.hpp"
 
 class program : public cello::program {
 public:
     int init(int argc, char *argv[]) override {
         cello::program::init(argc, argv);
-        vec_mirror = std::unique_ptr<datastructure::vector_host_mirror<int>>
-            (new datastructure::vector_host_mirror<int>(find<datastructure::vector<int>>("vec_int")));
+        vec_mirror = std::unique_ptr<vector_type::mirror_type>
+            (new vector_type::mirror_type(find<vector_type>("vec_int")));
         vec_n = atoi(argv[2]);
         return 0;
     }
@@ -35,14 +36,18 @@ public:
 
     int check_output() override {
         cello::program::check_output();
+        int r = HB_MC_SUCCESS;
         for (int i = 0; i < vec_n; i++) {
-            printf("vec_int[%3d]: %3d\n", i, vec_mirror->at(i));
+            if (vec_mirror->at(i) != 2*i) {
+                printf("FAIL: vec_int[%3d]: %3d\n", i, vec_mirror->at(i));
+                r = HB_MC_FAIL;
+            }
         }
-        return 0;
+        return r;
     }
 
-    bsg_global_pointer::pointer<datastructure::vector<int>> vec_int_ptr;
-    std::unique_ptr<datastructure::vector_host_mirror<int>> vec_mirror;
+    bsg_global_pointer::pointer<vector_type> vec_int_ptr;
+    std::unique_ptr<vector_type::mirror_type> vec_mirror;
     int vec_n;    
 };
 
