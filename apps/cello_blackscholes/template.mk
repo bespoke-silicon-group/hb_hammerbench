@@ -12,6 +12,9 @@
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+REPLICANT_PATH := $(shell cd $(HB_HAMMERBENCH_PATH)/.. && git rev-parse --show-toplevel)
+#BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X4Y2_hbm_one_pseudo_channel
+BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X2Y2_ruche_X4Y2_hbm
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 ###############################################################################
@@ -75,9 +78,14 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 #
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
-C_ARGS ?= $(BSG_MANYCORE_KERNELS)
+C_ARGS ?= $(BSG_MANYCORE_KERNELS) $(num_options) $(APP_PATH)/in_10M.txt
 
 SIM_ARGS ?=
+
+exec.log debug.log profile.log pc_histogram.log: $(APP_PATH)/in_10M.txt
+
+$(APP_PATH)/in_10M.txt: $(APP_PATH)/in_10M.txt.xz
+	xz -d -k $<
 
 # Include platform-specific execution rules
 include $(EXAMPLES_PATH)/execution.mk

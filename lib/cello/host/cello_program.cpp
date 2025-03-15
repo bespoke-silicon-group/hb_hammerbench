@@ -47,7 +47,8 @@ int program::sync_input() {
         BSG_CUDA_CALL(hb_mc_device_set_default_pod(&this->mc, pod_id));
         BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&this->mc, jobs_in[pod_id].data(), jobs_in[pod_id].size()));
         //BSG_CUDA_CALL(hb_mc_device_pod_dma_to_device(&this->mc, pod_id, jobs_in[pod_id].data(), jobs_in[pod_id].size()));
-    }
+        jobs_in[pod_id].clear();
+    }    
     return 0;
 }
 
@@ -84,6 +85,7 @@ int program::sync_output() {
         // broken
         BSG_CUDA_CALL(hb_mc_device_set_default_pod(&this->mc, pod_id));
         BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&this->mc, jobs_out[pod_id].data(), jobs_out[pod_id].size()));
+        jobs_out[pod_id].clear();
     }
     return 0;
 }
