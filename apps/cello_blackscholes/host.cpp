@@ -69,7 +69,7 @@ public:
     }
 
     int output() override {
-        cello::program::sync_input();        
+        cello::program::output();
         BSG_CUDA_CALL(options_data->sync_host(jobs_out));
         return 0;
     }
