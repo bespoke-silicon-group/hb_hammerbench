@@ -91,7 +91,23 @@ static inline int id() {
 static inline int num_tiles_total() {
     return bsg_tiles_X * bsg_tiles_Y * bsg_pods_X * bsg_pods_Y;
 }
+
 }
+
+/**
+ * @brief decode the id
+ */
+struct thread_id_decoded {
+    int pod    = 0;
+    int pod_x  = 0;
+    int pod_y  = 0;
+    int tile   = 0;
+    int tile_x = 0;
+    int tile_y = 0;
+};
+
+void thread_id_decode(thread_id_decoded *decode, int id);
+
 
 /**
  * @brief setup the id variables

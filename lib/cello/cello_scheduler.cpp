@@ -34,33 +34,25 @@ DMEM(work_queue *) my_tasks_ptr = &my_tasks;
 DMEM(del_queue) my_delegates;
 DMEM(del_queue *) my_delegates_ptr = &my_delegates;
 
-void decode_id(int id, int &pod, int &pod_x, int &pod_y, int &tile, int &tile_x, int &tile_y)
-{
-    pod    = id / my::num_tiles();
-    tile   = id % my::num_tiles();
-    pod_x  = pod % my::num_pods_x();
-    pod_y  = pod / my::num_pods_x();
-    tile_x = tile % my::num_tiles_x();
-    tile_y = tile / my::num_tiles_x();    
-}
 
 global_pointer<work_queue> tasks_of(int id)
 {
     int pod, pod_x, pod_y, tile, tile_x, tile_y;
-    decode_id(id, pod, pod_x, pod_y, tile, tile_x, tile_y);
+    thread_id_decoded decode;
+    thread_id_decode(&decode, id);
 
-    work_queue *lcl = bsg_tile_group_remote_pointer<work_queue>(tile_x, tile_y, &my_tasks);
+    work_queue *lcl = bsg_tile_group_remote_pointer<work_queue>(decode.tile_x, decode.tile_y, &my_tasks);
     global_pointer<work_queue> glbl = global_pointer<work_queue>::onPodXY(my::pod_x(), my::pod_y(), lcl);
     return glbl;
 }
 
 global_pointer<del_queue> delegates_of(int id)
 {
-    int pod, pod_x, pod_y, tile, tile_x, tile_y;
-    decode_id(id, pod, pod_x, pod_y, tile, tile_x, tile_y);
+    thread_id_decoded decode;
+    thread_id_decode(&decode, id);
 
-    del_queue *lcl = bsg_tile_group_remote_pointer<del_queue>(tile_x, tile_y, &my_delegates);
-    global_pointer<del_queue> glbl = global_pointer<del_queue>::onPodXY(pod_x, pod_y, lcl);
+    del_queue *lcl = bsg_tile_group_remote_pointer<del_queue>(decode.tile_x, decode.tile_y, &my_delegates);
+    global_pointer<del_queue> glbl = global_pointer<del_queue>::onPodXY(decode.pod_x, decode.pod_y, lcl);
     return glbl;
 }
 
@@ -91,9 +83,9 @@ void execute_task(int victim_id, task * t)
 
 void execute_task(int victim_id, global_pointer<task> t)
 {
-    int pod, pod_x, pod_y, tile, tile_x, tile_y;
-    decode_id(victim_id, pod, pod_x, pod_y, tile, tile_x, tile_y);
-    if (pod != my::pod_id()) {
+    thread_id_decoded decode;
+    thread_id_decode(&decode, victim_id);
+    if (decode.pod != my::pod_id()) {
         task *lcl = reinterpret_cast<task*>(allocate(t->size()));
         bsg_global_pointer::memcpy
             (reinterpret_cast<char*>(lcl)
