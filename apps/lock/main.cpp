@@ -4,7 +4,7 @@
 int program_main(int argc, char *argv[])
 {
     hb_mc_device_t mc;
-    BSG_CUDA_CALL(hb_mc_device_init(&mc, "lock", 0));
+    BSG_CUDA_CALL(hb_mc_device_init(&mc, "lock", HB_MC_DEVICE_ID));
 
     hb_mc_pod_id_t pod_id;
     hb_mc_device_foreach_pod_id(&mc, pod_id)

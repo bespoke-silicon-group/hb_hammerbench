@@ -8,7 +8,7 @@ hb_mc_device_t mc;
 int multipod_pointer_main(int argc, char *argv[])
 {
     char *program = argv[1];
-    BSG_CUDA_CALL(hb_mc_device_init(&mc, "multipod-pointer", 0));
+    BSG_CUDA_CALL(hb_mc_device_init(&mc, "multipod-pointer", HB_MC_DEVICE_ID));
 
     //hb_mc_dimension_t tg = mc.mc->config.pod_shape;
     hb_mc_dimension_t tg = {bsg_tiles_X, bsg_tiles_Y};
