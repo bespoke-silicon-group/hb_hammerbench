@@ -10,6 +10,7 @@
 
 typedef std::array<uint8_t, SEQ_LEN> sequence;
 typedef int32_t score;
+typedef std::array<score, SEQ_LEN> scorev;
 
 typedef datastructure::vector<sequence, 1> input_vector;
 typedef datastructure::vector<score, 1> output_vector;

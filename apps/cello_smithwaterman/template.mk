@@ -36,7 +36,7 @@ vpath %.cpp $(APP_PATH)
 # TEST_SOURCES is a list of source files that need to be compiled
 TEST_SOURCES += host.cpp
 
-DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
+DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE -DNUM_SEQ=$(num-seq)
 CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CXXDEFINES +=
 
@@ -63,11 +63,13 @@ include $(EXAMPLES_PATH)/link.mk
 # BSG_MANYCORE_KERNELS is a list of manycore executables that should
 # be built before executing.
 
+# RISCV_CCPPFLAGS += -DTRACE # uncomment to enable trace
+RISCV_CCPPFLAGS += -DNUM_SEQ=$(num-seq)
 RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_TARGET_OBJECTS += kernel.rvo
-BSG_MANYCORE_KERNELS += main.riscv
+BSG_MANYCORE_KERNELS := main.riscv
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 ###############################################################################
@@ -79,6 +81,9 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
 C_ARGS ?= $(BSG_MANYCORE_KERNELS)
+C_ARGS += $(APP_PATH)/dna-query32.fasta
+C_ARGS += $(APP_PATH)/dna-reference32.fasta
+C_ARGS += $(APP_PATH)/output32
 
 SIM_ARGS ?=
 
