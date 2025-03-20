@@ -1,13 +1,14 @@
 #include <cello/cello.hpp>
 #include <datastructure/vector.hpp>
 #include <util/statics.hpp>
+#include "common.hpp"
 
 using namespace cello;
 
 #define pr(fmt, ...)                            \
     do { bsg_printf("pod[x=%2d,y=%2d], tile[x=%2d,y=%2d]: " fmt, my::pod_x(), my::pod_y(), my::tile_x(), my::tile_y(), ##__VA_ARGS__); } while (0)
 
-DRAM(datastructure::vector<int>) vec_int;
+DRAM(vector_type) vec_int;
 
 DRAM(std::atomic<int>) counter;
 

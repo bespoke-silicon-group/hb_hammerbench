@@ -31,4 +31,17 @@ void set_id_vars(config *cfg) {
     my::__bsg_pod_id = my::pod_x() + my::num_pods_x() * my::pod_y();
     my::__bsg_absolute_id = my::pod_id() * my::num_tiles() + my::tile_id();
 }
+
+/**
+ * @brief decode the id
+ */
+void thread_id_decode(thread_id_decoded *decode, int id)
+{
+    decode->pod    = id / my::num_tiles();
+    decode->tile   = id % my::num_tiles();
+    decode->pod_x  = decode->pod % my::num_pods_x();
+    decode->pod_y  = decode->pod / my::num_pods_x();
+    decode->tile_x = decode->tile % my::num_tiles_x();
+    decode->tile_y = decode->tile / my::num_tiles_x();
+}
 }

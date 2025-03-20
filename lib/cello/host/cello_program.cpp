@@ -6,7 +6,7 @@ program::program() {}
 
 int program::init(int argc, char **argv) {
     char *program = argv[1];
-    BSG_CUDA_CALL(hb_mc_device_init(&this->mc, "cello_program", 0));
+    BSG_CUDA_CALL(hb_mc_device_init(&this->mc, "cello_program", HB_MC_DEVICE_ID));
     bsg_global_pointer::the_device = &this->mc;
     jobs_in.resize(this->mc.num_pods);
     jobs_out.resize(this->mc.num_pods);
@@ -43,11 +43,10 @@ int program::sync_input() {
     hb_mc_pod_id_t pod_id;
     hb_mc_device_foreach_pod_id(&this->mc, pod_id)
     {
-        // this is broken but i'll fix it later
         BSG_CUDA_CALL(hb_mc_device_set_default_pod(&this->mc, pod_id));
         BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&this->mc, jobs_in[pod_id].data(), jobs_in[pod_id].size()));
-        //BSG_CUDA_CALL(hb_mc_device_pod_dma_to_device(&this->mc, pod_id, jobs_in[pod_id].data(), jobs_in[pod_id].size()));
-    }
+        jobs_in[pod_id].clear();
+    }    
     return 0;
 }
 
@@ -81,9 +80,9 @@ int program::sync_output() {
     hb_mc_pod_id_t pod_id;
     hb_mc_device_foreach_pod_id(&this->mc, pod_id)
     {
-        // broken
         BSG_CUDA_CALL(hb_mc_device_set_default_pod(&this->mc, pod_id));
         BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&this->mc, jobs_out[pod_id].data(), jobs_out[pod_id].size()));
+        jobs_out[pod_id].clear();
     }
     return 0;
 }

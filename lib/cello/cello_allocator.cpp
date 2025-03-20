@@ -2,6 +2,7 @@
 #include <cello/thread_id.hpp>
 #include <atomic>
 #include <bsg_manycore.h>
+#include <cstring>
 
 namespace cello
 {
@@ -33,6 +34,7 @@ void *allocate(size_t size) {
         bsg_print_hexadecimal(0xdeadbeef);
         while (1);
     }
+    memset(reinterpret_cast<void *>(mem), 0, size);
     return reinterpret_cast<void *>(mem);
 }
 

@@ -38,7 +38,7 @@ public:
     /**
      * @brief run the program
      */
-    int run();
+    virtual int run();
 
     /**
      * @brief output data
