@@ -8,8 +8,10 @@ DRAM(OptionData) output;
 
 int cello_main(int argc, char *argv[])
 {
+    bsg_print_hexadecimal(0x1000+0xAAA);
     data.foreach([](int i, OptionData &dram_data){
         //bsg_printf("%2d: Option[%2d]\n", cello::my::id(), i);
+        bsg_print_int(i);
         OptionData dmem_data;
         // Copy from DRAM;
         float s0      = dram_data.s;
