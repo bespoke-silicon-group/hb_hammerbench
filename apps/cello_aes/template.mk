@@ -68,6 +68,7 @@ include $(EXAMPLES_PATH)/link.mk
 # BSG_MANYCORE_KERNELS is a list of manycore executables that should
 # be built before executing.
 
+#RISCV_CCPPFLAGS += -DTRACE # Enable tracing
 RISCV_CCPPFLAGS += -O3 -std=c++14 -DNUM_ITERS=$(num-iter)
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
