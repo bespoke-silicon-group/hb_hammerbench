@@ -47,7 +47,7 @@ public:
     using value_gconstreference = bsg_global_pointer::reference<const T>;
     using mirror_type = vector_host_mirror<T, STRIDE>;
 #endif
-    
+    static constexpr size_t stride = STRIDE;
 #ifndef HOST
     template <typename F>
     void foreach(F && f) {
@@ -165,18 +165,19 @@ public:
 
     VECTOR_INDEX_METHODS(vector_host_mirror);
 
-    T& at(size_t i) {
+    hb_mc_pod_id_t host_pod_index(size_t i) const {
         hb_mc_coordinate_t pod = {.x=pod_x(i), .y=pod_y(i)};
-        hb_mc_pod_id_t pod_id = hb_mc_coordinate_to_index(pod, bsg_global_pointer::the_device->mc->config.pods);
-        return data[pod_id][lcl(i)];
+        return hb_mc_coordinate_to_index(pod, bsg_global_pointer::the_device->mc->config.pods);
+    }
+        
+    T& at(size_t i) {
+        return data[host_pod_index(i)][lcl(i)];
     }
 
     const T& at(size_t i) const {
-        hb_mc_coordinate_t pod = {.x=pod_x(i), .y=pod_y(i)};
-        hb_mc_pod_id_t pod_id = hb_mc_coordinate_to_index(pod, bsg_global_pointer::the_device->mc->config.pods);
-        return data[pod_id][lcl(i)];
+        return data[host_pod_index(i)][lcl(i)];
     }
-    
+
     /**
      * @brief Construct a vector_host_mirror from a vector
      * @param vptr A pointer to the vector to mirror
