@@ -174,6 +174,14 @@ public:
     }
 
     /**
+     * @brief add assignment operator
+     */
+    address& operator+=(uintptr off) {
+        raw_ += off;
+        return *this;
+    }
+
+    /**
      * @brief subtract operator
      */
     address operator-(uintptr off) const {

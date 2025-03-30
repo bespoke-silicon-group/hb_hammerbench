@@ -69,6 +69,7 @@ public:
                     f(j, this->local(j));
                 }
             });
+            //bsg_print_int(2000000+cello::my::pod_id());
         });
         wait(&j);
     }

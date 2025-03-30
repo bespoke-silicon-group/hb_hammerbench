@@ -121,7 +121,7 @@ public:
     /**
      * @brief indexing operator
      */
-    template <typename I>
+    template <typename I, typename = typename std::enable_if<std::is_integral<I>::value>::type>
     reference<T> operator[](I i) {
         return reference<T>(ref_.addr() + (i * sizeof(T)));
     }
@@ -129,9 +129,26 @@ public:
     /**
      * @brief const indexing operator
      */
-    template <typename I>
+    template <typename I, typename = typename std::enable_if<std::is_integral<I>::value>::type>
     const reference<T> operator[](I i) const {
         return reference<T>(ref_.addr() + (i * sizeof(T)));
+    }
+
+    /**
+     * @brief addition operator by integer
+     */
+    template <typename I, typename = typename std::enable_if<std::is_integral<I>::value>::type>
+    pointer<T> operator+(I i) const {
+        return pointer<T>(ref_.addr() + (i * sizeof(T)));
+    }
+
+    /**
+     * @brief post-increment operator
+     */
+    pointer<T> operator++(int) {
+        pointer<T> tmp(*this);
+        ref_.addr() += sizeof(T);
+        return tmp;
     }
 
     /**

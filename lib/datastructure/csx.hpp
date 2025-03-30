@@ -2,6 +2,8 @@
 #define DATASTRUCTURE_CSX_HPP
 #include <datastructure/vector.hpp>
 #include <cstddef>
+#include <utility>
+#include <tuple>
 
 #ifndef HOST
 #include <cello/foreach.hpp>
@@ -88,15 +90,119 @@ public:
     }
 #endif
 
-#define CSX_METHODS()                                      \
-    index_type nnz(index_type outerIndex) const {          \
-        auto offsets = outer_pointers().at_ptr(outerIndex);     \
-        index_type start = offsets[0];                     \
-        index_type end = offsets[1];                       \
-        return end - start;                                \
+#define CSX_METHODS()                                                   \
+    /**                                                                 \
+     * @brief get the number of nonzeros for the outer index            \
+     * @return the number of nonzeros                                   \
+     */                                                                 \
+    index_type nnz(index_type outerIndex) const {                       \
+        auto offsets = outer_pointers().at_ptr(outerIndex);             \
+        index_type start = offsets[0];                                  \
+        index_type end = offsets[1];                                    \
+        return end - start;                                             \
+    }                                                                   \
+    /**                                                                 \
+     * @brief get the range of the inner indices for the outer index    \
+     * @param outerIndex the outer index                                \
+     * @return the range of the inner indices                           \
+     * note that calling core is expected to be local to outerIndex     \
+     */                                                                 \
+    std::tuple<index_type, index_type> outer_index_range_lcl(index_type outerIndex) const { \
+        index_type i = outer_pointers().lcl(outerIndex);                \
+        index_type j = i+1;                                             \
+        return {outer_pointers().data()[i], outer_pointers().data()[j]}; \
+    }                                                                   \
+    /**                                                                 \
+     * @brief get range of the inner indices for the outer index        \
+     * @param outerIndex the outer index                                \
+     * @return the range of the inner indices                           \
+     * note that calling core is expected to be local to outerIndex     \
+     */                                                                 \
+    std::tuple<inner_pointer_type, inner_pointer_type> inner_indices_range_lcl(index_type outerIndex) const { \
+        index_type start, end;                                          \
+        std::tie(start, end) = outer_index_range_lcl(outerIndex);       \
+        return {inner_indices()+start, inner_indices()+end};            \
+    }                                                                   \
+    /**                                                                 \
+     * @brief get the range of the values for the outer index           \
+     * @param outerIndex the outer index                                \
+     * @return the range of the values                                  \
+     * note that calling core is expected to be local to outerIndex     \
+     */                                                                 \
+    std::tuple<value_pointer_type, value_pointer_type> values_range_lcl(index_type outerIndex) const { \
+        index_type start, end;                                          \
+        std::tie(start, end) = outer_index_range_lcl(outerIndex);       \
+        return {values()+start, values()+end};                          \
+    }                                                                   \
+    /**                                                                 \
+     * @brief get the range of the inner indices and value ranges for the outer index \
+     * @param outerIndex the outer index                                \
+     * @return the range of the inner indices and values                \
+     * note that calling core is expected to be local to outerIndex     \
+     */                                                                 \
+    std::tuple<inner_pointer_type, inner_pointer_type, value_pointer_type, value_pointer_type> \
+    inner_indices_values_range_lcl(index_type outerIndex) const {       \
+        index_type start, end;                                          \
+        std::tie(start, end) = outer_index_range_lcl(outerIndex);       \
+        return {inner_indices()+start, inner_indices()+end, values()+start, values()+end}; \
     }
-
-    CSX_METHODS();
+    /**                                                                 \
+     * @brief get the range of the inner indices for the outer index    \
+     * @param outerIndex the outer index                                \
+     * @return the range of the inner indices                           \
+     */                                                                 \
+    std::tuple<index_type, index_type> outer_index_range(index_type outerIndex) const { \
+        typename outer_vector_type::value_gconstpointer offptr = outer_pointers().at_ptr(outerIndex); \
+        return {(index_type)offptr[0], (index_type)offptr[1]};          \
+    }                                                                   \
+    /**                                                                 \
+     * @brief get range of the inner indices for the outer index        \
+     * @param outerIndex the outer index                                \
+     * @return the range of the inner indices                           \
+     */                                                                 \
+    std::tuple<bsg_global_pointer::pointer<index_type>, bsg_global_pointer::pointer<index_type>>
+    inner_indices_range(index_type outerIndex) const {                  \
+        index_type start, end;                                          \
+        std::tie(start, end) = outer_index_range(outerIndex);           \
+        auto inner_indices_ptr = bsg_global_pointer::pointer<index_type>(inner_indices()); \
+        inner_indices_ptr.set_pod_x(outer_pointers().pod_x(outerIndex)); \
+        inner_indices_ptr.set_pod_y(outer_pointers().pod_y(outerIndex)); \
+        return {inner_indices_ptr+start, inner_indices_ptr+end};        \
+    }                                                                   \
+    /**                                                                 \
+     * @brief get the range of the values for the outer index           \
+     * @param outerIndex the outer index                                \
+     * @return the range of the values                                  \
+     */                                                                 \
+    std::tuple<bsg_global_pointer::pointer<value_type>, bsg_global_pointer::pointer<value_type>> \
+    values_range(index_type outerIndex) const {                        \
+        index_type start, end;                                          \
+        std::tie(start, end) = outer_index_range(outerIndex);           \
+        auto values_ptr = bsg_global_pointer::pointer<value_type>(values()); \
+        values_ptr.set_pod_x(outer_pointers().pod_x(outerIndex));       \
+        values_ptr.set_pod_y(outer_pointers().pod_y(outerIndex));       \
+        return {values_ptr+start, values_ptr+end};                      \
+    }                                                                   \
+    /**                                                                 \
+     * @brief get the range of the inner indices and value ranges for the outer index \
+     * @param outerIndex the outer index                                \
+     * @return the range of the inner indices and values                \
+     */                                                                 \
+    std::tuple<bsg_global_pointer::pointer<index_type>, bsg_global_pointer::pointer<index_type>, \
+               bsg_global_pointer::pointer<value_type>, bsg_global_pointer::pointer<value_type>> \
+    inner_indices_values_range(index_type outerIndex) const {           \
+        index_type start, end;                                          \
+        std::tie(start, end) = outer_index_range(outerIndex);           \
+        int pod_x = outer_pointers().pod_x(outerIndex);                 \
+        int pod_y = outer_pointers().pod_y(outerIndex);                 \
+        auto inner_indices_ptr = bsg_global_pointer::pointer<index_type>(inner_indices()); \
+        inner_indices_ptr.set_pod_x(pod_x);                            \
+        inner_indices_ptr.set_pod_y(pod_y);                            \
+        auto values_ptr = bsg_global_pointer::pointer<value_type>(values()); \
+        values_ptr.set_pod_x(pod_x);                                   \
+        values_ptr.set_pod_y(pod_y);                                   \
+        return {inner_indices_ptr+start, inner_indices_ptr+end, values_ptr+start, values_ptr+end}; \
+    }
 
     FIELD(index_type, inner_size);
     FIELD(index_type, outer_size);
@@ -106,6 +212,7 @@ public:
     FIELD(index_type, rows);
     FIELD(index_type, cols);
     FIELD(index_type, nnz);
+    CSX_METHODS();
 };
 }
 
@@ -118,6 +225,9 @@ public:
     using csx_type = datastructure::compressed_sparse_matrix<ValueType, IndexType, flags>;
     using value_type = typename csx_type::value_type;
     using index_type = typename csx_type::index_type;
+    using outer_vector_type = typename csx_type::outer_vector_type;
+    using inner_pointer_type = typename csx_type::inner_pointer_type;
+    using value_pointer_type = typename csx_type::value_pointer_type;
     BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(csx_type);
     BSG_GLOBAL_POINTER_REFERENCE_FIELD(csx_type, inner_size);
     BSG_GLOBAL_POINTER_REFERENCE_FIELD(csx_type, outer_size);
@@ -202,7 +312,7 @@ public:
             int start = mat.outerIndexPtr()[i];
             int end = mat.outerIndexPtr()[j];
             int size = end - start;
-            printf("outerIndexPtr[%3d] = %3d - %3d: %3d\n", i, start, end, size);
+            //printf("outerIndexPtr[%3d] = %3d - %3d: %3d\n", i, start, end, size);
         }
         const index_type *outerIndexPtr = mat.outerIndexPtr();
         const index_type *innerIndexPtr = mat.innerIndexPtr();
@@ -225,12 +335,12 @@ public:
         outer_pointers.init_host_from(outer_indices);
 
         // debug
-        hb_mc_pod_id_t pod_id;
-        hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
-            printf("mat.nonZeros() = %d\n", mat.nonZeros());
-            printf("mat.outerSize() = %d\n", mat.outerSize());
-            printf("outer_indices[outerSize() + %d] = %d\n", pod_id, outer_indices[mat.outerSize() + pod_id]);
-        }
+        // hb_mc_pod_id_t pod_id;
+        // hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
+        //     printf("mat.nonZeros() = %ld\n", mat.nonZeros());
+        //     printf("mat.outerSize() = %ld\n", mat.outerSize());
+        //     printf("outer_indices[outerSize() + %d] = %d\n", pod_id, outer_indices[mat.outerSize() + pod_id]);
+        // }
         rows = mat.rows();
         cols = mat.cols();
         nnz = mat.nonZeros();
@@ -254,6 +364,8 @@ public:
             ptr->cols() = 0;
             ptr->values() = 0;
             ptr->inner_indices() = 0;
+            ptr->outer_size() = 0;
+            ptr->inner_size() = 0;
         }
         //BSG_CUDA_CALL(outer_pointers.clear_device());
         return 0;
