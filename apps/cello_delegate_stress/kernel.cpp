@@ -1,4 +1,7 @@
 #include <cello/cello.hpp>
+#include <util/statics.hpp>
+
+DRAM(int) data[NITERS];
 
 int cello_main(int argc, char *argv[])
 {
@@ -10,6 +13,7 @@ int cello_main(int argc, char *argv[])
     cello::parallel_foreach(0, NITERS, [jp](int i) {
         cello::on_every_pod(jp, [i]() {
             bsg_print_int(i);
+            data[i] = 1;
         });
     });
 
