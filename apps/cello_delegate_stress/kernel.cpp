@@ -1,7 +1,8 @@
 #include <cello/cello.hpp>
 #include <util/statics.hpp>
 
-DRAM(int) data[NITERS];
+DRAM(int) niters = NITERS;
+DRAM(int) data [NITERS];
 
 int cello_main(int argc, char *argv[])
 {
@@ -10,7 +11,8 @@ int cello_main(int argc, char *argv[])
     joiner*jp = bsg_tile_group_remote_pointer<joiner>
         (cello::my::tile_x(), cello::my::tile_y(), &j);
 
-    cello::parallel_foreach(0, NITERS, [jp](int i) {
+    int n = niters;
+    cello::foreach<cello::serial>(0, n, [jp](int i) {
         cello::on_every_pod(jp, [i]() {
             bsg_print_int(i);
             data[i] = 1;
