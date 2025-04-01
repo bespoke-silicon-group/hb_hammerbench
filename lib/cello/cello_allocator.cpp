@@ -3,6 +3,7 @@
 #include <atomic>
 #include <bsg_manycore.h>
 #include <cstring>
+#include <algorithm>
 
 namespace cello
 {
@@ -31,6 +32,9 @@ void allocator_initialize(config *cfg) {
  * @return Pointer to allocated memory
  */
 void *allocate(size_t size) {
+    // align size to size of cache line
+    size = (size + BSG_CACHE_LINE_SIZE - 1) & ~(BSG_CACHE_LINE_SIZE - 1);
+    // allocate memory
     uintptr_t mem = allocator_base.fetch_add(size, std::memory_order_relaxed);
     if (mem + size > allocator_end) {
         bsg_print_hexadecimal(mem);
