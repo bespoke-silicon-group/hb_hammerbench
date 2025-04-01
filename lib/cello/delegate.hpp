@@ -79,7 +79,7 @@ void on_pod(int pod_id, F && f)
 template <typename F>
 void on_every_pod(n_child_joiner *jp, F &&f)
 {    
-    cello::foreach<cello::parallel>(0, my::num_pods(), [jp, f](int pod){
+    cello::foreach<cello::serial>(0, my::num_pods(), [jp, f](int pod){
         on_pod(pod, jp, f);
     });
 }

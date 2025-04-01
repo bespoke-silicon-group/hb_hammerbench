@@ -121,7 +121,7 @@ public:
      */
     template <typename T>
     T read() const {
-        register T rv;
+        register typename std::remove_const<T>::type rv;
         register T* ptr = reinterpret_cast<T*>(raw_);
         {
             pod_address_guard grd(ext_.pod_addr());
@@ -171,6 +171,14 @@ public:
      */
     address operator+(uintptr off) const {
         return address(ext_, raw_+off);
+    }
+
+    /**
+     * @brief add assignment operator
+     */
+    address& operator+=(uintptr off) {
+        raw_ += off;
+        return *this;
     }
 
     /**
