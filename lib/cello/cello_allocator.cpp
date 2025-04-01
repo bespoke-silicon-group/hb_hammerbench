@@ -9,6 +9,7 @@ namespace cello
 
 __attribute__((section(".dram")))
 std::atomic<uintptr_t> allocator_base;
+
 __attribute__((section(".dram")))
 uintptr_t allocator_end;
 
@@ -17,6 +18,8 @@ uintptr_t allocator_end;
  */
 void allocator_initialize(config *cfg) {
     if (my::tile_id() == 0) {
+        bsg_print_hexadecimal(cfg->dram_buffer());
+        bsg_print_hexadecimal(0xcafebabe);
         allocator_base = cfg->dram_buffer();
         allocator_end = allocator_base + cfg->dram_buffer_size();
     }
