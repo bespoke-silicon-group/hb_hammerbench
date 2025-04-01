@@ -19,10 +19,11 @@ uintptr_t allocator_end;
  */
 void allocator_initialize(config *cfg) {
     if (my::tile_id() == 0) {
-        bsg_print_hexadecimal(cfg->dram_buffer());
-        bsg_print_hexadecimal(0xcafebabe);
         allocator_base = cfg->dram_buffer();
         allocator_end = allocator_base + cfg->dram_buffer_size();
+        bsg_print_hexadecimal(cfg->dram_buffer());
+        bsg_print_hexadecimal(allocator_end);
+        bsg_print_hexadecimal(0xcafebabe);
     }
 }
 
@@ -39,8 +40,10 @@ void *allocate(size_t size) {
     if (mem + size > allocator_end) {
         bsg_print_hexadecimal(mem);
         bsg_print_hexadecimal(0xdeadbeef);
+        bsg_fence();
         while (1);
     }
+    bsg_fence(); // for some reason the hardware crashes and burns without this
     memset(reinterpret_cast<void *>(mem), 0, size);
     return reinterpret_cast<void *>(mem);
 }
