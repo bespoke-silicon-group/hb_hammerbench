@@ -18,10 +18,10 @@ namespace bsg_global_pointer
 #error "BSG_COORD_Y_WIDTH is not defined"
 #endif
 #ifndef BSG_POD_TILES_X
-#error "BSG_POD_X is not defined"
+#error "BSG_POD_TILES_X is not defined"
 #endif
 #ifndef BSG_POD_TILES_Y
-#error "BSG_POD_Y is not defined"
+#error "BSG_POD_TILES_Y is not defined"
 #endif
 #ifndef BSG_PODS_X
 #error "BSG_PODS_X is not defined"
