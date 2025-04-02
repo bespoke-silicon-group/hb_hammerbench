@@ -13,7 +13,7 @@
 ###############################################################################
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 REPLICANT_PATH := $(shell cd $(HB_HAMMERBENCH_PATH)/.. && git rev-parse --show-toplevel)
-BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X4Y2_ruche_X4Y2_hbm
+#BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X4Y2_ruche_X4Y2_hbm
 
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 include $(HB_HAMMERBENCH_PATH)/mk/cello.mk
