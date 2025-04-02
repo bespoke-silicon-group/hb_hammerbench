@@ -3,15 +3,20 @@
 #include "bsg_cuda_lite_barrier.h"
 #include "util/lock.hpp"
 #include "util/test_eq.hpp"
+#include "util/statics.hpp"
+
+#define N 1
+
+namespace lock_vars
+{
+static DRAM(util::lock) l;
+static DRAM(int) x = 0, y = 0;
+}
 
 int lock()
 {
-    __attribute__((section(".dram")))
-        static util::lock l;
-    __attribute__((section(".dram")))
-        static int x = 0, y = 0;
-
-    static constexpr int n = 100;
+    using namespace lock_vars;
+    static constexpr int n = N;
     for (int i = 0; i < n; i++) {
         y += 1;
     }
@@ -33,15 +38,17 @@ int lock()
     return 0;
 }
 
+namespace tile_lock_vars
+{
+static DMEM(util::tile_lock) l;
+static DRAM(int) x = 0, y = 0;
+}
+
 int tile_lock()
 {
-    __attribute__((section(".dmem")))
-        static util::tile_lock l;
-    __attribute__((section(".dram")))
-        static int x = 0, y = 0;
-
+    using namespace tile_lock_vars;
     util::tile_lock *lp = bsg_tile_group_remote_pointer<util::tile_lock>(0, 0, &l);
-    static constexpr int n = 100;
+    static constexpr int n = N;
     for (int i = 0; i < n; i++) {
         y += 1;
     }
@@ -63,17 +70,21 @@ int tile_lock()
     return 0;
 }
 
+namespace lock_guard_vars
+{
+static DRAM(util::lock) l;
+static DRAM(int) x = 0;
+}
+
 int lock_guard()
 {
-    __attribute__((section(".dram")))
-        static util::lock l;
-    __attribute__((section(".dram")))
-        static int x = 0;
-
-    static constexpr int n = 100;
+    using namespace lock_guard_vars;
+    bsg_barrier_tile_group_sync();
+    static constexpr int n = N;
     for (int i = 0; i < n; i++) {
         util::lock_guard<util::lock> g(l);
         x += 1;
+        bsg_fence();
     }
 
     bsg_barrier_tile_group_sync();
@@ -85,15 +96,16 @@ int lock_guard()
     return 0;
 }
 
+namespace tile_lock_guard_vars
+{
+DMEM(util::tile_lock) l;
+DRAM(int) x = 0;
+}
 int tile_lock_guard()
 {
-    __attribute__((section(".dmem")))
-        static util::tile_lock l;
-    __attribute__((section(".dram")))
-        static int x = 0;
-
+    using namespace tile_lock_guard_vars;
     util::tile_lock *lp = bsg_tile_group_remote_pointer<util::tile_lock>(0, 0, &l);
-    static constexpr int n = 100;
+    static constexpr int n = N;
     for (int i = 0; i < n; i++) {
         util::lock_guard<util::tile_lock> g(*lp);
         x += 1;
@@ -122,13 +134,13 @@ class util::lockable<Int, Lock> {
     UTIL_LOCKABLE_METHOD_UNSAFE(Int, Lock, add);
 };
 
-__attribute__((section(".dram")))
-static util::lockable<Int, util::lock> I, J;
+typedef util::lockable<Int, util::lock> LockableInt;
+static DRAM(LockableInt) I, J;
 
 int lockable()
 {
     bsg_barrier_tile_group_sync();
-    static constexpr int n = 100;
+    static constexpr int n = N;
     for (int i = 0; i < n; i++) {
         I.add(1);
     }
