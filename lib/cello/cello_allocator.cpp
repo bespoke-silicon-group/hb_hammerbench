@@ -21,9 +21,9 @@ void allocator_initialize(config *cfg) {
     if (my::tile_id() == 0) {
         allocator_base = cfg->dram_buffer();
         allocator_end = allocator_base + cfg->dram_buffer_size();
-        bsg_print_hexadecimal(cfg->dram_buffer());
-        bsg_print_hexadecimal(allocator_end);
-        bsg_print_hexadecimal(0xcafebabe);
+        // bsg_print_hexadecimal(cfg->dram_buffer());
+        // bsg_print_hexadecimal(allocator_end);
+        // bsg_print_hexadecimal(0xcafebabe);
     }
 }
 

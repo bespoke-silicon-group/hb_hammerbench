@@ -18,7 +18,6 @@ tile_lock::tile_lock() {
 void tile_lock::acquire()
 {
     int *lp = reinterpret_cast<int*>(this);
-
     exponential_backoff<16>([=]() { return bsg_amoswap(lp, 1) == 1; });
 }
 
@@ -28,7 +27,7 @@ void tile_lock::acquire()
 void tile_lock::release()
 {
     int *lp = reinterpret_cast<int*>(this);
-    bsg_amoswap(lp, 0);
+    bsg_amoswap_rl(lp, 0);
 }
 
 }
