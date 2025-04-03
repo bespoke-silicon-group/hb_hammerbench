@@ -34,16 +34,22 @@ DMEM(work_queue *) my_tasks_ptr = &my_tasks;
 DMEM(del_queue) my_delegates;
 DMEM(del_queue *) my_delegates_ptr = &my_delegates;
 
-
-global_pointer<work_queue> tasks_of(int id)
+#ifdef GLOBAL_STEALING
+global_pointer<work_queue>
+#else
+work_queue*
+#endif
+tasks_of(int id)
 {
-    int pod, pod_x, pod_y, tile, tile_x, tile_y;
     thread_id_decoded decode;
     thread_id_decode(&decode, id);
 
     work_queue *lcl = bsg_tile_group_remote_pointer<work_queue>(decode.tile_x, decode.tile_y, &my_tasks);
-    global_pointer<work_queue> glbl = global_pointer<work_queue>::onPodXY(my::pod_x(), my::pod_y(), lcl);
-    return glbl;
+#ifdef GLOBAL_STEALING
+    global_pointer<work_queue> glbl = global_pointer<work_queue>::onPodXY(decode.pod_x, decode.pod_y, lcl);
+#else
+    return lcl;
+#endif
 }
 
 global_pointer<del_queue> delegates_of(int id)
