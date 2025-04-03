@@ -24,7 +24,7 @@ inline int fast_random()
 }
 
 using work_queue = util::lockable<task_queue, util::tile_lock>;
-using del_queue  = util::lockable<delegate_queue, util::lock>;
+using del_queue  = util::lockable<delegate_queue, util::tile_lock>;
 
 /**
  *  my queue
