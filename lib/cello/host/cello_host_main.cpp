@@ -19,4 +19,4 @@ int Main(int argc, char *argv[]) {
 }
 }
 
-declare_program_main("cello_prorgram", cello::Main);
+declare_program_main("cello_program", cello::Main);
