@@ -37,7 +37,12 @@ class program : public cello::program
         C_list_head
             = new list_head_vector_mirror(find<list_head_vector>("C_list_head"));
         C_list_head->init_host_from(C_list_head_data);
-        
+
+        std::vector<index_type> C_col_count_data(A->rows);
+        std::fill(C_col_count_data.begin(), C_col_count_data.end(), 0);
+        C_col_count
+            = new count_vector_mirror(find<count_vector>("C_col_count"));
+        C_col_count->init_host_from(C_col_count_data);
         return 0;
     }
 
@@ -46,11 +51,13 @@ class program : public cello::program
         BSG_CUDA_CALL(A->sync_device(jobs_in));
         BSG_CUDA_CALL(B->sync_device(jobs_in));
         BSG_CUDA_CALL(C_list_head->sync_device(jobs_in));
+        BSG_CUDA_CALL(C_col_count->sync_device(jobs_in));
         return 0;
     }
 
     csx_mirror *A, *B, *C;
     list_head_vector_mirror *C_list_head;
+    count_vector_mirror *C_col_count;
     eigen_matrix A_host, B_host, C_host;
 };
 
