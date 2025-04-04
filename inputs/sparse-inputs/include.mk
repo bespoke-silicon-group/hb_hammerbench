@@ -51,7 +51,7 @@ from_cse_tar := $(addsuffix .tar.gz,$(from_cse_mtx))
 $(from_cse_tar):
 	$(eval tarfile=$(notdir $@))
 	$(eval url=https://homes.cs.washington.edu/~mrutt/sparse_inputs/$(tarfile))
-	wget -O $@ $(url)
+	wget -O --ipv4-only $@ $(url)
 
 $(from_cse_mtx):  $(HB_HAMMERBENCH_PATH)/inputs/sparse-inputs/%.mtx: $(HB_HAMMERBENCH_PATH)/inputs/sparse-inputs/%.mtx.tar.gz
 	tar zxf $< -C $(dir $@)
