@@ -138,6 +138,7 @@ public:
     VECTOR_AT_METHODS(vector);
     FIELD(value_pointer ,data);
     FIELD(uintptr       ,size);
+    FIELD(uintptr       ,local_size);
 };
 }
 
@@ -149,6 +150,7 @@ public:
     BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(type);
     BSG_GLOBAL_POINTER_REFERENCE_FIELD(type, data);
     BSG_GLOBAL_POINTER_REFERENCE_FIELD(type, size);
+    BSG_GLOBAL_POINTER_REFERENCE_FIELD(type, local_size);
     VECTOR_AT_METHODS(type);
 };
 
@@ -197,6 +199,7 @@ public:
             BSG_CUDA_CALL(hb_mc_device_pod_free(bsg_global_pointer::the_device, pod_id, eva));
             vptr->data() = 0;
             vptr->size() = 0;
+            vptr->local_size() = 0;
         }
         return 0;
     }
@@ -228,6 +231,7 @@ public:
                 .set_pod_y(pod.y);
             vptr->data() = eva;
             vptr->size() = size;
+            vptr->local_size() = data[pod_id].size();
         }
         return 0;
     }

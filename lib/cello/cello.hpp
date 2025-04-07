@@ -9,4 +9,5 @@
 #include <cello/thread_id.hpp>
 #include <cello/threads.hpp>
 #include <cello/init.hpp>
+#include <cello/allocator.hpp>
 #endif

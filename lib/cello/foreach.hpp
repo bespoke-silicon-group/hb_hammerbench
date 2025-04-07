@@ -31,7 +31,7 @@ void foreach(Idx begin, Idx end, Idx step, Body &&body)
 template <cello::Schedule sched = parallel, typename Idx, typename Body>
 void foreach(Idx begin, Idx end, Body &&body)
 {
-    foreach<sched>(begin, end, 1, std::forward<Body>(body));
+    foreach<sched>(begin, end, static_cast<Idx>(1), std::forward<Body>(body));
 }
 }
 #endif
