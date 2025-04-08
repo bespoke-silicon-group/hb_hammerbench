@@ -492,6 +492,7 @@ public:
             ptr.set_pod_x(pod.x).set_pod_y(pod.y);
             index_type sz = ptr->outer_pointers().local_size();
             bsg_global_pointer::pointer<index_type> outer_ptr(ptr->outer_pointers().data());
+	    outer_ptr.set_pod_x(pod.x).set_pod_y(pod.y);
             index_type nnz = outer_ptr[sz-1];
             inner_indices[pod_id].resize(nnz);
             values[pod_id].resize(nnz);
@@ -515,7 +516,7 @@ public:
      * @return the range of the inner indices                           
      */
     std::tuple<index_type, index_type> outer_index_range(index_type outerIndex) const {
-        size_t pod = outer_pointers.pod(outerIndex);
+        size_t pod = outer_pointers.host_pod_index(outerIndex);
         size_t lcl = outer_pointers.lcl(outerIndex);        
         return { outer_pointers.data[pod][lcl], outer_pointers.data[pod][lcl+1] };
     }
@@ -530,7 +531,7 @@ public:
     inner_indices_range(index_type outerIndex) {
         index_type start, end;
         std::tie(start, end) = outer_index_range(outerIndex);
-        size_t pod = outer_pointers.pod(outerIndex);
+        size_t pod = outer_pointers.host_pod_index(outerIndex);
         return {&inner_indices[pod][start], &inner_indices[pod][end]};
     }
 
@@ -543,7 +544,7 @@ public:
     values_range(index_type outerIndex) {
         index_type start, end;
         std::tie(start, end) = outer_index_range(outerIndex);
-        size_t pod = outer_pointers.pod(outerIndex);
+        size_t pod = outer_pointers.host_pod_index(outerIndex);
         return {&values[pod][start], &values[pod][end]};
     }
 
@@ -556,7 +557,7 @@ public:
     inner_indices_values_range(index_type outerIndex) {
         index_type start, end;
         std::tie(start, end) = outer_index_range(outerIndex);
-        size_t pod = outer_pointers.pod(outerIndex);
+        size_t pod = outer_pointers.host_pod_index(outerIndex);
         index_type *idx_start = &inner_indices[pod][start];
         index_type *idx_end = &inner_indices[pod][end];
         value_type *val_start = &values[pod][start];
