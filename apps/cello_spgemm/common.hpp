@@ -24,20 +24,11 @@ struct nonzero_type {
 
 #ifndef HOST
 /* table of partial results */
-#ifdef UNORDERED_MAP
-using partial_table = std::unordered_map<
-    index_type,
-    value_type,
-    std::hash<index_type>,
-    std::equal_to<index_type>,
-    cello::allocator<std::pair<const index_type, value_type>>>;
-#else
 using partial_table = std::map<
     index_type,
     value_type,
     std::less<index_type>,
     cello::allocator<std::pair<const index_type, value_type>>>;
-#endif
 using partial_table_ptr = partial_table*;
 #else
 using partial_table_ptr = hb_mc_eva_t;
