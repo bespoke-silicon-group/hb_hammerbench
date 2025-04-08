@@ -29,6 +29,21 @@ class program : public cello::program
         C_host_init.setZero();
         C_host = A_host * B_host;
 
+	bsg_pr_test_info("A x B = C\n");
+	bsg_pr_test_info("A: rows = %ld, cols = %ld, nnz = %ld\n"
+			 ,A_host.rows()
+			 ,A_host.cols()
+			 ,A_host.nonZeros());
+
+	bsg_pr_test_info("B: rows = %ld, cols = %ld, nnz = %ld\n"
+			 ,B_host.rows()
+			 ,B_host.cols()
+			 ,B_host.nonZeros());
+
+	bsg_pr_test_info("C: rows = %ld, cols = %ld, nnz = %ld\n"
+			 ,C_host.rows()
+			 ,C_host.cols()
+			 ,C_host.nonZeros());
         A = new csx_mirror(find<csx_type>("A"));
         A->init_host_from(A_host);
         

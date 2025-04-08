@@ -194,7 +194,6 @@ int cello_main(int argc, char *argv[])
                     fmadd_asm(C_val, A_val, B_val, C_val);
                     C_entry->second = C_val;
                 }
-                C_entry = accum->find(B_idx);
             }
         }
         result = accum;
