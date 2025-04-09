@@ -51,7 +51,7 @@ from_cse_tar := $(addsuffix .tar.gz,$(from_cse_mtx))
 $(from_cse_tar):
 	$(eval tarfile=$(notdir $@))
 	$(eval url=https://homes.cs.washington.edu/~mrutt/sparse_inputs/$(tarfile))
-	wget -O --ipv4-only $@ $(url)
+	wget --inet4-only -O $@ $(url)
 
 $(from_cse_mtx):  $(HB_HAMMERBENCH_PATH)/inputs/sparse-inputs/%.mtx: $(HB_HAMMERBENCH_PATH)/inputs/sparse-inputs/%.mtx.tar.gz
 	tar zxf $< -C $(dir $@)
@@ -73,7 +73,7 @@ from_snap_tar := $(patsubst %.mtx,%.tar.gz,$(from_snap_mtx))
 $(from_snap_tar):
 	$(eval tarfile=$(notdir $@))
 	$(eval url=https://suitesparse-collection-website.herokuapp.com/MM/SNAP/$(tarfile))
-	wget -O $@ $(url)
+	wget --inet4-only -O $@ $(url)
 
 $(from_snap_mtx):  $(HB_HAMMERBENCH_PATH)/inputs/sparse-inputs/%.mtx: $(HB_HAMMERBENCH_PATH)/inputs/sparse-inputs/%.tar.gz
 	tar zxf $< -C $(dir $@)
