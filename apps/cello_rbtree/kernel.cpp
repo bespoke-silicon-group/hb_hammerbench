@@ -210,15 +210,12 @@ public:
      * right rotation
      */
     void right_rotate(node *z) {
-        bsg_printf("right rotation on z @ {key = %d}\n", z->key);
-        bsg_printf("z->l @ {key = %d}\n", z->l->key);
-        bsg_printf("z->r @ {key = %d}\n", z->r->key);
         // set x
         node *zp = z->p;
         node *x = z->l;
-        bsg_printf("x = z->l @ {key = %d}\n", x->key);
         node *zpl = zp->l;
         node *zpr = zp->r;
+        asm volatile ("" ::: "memory");
         // turn x's right subtree into z's left subtree
         z->l = x->r;
         if (!is_nill(z->l)) {
@@ -227,20 +224,17 @@ public:
         // link z's parent to x
         x->p = zp;
         if (!is_nill(zp)) {
-            bsg_printf("this line should not be called\n");
             if (zpl == z) {
                 zp->l = x;
             } else {
                 zp->r = x;
             }
         } else {
-            bsg_printf("setting root to x @ {key = %d}\n", x->key);
             root = x;
         }
         // put z on x's right
         x->r = z;
         z->p = x;
-        bsg_printf("root @ {key = %d}\n", root->key);
     }
 
    /**
