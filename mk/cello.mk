@@ -38,6 +38,7 @@ RISCV_CCPPFLAGS += -DBSG_PODS_Y=$(BSG_MACHINE_PODS_Y)
 RISCV_CCPPFLAGS += -DBSG_CACHE_LINE_SIZE=$(shell echo $(BSG_MACHINE_VCACHE_LINE_WORDS)*4 | bc)
 RISCV_CCPPFLAGS += -fno-rtti
 RISCV_CCPPFLAGS += -fno-exceptions
+RISCV_CCPPFLAGS += -fno-delete-null-pointer-checks
 RISCV_CCPPFLAGS += -lstdc++
 RISCV_LDFLAGS   += -lstdc++
 
