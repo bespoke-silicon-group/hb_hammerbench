@@ -163,8 +163,8 @@ inline void exclusive_scan
 
 int cello_main(int argc, char *argv[])
 {
-    bsg_printf("A: %d rows, %d columns, %d non-zeros\n", A.rows(), A.cols(), A.nnz());
-    bsg_printf("B: %d rows, %d columns, %d non-zeros\n", B.rows(), B.cols(), B.nnz());
+    dbg("A: %d rows, %d columns, %d non-zeros\n", A.rows(), A.cols(), A.nnz());
+    dbg("B: %d rows, %d columns, %d non-zeros\n", B.rows(), B.cols(), B.nnz());
     C_product.foreach([](int i, partial_table *& result) {
         partial_table *accum = static_cast<partial_table*>(cello::allocate(sizeof(partial_table)));
         new (accum) partial_table();
