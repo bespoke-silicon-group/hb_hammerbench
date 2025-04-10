@@ -97,7 +97,7 @@ inline void exclusive_scan
         index_type sum = 0;
         for (index_type i = start; i < end; i++) {
             out[i] = sum;
-            sum += in[i]->size();
+            sum += in[i]->size;
         }
 
         // update tree
@@ -187,12 +187,12 @@ int cello_main(int argc, char *argv[])
                 value_type B_val = *B_val_p;
                 value_type C_val = A_val * B_val;
                 auto C_entry = accum->find(B_idx);
-                if (C_entry == accum->end()) {
-                    accum->insert({B_idx, C_val});
+                if (C_entry == nullptr) {
+                    accum->insert(B_idx, C_val);
                 } else {
-                    value_type C_val = C_entry->second;
+                    value_type C_val = C_entry->val;
                     fmadd_asm(C_val, A_val, B_val, C_val);
-                    C_entry->second = C_val;
+                    C_entry->val = C_val;
                 }
             }
         }
@@ -220,9 +220,9 @@ int cello_main(int argc, char *argv[])
 
     C_product.foreach([](index_type i, partial_table * nonzeros) {
         auto [C_idx_p, _, C_val_p, __] = C.inner_indices_values_range_lcl(i);
-        for (auto it = nonzeros->begin(); it != nonzeros->end(); it++) {
-            index_type C_idx = it->first;
-            value_type C_val = it->second;
+        for (partial_table::iterator it(nonzeros); it.good(); it.next()) {
+            index_type C_idx = it->key;
+            value_type C_val = it->val;
             *C_idx_p++ = C_idx;
             *C_val_p++ = C_val;            
         }

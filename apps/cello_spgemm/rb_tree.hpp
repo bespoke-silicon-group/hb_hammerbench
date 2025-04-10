@@ -1,30 +1,8 @@
- #include <cello/cello.hpp>
+#ifndef RB_TREE_HPP
+#define RB_TREE_HPP
 #include <vector>
+#include <cello/cello.hpp>
 #include <array>
-#include <limits>
-
-template <typename index_type>
-inline index_type floor_log2(index_type x)
-{
-    index_type i = -1;
-    index_type j = i+1;
-    while  ((1 << j) <= x) {
-        i = j;
-        j = j+1;
-    }
-    return i;
-}
-
-template <typename index_type>
-inline index_type ceil_log2(index_type x)
-{
-    index_type j = 0;
-    while (x > (1<<j)) {
-        j = j+1;
-    }
-    return j;
-}
-
 /*
  * A node is either red or black
  *
@@ -121,81 +99,11 @@ public:
      */
     static bool is_red(node *n) { return node::is_red(n); }
     
-    /**
-     * @brief Check that  the root and leaf (nil)  nodes are black
-     */
-    void check_root_and_leafs() {
-        if (!is_black(root)) {
-            rb_dbg("Root @ {key = %d} is not black\n", root->key);
-        }
-        // leafs are black by definition
-    }
 
     /**
-     * @brief Check that red nodes have black children
+     * @brief find a key
+     * @return pointer to node if found, o/w nullptr
      */
-    void check_red_nodes_have_black_children() {
-        for (iterator it(this); it; it.next()) {
-            if (is_red(&*it)) {
-                bool l_is_black = is_black(it->l);
-                bool r_is_black = is_black(it->r);
-                bool bad = !(l_is_black && r_is_black);
-                if (bad) {
-                    rb_dbg("Red node @ {key = %d} has a red child: %s\n",
-                               it->key,
-                               l_is_black
-                               ? (r_is_black ? "l+r" : "l")
-                               : "r");
-                }
-            }
-        }
-    }
-
-    /**
-     * @brief Check that each simple path has the same number of black nodes
-     */
-    void check_black_balance() {
-        size_t min = std::numeric_limits<size_t>::max(), max = 0;
-        for (iterator it(this); it; it.next()) {
-            size_t c = 0;
-            if (is_nill(it->l) or is_nill(it->r)) {
-                c = count(&(*it));
-                min = std::min(c, min);
-                max = std::max(c, max);
-            }
-        }
-        if (min != max) {
-            rb_dbg("Black nodes are not balanced min = %d, max = %d\n", min, max);
-        }
-    }
-
-    /**
-     * @brief Count black nodes back to the root
-     */
-    size_t count(node *n) {
-        node *np = n->p;
-        size_t count = 0;
-        //rb_dbg("tracing key = %2d (%s)\n", n->key, is_black(n) ? "black" : "red");
-        while (!is_nill(np)) {
-            if (is_black(n)) {
-                count++;
-            }
-            n = n->p;
-            np = n->p;
-            //rb_dbg("        key = %2d (%s)\n", n->key, is_black(n) ? "black" : "red");
-        }
-        return count;
-    }
-
-    /**
-     * @brief Check that constraints of an rb tree hold
-     */
-    void check() {
-        check_root_and_leafs();
-        check_red_nodes_have_black_children();
-        check_black_balance();
-    }
-
     node *find(const Key &key) {
         node *z = root;
         while (!is_nill(z) and (z->key != key)) {
@@ -214,6 +122,7 @@ public:
         z->color = RED;        
         insert_internal(z);
         fixup_after_insertion(z);
+        size++;
     }
 
     /**
@@ -361,7 +270,6 @@ public:
     size_t size = 0;    
 };
 
-
 template <typename Key, typename Value>
 class rb_iterator {
 public:
@@ -451,23 +359,4 @@ public:
     std::array<node *, 20> stack;
     size_t end = 0;
 };
-
-int cello_main(int argc, char *argv[])
-{
-    rb_tree<int,int> tree;
-    int n = 100;
-    for (int i = 0; i < n; i++) {
-        tree.insert(i, i);
-        tree.check();        
-    }
-    for (int i = 0; i < n; i++) {
-        rb_tree<int,int>::node*n = tree.find(i);
-        if (n != nullptr) {
-            bsg_print_int(1000*i + n->val);
-        } else {
-            bsg_print_int(2000*i);
-        }
-    }
-    
-    return 0;
-}
+#endif

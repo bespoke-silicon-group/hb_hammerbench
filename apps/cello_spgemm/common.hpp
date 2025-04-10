@@ -5,8 +5,9 @@
 #include <util/list.hpp>
 #ifndef HOST
 #include <utility>
-#include <unordered_map>
-#include <map>
+//#include <unordered_map>
+//#include <map>
+#include "rb_tree.hpp"
 #include <cello/cello.hpp>
 #endif
 
@@ -24,11 +25,7 @@ struct nonzero_type {
 
 #ifndef HOST
 /* table of partial results */
-using partial_table = std::map<
-    index_type,
-    value_type,
-    std::less<index_type>,
-    cello::allocator<std::pair<const index_type, value_type>>>;
+using partial_table = rb_tree<index_type, value_type>;
 using partial_table_ptr = partial_table*;
 #else
 using partial_table_ptr = hb_mc_eva_t;
