@@ -97,7 +97,11 @@ inline void exclusive_scan
         index_type sum = 0;
         for (index_type i = start; i < end; i++) {
             out[i] = sum;
+#ifdef USE_RB_TREE
             sum += in[i]->size;
+#else
+            sum += in[i]->size();
+#endif
         }
 
         // update tree
@@ -187,6 +191,7 @@ int cello_main(int argc, char *argv[])
                 value_type B_val = *B_val_p;
                 value_type C_val = A_val * B_val;
                 auto C_entry = accum->find(B_idx);
+#ifdef USE_RB_TREE
                 if (C_entry == nullptr) {
                     accum->insert(B_idx, C_val);
                 } else {
@@ -194,6 +199,15 @@ int cello_main(int argc, char *argv[])
                     fmadd_asm(C_val, A_val, B_val, C_val);
                     C_entry->val = C_val;
                 }
+#else
+                if (C_entry == accum->end()) {
+                    accum->insert({B_idx, C_val});
+                } else {
+                    value_type C_val = C_entry->second;
+                    fmadd_asm(C_val, A_val, B_val, C_val);
+                    C_entry->second = C_val;
+                }
+#endif
             }
         }
         result = accum;
@@ -220,12 +234,21 @@ int cello_main(int argc, char *argv[])
 
     C_product.foreach([](index_type i, partial_table * nonzeros) {
         auto [C_idx_p, _, C_val_p, __] = C.inner_indices_values_range_lcl(i);
+#ifdef USE_RB_TREE
         for (partial_table::iterator it(nonzeros); it.good(); it.next()) {
             index_type C_idx = it->key;
             value_type C_val = it->val;
             *C_idx_p++ = C_idx;
             *C_val_p++ = C_val;            
         }
+#else
+        for (auto it = nonzeros->begin(); it != nonzeros->end(); it++) {
+            index_type C_idx = it->first;
+            value_type C_val = it->second;
+            *C_idx_p++ = C_idx;
+            *C_val_p++ = C_val;
+        }
+#endif
     });
     return 0;
 }
