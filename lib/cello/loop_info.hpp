@@ -62,6 +62,18 @@ public:
     }
 
     /**
+     * @brief get the height of the tree
+     */
+    IdxT height() const {
+        IdxT j = 0;
+        IdxT l = leafs();
+        while (l > (1<<j)) {
+            j = j+1;
+        }
+        return j;
+    }
+
+    /**
      * @brief Get a loop_info for the lower half
      */
     loop_info lower() const {
