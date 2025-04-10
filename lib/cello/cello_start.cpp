@@ -2,6 +2,7 @@
 #include <cello/scheduler.hpp>
 #include <cello/allocator.hpp>
 #include <cello/thread_id.hpp>
+#include <cello/init.hpp>
 #include <global_pointer/global_pointer.hpp>
 #include <util/statics.hpp>
 #include <bsg_manycore.h>
@@ -66,11 +67,17 @@ int cello_setup(cello::config *config)
     bsg_barrier_tile_group_init();
     bsg_barrier_tile_group_sync();
     set_id_vars(config);
+
+    bsg_barrier_tile_group_sync();
+    call_global_constructors();
+    
+    bsg_barrier_tile_group_sync();    
     allocator_initialize(config);
+
     bsg_barrier_tile_group_sync();
     scheduler_initialize(config);
+
     bsg_barrier_tile_group_sync();
-    bsg_barrier_tile_group_sync();    
     return 0;
 }
 

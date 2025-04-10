@@ -89,7 +89,20 @@ public:
         });
     }
 #endif
-
+#define CSX_INDEX_METHODS()                             \
+    int pod(index_type outerIndex) const {              \
+        return outer_pointers().pod(outerIndex);        \
+    }                                                   \
+    int pod_x(index_type outerIndex) const {            \
+        return outer_pointers().pod_x(outerIndex);      \
+    }                                                   \
+    int pod_y(index_type outerIndex) const {            \
+        return outer_pointers().pod_y(outerIndex);      \
+    }                                                   \
+    size_t lcl(index_type outerIndex) const {           \
+        return outer_pointers().lcl(outerIndex);        \
+    }                                                   \
+    
 #define CSX_METHODS()                                                   \
     /**                                                                 \
      * @brief get the number of nonzeros for the outer index            \
@@ -213,6 +226,7 @@ public:
     FIELD(index_type, cols);
     FIELD(index_type, nnz);
     CSX_METHODS();
+    CSX_INDEX_METHODS();
 };
 }
 
@@ -237,7 +251,9 @@ public:
     BSG_GLOBAL_POINTER_REFERENCE_FIELD(csx_type, rows);
     BSG_GLOBAL_POINTER_REFERENCE_FIELD(csx_type, cols);
     BSG_GLOBAL_POINTER_REFERENCE_FIELD(csx_type, nnz);
+    BSG_GLOBAL_POINTER_REFERENCE_FUNCTION_CONST(csx_type, is_row_major, bool);
     CSX_METHODS();
+    CSX_INDEX_METHODS();
 };
 
 #ifdef HOST
@@ -346,6 +362,21 @@ public:
         nnz = mat.nonZeros();
     }
 
+    eigen_sparse_matrix_type to_eigen() {
+        eigen_sparse_matrix_type mat(rows, cols);
+        std::vector<Eigen::Triplet<value_type>> triplets;
+        for (index_type i = 0; i < outerSize(); i++) {
+            auto [idx_start, idx_end, val_p, _] = inner_indices_values_range(i);
+            for (index_type *jp = idx_start; jp < idx_end; jp++) {
+                index_type j = *jp;
+                value_type v = *val_p++;
+                triplets.push_back(Eigen::Triplet<value_type>(i, j, v));
+            }
+        }
+        mat.setFromTriplets(triplets.begin(), triplets.end());
+        return mat;
+    }
+
     /**
      * @brief zero out the device
      */
@@ -407,6 +438,8 @@ public:
         BSG_CUDA_CALL(outer_pointers.sync_device(jobs_in));
         hb_mc_pod_id_t pod_id;
         hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
+            hb_mc_coordinate_t pod = pod_id_to_coordinate(pod_id);
+            ptr.set_pod_x(pod.x).set_pod_y(pod.y);
             jobs_in[pod_id].push_back({
                     ptr->inner_indices(),
                     inner_indices[pod_id].data(),
@@ -440,6 +473,9 @@ public:
      * @brief set the host metadata from the device
      */
     int init_host_from_device() {
+        nnz  = ptr->nnz();
+        rows = ptr->rows();
+        cols = ptr->cols();
         return 0;
     }
     
@@ -450,9 +486,92 @@ public:
         clear_host();
         init_host_from_device();
         BSG_CUDA_CALL(outer_pointers.sync_host(jobs_out));
+        hb_mc_pod_id_t pod_id;
+        hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
+            hb_mc_coordinate_t pod = pod_id_to_coordinate(pod_id);
+            ptr.set_pod_x(pod.x).set_pod_y(pod.y);
+            index_type sz = ptr->outer_pointers().local_size();
+            bsg_global_pointer::pointer<index_type> outer_ptr(ptr->outer_pointers().data());
+	    outer_ptr.set_pod_x(pod.x).set_pod_y(pod.y);
+            index_type nnz = outer_ptr[sz-1];
+            inner_indices[pod_id].resize(nnz);
+            values[pod_id].resize(nnz);
+            jobs_out[pod_id].push_back({
+                    ptr->inner_indices(),
+                    inner_indices[pod_id].data(),
+                    inner_indices[pod_id].size() * sizeof(index_type),
+                });
+            jobs_out[pod_id].push_back({
+                    ptr->values(),
+                    values[pod_id].data(),
+                    values[pod_id].size() * sizeof(value_type),
+                });
+        }
         return 0;
     }
+
+    /**                                                                 
+     * @brief get the range of the inner indices for the outer index    
+     * @param outerIndex the outer index                                
+     * @return the range of the inner indices                           
+     */
+    std::tuple<index_type, index_type> outer_index_range(index_type outerIndex) const {
+        size_t pod = outer_pointers.host_pod_index(outerIndex);
+        size_t lcl = outer_pointers.lcl(outerIndex);        
+        return { outer_pointers.data[pod][lcl], outer_pointers.data[pod][lcl+1] };
+    }
+
     
+    /**
+     * @brief get range of the inner indices for the outer index
+     * @param outerIndex the outer index
+     * @return the range of the inner indices
+     */
+    std::tuple<index_type*, index_type*>
+    inner_indices_range(index_type outerIndex) {
+        index_type start, end;
+        std::tie(start, end) = outer_index_range(outerIndex);
+        size_t pod = outer_pointers.host_pod_index(outerIndex);
+        return {&inner_indices[pod][start], &inner_indices[pod][end]};
+    }
+
+    /**
+     * @brief get range of the values for the outer index
+     * @param outerIndex the outer index
+     * @return the range of the values
+     */
+    std::tuple<value_type*, value_type*>
+    values_range(index_type outerIndex) {
+        index_type start, end;
+        std::tie(start, end) = outer_index_range(outerIndex);
+        size_t pod = outer_pointers.host_pod_index(outerIndex);
+        return {&values[pod][start], &values[pod][end]};
+    }
+
+    /**
+     * @brief get range of inner indicies and values for the outer index
+     * @param outerIndex the outer index
+     * @return the range of the inner indices and values
+     */
+    std::tuple<index_type*, index_type*, value_type*, value_type*>
+    inner_indices_values_range(index_type outerIndex) {
+        index_type start, end;
+        std::tie(start, end) = outer_index_range(outerIndex);
+        size_t pod = outer_pointers.host_pod_index(outerIndex);
+        index_type *idx_start = &inner_indices[pod][start];
+        index_type *idx_end = &inner_indices[pod][end];
+        value_type *val_start = &values[pod][start];
+        value_type *val_end = &values[pod][end];
+        return {idx_start, idx_end, val_start, val_end};
+    }    
+
+    /**
+     * @brief the size of the outer dimension
+     */
+    index_type outerSize() const {
+        return is_row_major() ? cols : rows;
+    }
+
     bsg_global_pointer::pointer<csx_type> ptr;
     typename outer_vector_type::mirror_type outer_pointers;
     std::vector<std::vector<index_type>> inner_indices;
