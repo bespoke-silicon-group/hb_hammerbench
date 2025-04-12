@@ -234,5 +234,10 @@ template <typename To, typename From>
 pointer<To> pointer_cast(const pointer<From>& from) {
     return pointer<To>(from.ref().addr());
 }
+
+template <typename T>
+pointer<T> addressof(reference<T> r) {
+    return pointer<T>(r.addr());
+}
 }
 #endif

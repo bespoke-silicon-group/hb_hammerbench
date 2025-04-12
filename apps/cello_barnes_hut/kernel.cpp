@@ -1,0 +1,172 @@
+#include <cello/cello.hpp>
+#include "common.hpp"
+#include <util/statics.hpp>
+#include <cmath>
+
+#include "HBBody.hpp"
+
+// Constants;
+#define itolsq  (1.0f/(0.5f*0.5f))
+#define epssq   (0.05f*0.05f)
+#define dthf    (0.25f)
+
+inline void updateForce(float* force, float* delta, float distsq, float mass) {
+  float idr =  1.0f / sqrtf(distsq + epssq);
+  float scale = mass * idr * idr * idr;
+  force[0] = delta[0] * scale;
+  force[1] = delta[1] * scale;
+  force[2] = delta[2] * scale;
+}
+
+inline float dist2(float x, float y, float z) {
+  return (x*x) + (y*y) + (z*z);
+}
+
+DRAM(body_vector) bodies;
+DRAM(node_vector) nodes;
+DRAM(bsg_global_pointer::pointer<HBNode>*) nodestack;
+
+int cello_main(int argc, char *argv[])
+{
+#if 1
+    bodies.foreach([](int curr, HBBody &rcurr_body){
+        HBBody *pcurr_body = &rcurr_body;
+        HBBody curr_body = *pcurr_body;
+
+        // delta;
+        float delta[3];
+        float distsq;
+
+        float prev_acc[3];
+        prev_acc[0] = curr_body.acc[0];
+        prev_acc[1] = curr_body.acc[1];
+        prev_acc[2] = curr_body.acc[2];
+        curr_body.acc[0] = 0.0f;
+        curr_body.acc[1] = 0.0f;
+        curr_body.acc[2] = 0.0f;
+
+        // my stack in DRAM;
+        global_node_pointer* mystack = &nodestack[__bsg_id*STACK_SIZE];
+        global_node_pointer* max_mystack_ptr = &mystack[STACK_SIZE+1];
+
+        // put the root in the stack
+        mystack[0] = bsg_global_pointer::addressof(nodes[0]);
+        global_node_pointer* mystack_top = &mystack[1];
+
+        while (mystack_top != mystack) {
+            // take one off the stack;
+            mystack_top--;
+            global_node_pointer curr_node = *mystack_top;
+      
+            // distsq;
+            float l_co_mass;
+            float l_co_pos[3];
+            float l_diamsq;
+            l_co_mass = curr_node->CoMass();
+            l_co_pos[0] = curr_node->CoPos(0);
+            l_co_pos[1] = curr_node->CoPos(1);
+            l_co_pos[2] = curr_node->CoPos(2);
+            l_diamsq = curr_node->DiamSq();
+            asm volatile("": : :"memory");
+
+            delta[0] = curr_body.pos[0] - l_co_pos[0];
+            delta[1] = curr_body.pos[1] - l_co_pos[1];
+            delta[2] = curr_body.pos[2] - l_co_pos[2];
+            float curr_diamsq = itolsq * l_diamsq;
+            distsq = dist2(delta[0], delta[1], delta[2]);
+
+            if (distsq >= curr_diamsq) {
+                // far away; compute summarized force;
+                float node_force[3];
+                updateForce(node_force, delta, distsq, l_co_mass);
+                curr_body.acc[0] += node_force[0];
+                curr_body.acc[1] += node_force[1];
+                curr_body.acc[2] += node_force[2];
+            } else {
+                //float child_diamsq = curr_diamsq * 0.25f;
+                // Move down;
+                // Load all child pointers;
+                uint32_t children[8];
+                uint32_t tmp0 = curr_node->Child(0);
+                uint32_t tmp1 = curr_node->Child(1);
+                uint32_t tmp2 = curr_node->Child(2);
+                uint32_t tmp3 = curr_node->Child(3);
+                uint32_t tmp4 = curr_node->Child(4);
+                uint32_t tmp5 = curr_node->Child(5);
+                uint32_t tmp6 = curr_node->Child(6);
+                uint32_t tmp7 = curr_node->Child(7);
+                asm volatile("": : :"memory");
+                children[0] = tmp0;
+                children[1] = tmp1;
+                children[2] = tmp2;
+                children[3] = tmp3;
+                children[4] = tmp4;
+                children[5] = tmp5;
+                children[6] = tmp6;
+                children[7] = tmp7;
+                asm volatile("": : :"memory");
+
+                for (int i = 0; i < 8; i++) {
+                    if (children[i] == 0) {
+                        // skip null pointer;
+                        continue;
+                    } else {
+                        uint32_t is_leaf = children[i] & leaf;
+                        if (is_leaf) {
+                            // child is leaf;
+                            uint32_t body_idx = children[i] & ~leaf;
+                            HBBody* body_ptr = (HBBody*) body_idx;
+                            if (body_ptr != pcurr_body) {
+                                // child is not self;
+                                float child_pos[3];
+                                float child_mass;
+                                float child_delta[3];
+                                float child_distsq;
+                                child_pos[0] = body_ptr->pos[0];
+                                child_pos[1] = body_ptr->pos[1];
+                                child_pos[2] = body_ptr->pos[2];
+                                child_mass = body_ptr->mass;
+                                asm volatile("": : :"memory");
+                                child_delta[0] = curr_body.pos[0] - child_pos[0];
+                                child_delta[1] = curr_body.pos[1] - child_pos[1];
+                                child_delta[2] = curr_body.pos[2] - child_pos[2];
+                                child_distsq = dist2(child_delta[0], child_delta[1], child_delta[2]);
+                                float child_force[3];
+                                updateForce(child_force, child_delta, child_distsq, child_mass);
+                                curr_body.acc[0] += child_force[0];
+                                curr_body.acc[1] += child_force[1];
+                                curr_body.acc[2] += child_force[2];
+                            }
+                        } else {
+                            // child is an internal node;
+                            // put it on the stack;
+                            *mystack_top = (HBNode *) children[i];
+                            mystack_top++;
+                            if (mystack_top == max_mystack_ptr) {
+                                bsg_print_int(0xdeadbeef);
+                            }
+                        }
+                    }
+                }
+            }  
+        }
+
+        // Finished traversal;
+        float new_vel[3]; 
+        new_vel[0] = dthf * (curr_body.acc[0] - prev_acc[0]);
+        new_vel[1] = dthf * (curr_body.acc[1] - prev_acc[1]);
+        new_vel[2] = dthf * (curr_body.acc[2] - prev_acc[2]);
+        curr_body.vel[0] += new_vel[0];
+        curr_body.vel[1] += new_vel[1];
+        curr_body.vel[2] += new_vel[2];
+        bodies[curr].Vel(0) = curr_body.vel[0];
+        bodies[curr].Vel(1) = curr_body.vel[1];
+        bodies[curr].Vel(2) = curr_body.vel[2];
+        bodies[curr].Acc(0) = curr_body.acc[0];
+        bodies[curr].Acc(1) = curr_body.acc[1];
+        bodies[curr].Acc(2) = curr_body.acc[2];
+    });
+#endif
+
+    return 0;
+}

@@ -46,6 +46,7 @@ public:
     using value_gconstpointer = bsg_global_pointer::pointer<const T>;
     using value_gconstreference = bsg_global_pointer::reference<const T>;
     using mirror_type = vector_host_mirror<T, STRIDE>;
+    using mirror = vector_host_mirror<T, STRIDE>;    
 #endif
     static constexpr size_t stride = STRIDE;
 #ifndef HOST
