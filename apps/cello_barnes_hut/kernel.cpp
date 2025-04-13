@@ -53,11 +53,12 @@ int cello_main(int argc, char *argv[])
         mystack[0] = bsg_global_pointer::addressof(nodes[0]);
         global_node_pointer* mystack_top = &mystack[1];
 
+        bsg_print_int(1000000 + curr);
         while (mystack_top != mystack) {
             // take one off the stack;
             mystack_top--;
             global_node_pointer curr_node = *mystack_top;
-      
+
             // distsq;
             float l_co_mass;
             float l_co_pos[3];
@@ -115,17 +116,17 @@ int cello_main(int argc, char *argv[])
                         if (is_leaf) {
                             // child is leaf;
                             uint32_t body_idx = children[i] & ~leaf;
-                            HBBody* body_ptr = (HBBody*) body_idx;
+                            bsg_global_pointer::pointer<HBBody> body_ptr = bsg_global_pointer::addressof(bodies[body_idx]);
                             if (body_ptr != pcurr_body) {
                                 // child is not self;
                                 float child_pos[3];
                                 float child_mass;
                                 float child_delta[3];
                                 float child_distsq;
-                                child_pos[0] = body_ptr->pos[0];
-                                child_pos[1] = body_ptr->pos[1];
-                                child_pos[2] = body_ptr->pos[2];
-                                child_mass = body_ptr->mass;
+                                child_pos[0] = body_ptr->Pos(0);
+                                child_pos[1] = body_ptr->Pos(1);
+                                child_pos[2] = body_ptr->Pos(2);
+                                child_mass = body_ptr->Mass();
                                 asm volatile("": : :"memory");
                                 child_delta[0] = curr_body.pos[0] - child_pos[0];
                                 child_delta[1] = curr_body.pos[1] - child_pos[1];
@@ -140,8 +141,8 @@ int cello_main(int argc, char *argv[])
                         } else {
                             // child is an internal node;
                             // put it on the stack;
-                            *mystack_top = (HBNode *) children[i];
-                            mystack_top++;
+                            *mystack_top =  bsg_global_pointer::addressof(nodes[children[i]]);
+                            mystack_top++;                            
                             if (mystack_top == max_mystack_ptr) {
                                 bsg_print_int(0xdeadbeef);
                             }

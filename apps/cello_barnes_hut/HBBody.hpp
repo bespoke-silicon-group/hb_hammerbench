@@ -12,6 +12,7 @@ typedef struct HBBody_ {
 template <>
 class bsg_global_pointer::reference<HBBody> {
     BSG_GLOBAL_POINTER_REFERENCE_TRIVIAL(HBBody);
+    BSG_GLOBAL_POINTER_REFERENCE_ACCESSOR(HBBody, Mass, mass);
     BSG_GLOBAL_POINTER_REFERENCE_ACCESSOR(HBBody, Pos_, pos);
     BSG_GLOBAL_POINTER_REFERENCE_ACCESSOR(HBBody, Vel_, vel);
     BSG_GLOBAL_POINTER_REFERENCE_ACCESSOR(HBBody, Acc_, acc);
