@@ -14,6 +14,23 @@ float dist2(float x, float y, float z) {
   return (x*x) + (y*y) + (z*z);
 }
 
+void set_diamsq(float diamsq, int node_id, std::vector<Node>& nodes, HBNode* hbnodes) {
+  // set diamsq;
+  hbnodes[node_id].diamsq = diamsq;
+  nodes[node_id].diamsq = diamsq;
+
+  // traverse down;
+  for (int i = 0; i < 8; i++) {
+    if (nodes[node_id].is_leaf[i]) {
+      continue;
+    } else {
+      if (nodes[node_id].child[i] != -1) {
+        set_diamsq(diamsq*0.25f, nodes[node_id].child[i], nodes, hbnodes);
+      }
+    }
+  }
+}
+
 // Force;
 void updateForce(float* force, float* delta, float distsq, float mass) {
   float idr = 1.0f / sqrtf(distsq + epssq);
@@ -421,10 +438,13 @@ public:
         hbbodies.resize(bodies.size());
         convert_hb(nodes, bodies, hbnodes.data(), hbbodies.data());
 
+        // Set diamsq;
+        set_diamsq(diamsq, 0, nodes, hbnodes.data());
+
         BSG_CUDA_CALL(d_bodies->init_host_from(hbbodies));
         BSG_CUDA_CALL(d_nodes->init_host_from(hbnodes));
 
-        printf("host: sizeof(*nodestack) = %zu\n", sizeof(global_node_pointer));
+        printf("host: sizeof(*nodestack) = %zu\n", sizeof(int));
         return 0;
     }
 

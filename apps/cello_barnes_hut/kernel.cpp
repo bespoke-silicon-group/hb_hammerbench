@@ -24,7 +24,7 @@ inline float dist2(float x, float y, float z) {
 
 DRAM(body_vector) bodies;
 DRAM(node_vector) nodes;
-DRAM(bsg_global_pointer::pointer<HBNode>*) nodestack;
+DRAM(int*) nodestack;
 
 int cello_main(int argc, char *argv[])
 {
@@ -46,18 +46,20 @@ int cello_main(int argc, char *argv[])
         curr_body.acc[2] = 0.0f;
 
         // my stack in DRAM;
-        global_node_pointer* mystack = &nodestack[__bsg_id*STACK_SIZE];
-        global_node_pointer* max_mystack_ptr = &mystack[STACK_SIZE+1];
+        int* mystack = &nodestack[__bsg_id*STACK_SIZE];
+        int* max_mystack_ptr = &mystack[STACK_SIZE+1];
 
         // put the root in the stack
-        mystack[0] = bsg_global_pointer::addressof(nodes[0]);
-        global_node_pointer* mystack_top = &mystack[1];
+        mystack[0] = 0;
+        int* mystack_top = &mystack[1];
 
         bsg_print_int(1000000 + curr);
         while (mystack_top != mystack) {
             // take one off the stack;
             mystack_top--;
-            global_node_pointer curr_node = *mystack_top;
+            int curr_node_idx = *mystack_top;
+            bsg_print_int(2000000 + curr_node_idx);
+            global_node_pointer curr_node = bsg_global_pointer::addressof(nodes[curr_node_idx]);
 
             // distsq;
             float l_co_mass;
@@ -68,6 +70,7 @@ int cello_main(int argc, char *argv[])
             l_co_pos[1] = curr_node->CoPos(1);
             l_co_pos[2] = curr_node->CoPos(2);
             l_diamsq = curr_node->DiamSq();
+            bsg_print_float(l_diamsq);
             asm volatile("": : :"memory");
 
             delta[0] = curr_body.pos[0] - l_co_pos[0];
@@ -106,7 +109,6 @@ int cello_main(int argc, char *argv[])
                 children[6] = tmp6;
                 children[7] = tmp7;
                 asm volatile("": : :"memory");
-
                 for (int i = 0; i < 8; i++) {
                     if (children[i] == 0) {
                         // skip null pointer;
@@ -141,7 +143,7 @@ int cello_main(int argc, char *argv[])
                         } else {
                             // child is an internal node;
                             // put it on the stack;
-                            *mystack_top =  bsg_global_pointer::addressof(nodes[children[i]]);
+                            *mystack_top =  children[i];
                             mystack_top++;                            
                             if (mystack_top == max_mystack_ptr) {
                                 bsg_print_int(0xdeadbeef);
