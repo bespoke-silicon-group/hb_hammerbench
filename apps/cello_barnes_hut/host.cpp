@@ -279,7 +279,7 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
 {
   size_t max_stack_size = 0;
   for (size_t b = 0; b < bodies.size(); b++) {
-    bsg_pr_test_info("body %zu\n", b);
+      //bsg_pr_test_info("body %zu\n", b);
     std::vector<int> stack;
     Body curr_body = bodies[b];
     
@@ -296,7 +296,7 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
 
     while (!stack.empty()) {
       int curr_node_id = stack.back();
-      bsg_pr_test_info("    node %d\n", curr_node_id);
+      //bsg_pr_test_info("    node %d\n", curr_node_id);
       //printf("curr_node_id: %d\n", curr_node_id);
       stack.pop_back();
       Node curr_node = nodes[curr_node_id]; 
