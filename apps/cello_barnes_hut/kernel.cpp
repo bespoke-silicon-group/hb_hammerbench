@@ -5,6 +5,8 @@
 
 #include "HBBody.hpp"
 
+//#define TRACE
+
 // Constants;
 #define itolsq  (1.0f/(0.5f*0.5f))
 #define epssq   (0.05f*0.05f)
@@ -52,13 +54,14 @@ int cello_main(int argc, char *argv[])
         // put the root in the stack
         mystack[0] = 0;
         int* mystack_top = &mystack[1];
-
+#ifdef TRACE
         bsg_print_int(1000000 + curr);
+#endif
         while (mystack_top != mystack) {
             // take one off the stack;
             mystack_top--;
             int curr_node_idx = *mystack_top;
-            bsg_print_int(2000000 + curr_node_idx);
+            //bsg_print_int(2000000 + curr_node_idx);
             global_node_pointer curr_node = bsg_global_pointer::addressof(nodes[curr_node_idx]);
 
             // distsq;
@@ -70,7 +73,6 @@ int cello_main(int argc, char *argv[])
             l_co_pos[1] = curr_node->CoPos(1);
             l_co_pos[2] = curr_node->CoPos(2);
             l_diamsq = curr_node->DiamSq();
-            bsg_print_float(l_diamsq);
             asm volatile("": : :"memory");
 
             delta[0] = curr_body.pos[0] - l_co_pos[0];
