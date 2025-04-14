@@ -356,7 +356,7 @@ public:
     static bool is_red(node *n) { return node::is_red(n); }
 
     node *curr = nullptr;
-    std::array<node *, 20> stack;
+    std::array<node *, 40> stack;
     size_t end = 0;
 };
 #endif
