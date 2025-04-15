@@ -59,8 +59,8 @@ void parallel_foreach(loop_info<Idx> &info, Body &&body)
         body(i);
     }
     wait(jp);
-    for (k = 0; k < h; k++) {
-        delete tpv[k];
+    for (size_t l = 0; l < k; l++) {
+        delete tpv[l];
     }
     cello::deallocate(tpv, sizeof(task*)*h);
 #endif
