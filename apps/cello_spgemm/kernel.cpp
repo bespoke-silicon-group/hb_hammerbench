@@ -128,9 +128,10 @@ inline void exclusive_scan
     dbg("exclusive_scan: tree[0]=%d\n", tree[0]);
     
     // update with offset for each region
-    cello::foreach<cello::parallel>(static_cast<index_type>(0ul),
-                                    static_cast<index_type>(REGIONS),
-                                    [=](index_type tid){
+    cello::foreach<cello::parallel>
+        (static_cast<index_type>(0ul),
+         static_cast<index_type>(REGIONS),
+         [=](index_type tid){
         // calculate range
         index_type region_size = (n + (REGIONS-1))/REGIONS;
         index_type start = tid * region_size;
@@ -169,6 +170,7 @@ int cello_main(int argc, char *argv[])
 {
     dbg("A: %d rows, %d columns, %d non-zeros\n", A.rows(), A.cols(), A.nnz());
     dbg("B: %d rows, %d columns, %d non-zeros\n", B.rows(), B.cols(), B.nnz());
+    bsg_print_hexadecimal(0xa);
     C_product.foreach([](int i, partial_table *& result) {
         partial_table *accum = static_cast<partial_table*>(cello::allocate(sizeof(partial_table)));
         new (accum) partial_table();
@@ -212,7 +214,7 @@ int cello_main(int argc, char *argv[])
         }
         result = accum;
     });
-
+    bsg_print_hexadecimal(0xb);
     cello::on_every_pod([](){
         exclusive_scan
             (C_product.data(),
@@ -231,7 +233,7 @@ int cello_main(int argc, char *argv[])
             }
         }
     });
-
+    bsg_print_hexadecimal(0xc);
     C_product.foreach([](index_type i, partial_table * nonzeros) {
         auto [C_idx_p, _, C_val_p, __] = C.inner_indices_values_range_lcl(i);
 #ifdef USE_RB_TREE
@@ -250,5 +252,6 @@ int cello_main(int argc, char *argv[])
         }
 #endif
     });
+    bsg_print_hexadecimal(0xd);
     return 0;
 }

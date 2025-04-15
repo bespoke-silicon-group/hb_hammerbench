@@ -5,7 +5,7 @@
 #include <util/list.hpp>
 #ifndef HOST
 #include <utility>
-//#define USE_RB_TREE
+#define USE_RB_TREE
 #ifdef USE_RB_TREE
 #include "rb_tree.hpp"
 #else
