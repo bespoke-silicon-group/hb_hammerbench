@@ -53,7 +53,7 @@ inline index_type tree_lchild(index_type root)
 }
 
 inline void exclusive_scan
-(partial_table **in, index_type *out, index_type n) {
+(partial_table *in, index_type *out, index_type n) {
     using namespace _exclusive_scan;
     size_t REGIONS = 1;
     while (REGIONS < n) {
@@ -79,7 +79,6 @@ inline void exclusive_scan
     for (index_type i = 0; i < tree_size; i++) {
         tree[i] = 0;
     }
-
     // perform exclusive scan on each region
     cello::foreach<cello::parallel>
         (static_cast<index_type>(0),
@@ -97,11 +96,7 @@ inline void exclusive_scan
         index_type sum = 0;
         for (index_type i = start; i < end; i++) {
             out[i] = sum;
-#ifdef USE_RB_TREE
-            sum += in[i]->size;
-#else
-            sum += in[i]->size();
-#endif
+            sum += in[i].size;
         }
 
         // update tree
@@ -124,7 +119,6 @@ inline void exclusive_scan
             }
         }
     });
-
     dbg("exclusive_scan: tree[0]=%d\n", tree[0]);
     
     // update with offset for each region
@@ -162,7 +156,6 @@ inline void exclusive_scan
             out[i] += s;
         }
     });
-
     cello::deallocate(tree, sizeof(std::atomic<index_type>)*tree_size);
 }
 
@@ -171,9 +164,9 @@ int cello_main(int argc, char *argv[])
     dbg("A: %d rows, %d columns, %d non-zeros\n", A.rows(), A.cols(), A.nnz());
     dbg("B: %d rows, %d columns, %d non-zeros\n", B.rows(), B.cols(), B.nnz());
     bsg_print_hexadecimal(0xa);
-    C_product.foreach([](int i, partial_table *& result) {
-        partial_table *accum = static_cast<partial_table*>(cello::allocate(sizeof(partial_table)));
-        new (accum) partial_table();
+    C_product.foreach([](int i, partial_table & result) {
+        partial_table accum;
+        //new (&accum) partial_table();
         auto [A_idx_start, A_idx_end, A_val_start, A_val_end] = A.inner_indices_values_range_lcl(i);        
         asm volatile ("" ::: "memory");
         
@@ -192,24 +185,14 @@ int cello_main(int argc, char *argv[])
                 index_type B_idx = *B_idx_p;
                 value_type B_val = *B_val_p;
                 value_type C_val = A_val * B_val;
-                auto C_entry = accum->find(B_idx);
-#ifdef USE_RB_TREE
+                auto C_entry = accum.find(B_idx);
                 if (C_entry == nullptr) {
-                    accum->insert(B_idx, C_val);
+                    accum.insert(B_idx, C_val);
                 } else {
                     value_type C_val = C_entry->val;
                     fmadd_asm(C_val, A_val, B_val, C_val);
                     C_entry->val = C_val;
                 }
-#else
-                if (C_entry == accum->end()) {
-                    accum->insert({B_idx, C_val});
-                } else {
-                    value_type C_val = C_entry->second;
-                    fmadd_asm(C_val, A_val, B_val, C_val);
-                    C_entry->second = C_val;
-                }
-#endif
             }
         }
         result = accum;
@@ -234,23 +217,14 @@ int cello_main(int argc, char *argv[])
         }
     });
     bsg_print_hexadecimal(0xc);
-    C_product.foreach([](index_type i, partial_table * nonzeros) {
+    C_product.foreach([](index_type i, partial_table &nonzeros) {
         auto [C_idx_p, _, C_val_p, __] = C.inner_indices_values_range_lcl(i);
-#ifdef USE_RB_TREE
-        for (partial_table::iterator it(nonzeros); it.good(); it.next()) {
+        for (partial_table::iterator it(&nonzeros); it.good(); it.next()) {
             index_type C_idx = it->key;
             value_type C_val = it->val;
             *C_idx_p++ = C_idx;
             *C_val_p++ = C_val;            
         }
-#else
-        for (auto it = nonzeros->begin(); it != nonzeros->end(); it++) {
-            index_type C_idx = it->first;
-            value_type C_val = it->second;
-            *C_idx_p++ = C_idx;
-            *C_val_p++ = C_val;
-        }
-#endif
     });
     bsg_print_hexadecimal(0xd);
     return 0;

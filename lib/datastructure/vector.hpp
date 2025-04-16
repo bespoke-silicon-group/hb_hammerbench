@@ -10,6 +10,7 @@
 #include <cello/delegate.hpp>
 #include <vector>
 #else
+#include <cassert>
 #include <bsg_manycore.h>
 #include <bsg_manycore_cuda.h>
 #endif
@@ -183,6 +184,10 @@ public:
         return data[host_pod_index(i)][lcl(i)];
     }
 
+    std::vector<T>& vector_of(size_t i) {
+        return data[host_pod_index(i)];
+    }
+
     /**
      * @brief Construct a vector_host_mirror from a vector
      * @param vptr A pointer to the vector to mirror
@@ -225,9 +230,11 @@ public:
     int init_device_from_host() {
         clear_device();
         hb_mc_pod_id_t pod_id;
+        size_t alloc_sz = (size + (bsg_global_pointer::the_device->num_pods-1))/bsg_global_pointer::the_device->num_pods;
         hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
             hb_mc_eva_t eva;
-            BSG_CUDA_CALL(hb_mc_device_pod_malloc(bsg_global_pointer::the_device, pod_id, data[pod_id].size() * sizeof(T), &eva));
+            assert(alloc_sz >= data[pod_id].size() && "bad allocation size");
+            BSG_CUDA_CALL(hb_mc_device_pod_malloc(bsg_global_pointer::the_device, pod_id, alloc_sz * sizeof(T), &eva));
             hb_mc_coordinate_t pod = hb_mc_index_to_coordinate(pod_id, bsg_global_pointer::the_device->mc->config.pods);
             vptr.set_pod_x(pod.x)
                 .set_pod_y(pod.y);
@@ -247,8 +254,12 @@ public:
         clear_host();
         size = vptr->size();
         size_t sz = (size + bsg_global_pointer::the_device->num_pods - 1) / bsg_global_pointer::the_device->num_pods;
-        for (auto & v : data) {
-            v.resize(sz);
+        hb_mc_pod_id_t pod_id;
+        hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
+            hb_mc_coordinate_t pod = hb_mc_index_to_coordinate(pod_id, bsg_global_pointer::the_device->mc->config.pods);
+            vptr.set_pod_x(pod.x)
+                .set_pod_y(pod.y);
+            data[pod_id].resize(vptr->local_size());
         }
         return 0;
     }
@@ -259,15 +270,9 @@ public:
      */
     int init_host_from(const std::vector<T> & init_data) {
         size = init_data.size();
-        
-        size_t sz = (size + bsg_global_pointer::the_device->num_pods - 1) / bsg_global_pointer::the_device->num_pods;
         data.resize(bsg_global_pointer::the_device->num_pods);
-        for (auto & v : data) {
-            v.resize(sz);
-        }
-
         for (size_t i = 0; i < size; i++) {
-            at(i) = init_data[i];
+            vector_of(i).push_back(init_data[i]);
         }
 
         return 0;

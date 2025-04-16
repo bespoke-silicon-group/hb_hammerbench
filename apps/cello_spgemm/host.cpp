@@ -50,7 +50,7 @@ class program : public cello::program
         B = new csx_mirror(find<csx_type>("B"));
         B->init_host_from(B_host);
 
-        std::vector<partial_table_ptr> init(A_host.rows());
+        std::vector<partial_table> init(A_host.rows());
         C_product = new partial_table_vector_mirror(find<partial_table_vector>("C_product"));
         C_product->init_host_from(init);
         
