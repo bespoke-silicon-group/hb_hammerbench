@@ -30,13 +30,15 @@ vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
 
 # TEST_SOURCES is a list of source files that need to be compiled
-# TEST_SOURCES += host.cpp
+TEST_SOURCES += host.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
+FLAGS	 += -DNUM_POINTS=256
+FLAGS    += -I$(APP_PATH)
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++11 $(FLAGS)
 
@@ -62,6 +64,7 @@ include $(EXAMPLES_PATH)/link.mk
 RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+RISCV_CCPPFLAGS += -DNUM_POINTS=256
 RISCV_TARGET_OBJECTS += kernel.rvo
 BSG_MANYCORE_KERNELS += main.riscv
 
@@ -74,7 +77,7 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 #
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
-C_ARGS ?= $(BSG_MANYCORE_KERNELS)
+C_ARGS ?= $(BSG_MANYCORE_KERNELS) $(num-iter)
 
 SIM_ARGS ?=
 
