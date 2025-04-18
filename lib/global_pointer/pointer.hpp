@@ -189,6 +189,13 @@ public:
         return !(*this == other);
     }
 
+    /**
+     * @brief to local pointer
+     */
+    uintptr to_local() const {
+        return ref().to_local();
+    }
+
     FIELD(reference<T>, ref); //!< reference object
 };
 

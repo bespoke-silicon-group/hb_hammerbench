@@ -186,7 +186,6 @@ opt_bit_reverse(FP32Complex *list) {
 
 // In-place implementation
 void fft256_specialized(FP32Complex *list) {
-
   opt_bit_reverse(list);
 
 

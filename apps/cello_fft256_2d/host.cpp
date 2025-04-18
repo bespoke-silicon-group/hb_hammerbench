@@ -4,6 +4,8 @@
 template <typename T>
 using hb_pointer = bsg_global_pointer::pointer<T>;
 
+#define If (std::complex<float>(0.0,1.0))
+
 #define PRECISION (15)
 int is_close(FP32Complex n, FP32Complex r) {
   float nr = n.real(), ni = n.imag();
@@ -26,8 +28,9 @@ int verify_fft (matrix & out_matrix) {
     //printf("%d-th result is %.6f+%.6fi (0x%08X 0x%08X)\n", i, rr, ii, *(uint32_t*)&rr, *(uint32_t*)&ii);
   }
 
+  bool fail = false;
   for (int i = 0; i < N; i++) {
-    FP32Complex ref = 0.0;
+      std::complex<float> ref = 0.0;
     //printf("%d-th component is %.3f+%.3fi\n", i, out[i].real(), out[i].imag());
     if ((i == r) || (i == ar)) {
       ref = N / 2.0;
@@ -43,10 +46,10 @@ int verify_fft (matrix & out_matrix) {
              , ref.real()
              , ref.imag()
              );
-      return 1;
+      fail = true;
     }
   }
-  return 0;
+  return (fail ? 1 : 0);
 }
 
 class program : public cello::program {
@@ -66,12 +69,12 @@ class program : public cello::program {
         for (int r = 0; r < NUM_POINTS; r++) {
             for (int c = 0; c < NUM_POINTS; c++) {
                 // input
-                int i = r*NUM_POINTS + c;
-                A[r][c] = i;
+                int j = r*NUM_POINTS + c;
+                A[r][c] = cosf(j*M_PI/8.0);
                 // output
                 float ref_sinf = sinf(-2.0f * M_PI * static_cast<float>(r*c)/static_cast<float>(NUM_POINTS*NUM_POINTS));
                 float ref_cosf = cosf(-2.0f * M_PI * static_cast<float>(r*c)/static_cast<float>(NUM_POINTS*NUM_POINTS));
-                h_twiddle[r][c] = ref_cosf + i*ref_sinf;
+                h_twiddle[r][c] = ref_cosf + If * ref_sinf;
             }
         }
 
@@ -83,6 +86,11 @@ class program : public cello::program {
         }
         BSG_CUDA_CALL(d_in->init_host_from(h_in));
         BSG_CUDA_CALL(d_out->init_host_from(h_out));
+        // initialize twiddle
+        hb_mc_pod_id_t pod_id;
+        hb_mc_device_foreach_pod_id(&mc, pod_id) {
+            jobs_in[pod_id].push_back({d_twiddle.to_local(), &h_twiddle, sizeof(h_twiddle)});
+        }
         // sync device
         BSG_CUDA_CALL(d_in->sync_device(jobs_in));
         BSG_CUDA_CALL(d_out->sync_device(jobs_in));
