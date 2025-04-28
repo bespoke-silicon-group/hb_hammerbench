@@ -51,7 +51,7 @@ public:
 #endif
     static constexpr size_t stride = STRIDE;
 #ifndef HOST
-    template <typename F>
+    template <typename cello::Schedule sched = cello::parallel, typename F>
     void foreach(F && f) {
         using namespace cello;
         using joiner = n_child_joiner;
@@ -61,7 +61,7 @@ public:
             size_t start = STRIDE * pod_id();
             size_t step = STRIDE * num_pods();
             size_t end = size();
-            cello::foreach<cello::parallel>
+            cello::foreach<sched>
                 (start, end, step, [this, f](size_t i){
                 size_t start = i;
                 size_t stop = i + STRIDE;

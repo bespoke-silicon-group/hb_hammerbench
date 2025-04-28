@@ -195,6 +195,13 @@ public:
         return ext_ == other.ext_ && raw_ == other.raw_;
     }
 
+    /**
+     * @brief to local pointer
+     */
+    uintptr to_local() const {
+        return raw();
+    }
+
     FIELD(address_ext ,ext); //!< extended address information
     FIELD(uintptr     ,raw); //!< the raw pointer
 };
