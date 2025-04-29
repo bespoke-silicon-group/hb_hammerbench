@@ -47,6 +47,8 @@ int kernel()
     bsg_cuda_print_stat_kernel_start();
     unsigned *l_table = g_table;
     int i = 0;
+#define UNROLL_4
+#ifdef UNROLL_8   
     for (; i+8 <= UPDATES_PER_THREAD; i += 8) {
         register unsigned k[8];
         register unsigned v[8];
@@ -85,7 +87,51 @@ int kernel()
         l_table[k[5]] = v[5];
         l_table[k[6]] = v[6];
         l_table[k[7]] = v[7];
+        bsg_fence();        
     }
+#elif defined(UNROLL_4)
+    for (; i+4 <= UPDATES_PER_THREAD; i += 4) {
+        register unsigned k[4];
+        register unsigned v[4];
+        k[0] = l_updates[i+0];
+        k[1] = l_updates[i+1];
+        k[2] = l_updates[i+2];
+        k[3] = l_updates[i+3];
+        asm volatile ("" ::: "memory");
+        v[0] = l_table[k[0]];
+        v[1] = l_table[k[1]];
+        v[2] = l_table[k[2]];
+        v[3] = l_table[k[3]];
+        asm volatile("" ::: "memory");
+        v[0] ^= k[0];
+        v[1] ^= k[1];
+        v[2] ^= k[2];
+        v[3] ^= k[3];
+        asm volatile("" ::: "memory");
+        l_table[k[0]] = v[0];
+        l_table[k[1]] = v[1];
+        l_table[k[2]] = v[2];
+        l_table[k[3]] = v[3];
+        bsg_fence();        
+    }    
+#elif defined(UNROLL_2)
+    for (; i+2 <= UPDATES_PER_THREAD; i += 2) {
+        register unsigned k[2];
+        register unsigned v[2];
+        k[0] = l_updates[i+0];
+        k[1] = l_updates[i+1];
+        asm volatile ("" ::: "memory");
+        v[0] = l_table[k[0]];
+        v[1] = l_table[k[1]];
+        asm volatile("" ::: "memory");
+        v[0] ^= k[0];
+        v[1] ^= k[1];
+        asm volatile("" ::: "memory");
+        l_table[k[0]] = v[0];
+        l_table[k[1]] = v[1];
+        bsg_fence();        
+    }     
+#endif
     for (; i < UPDATES_PER_THREAD; i++) {
         unsigned k = l_updates[i];
         unsigned v = l_table[k];
