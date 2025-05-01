@@ -102,6 +102,49 @@ public:
         return hb_mc_coordinate_to_index(coord, mc.mc->config.pods);
     }
 
+    /**
+     * write a value to all pods
+     */
+    template <typename T>
+    void write_all_pods(bsg_global_pointer::pointer<T>&p, const T&v) {
+        hb_mc_pod_id_t pod_id;
+        hb_mc_coordinate_t save = {.x = p.pod_x(), .y = p.pod_y()};
+        hb_mc_device_foreach_pod_id(&mc, pod_id) {
+            hb_mc_coordinate_t pod = pod_id_to_coord(pod_id);
+            p.set_pod_x(pod.x);
+            p.set_pod_y(pod.y);
+            *p = v;
+        }
+        p.set_pod_x(save.x).set_pod_y(save.y);
+    }
+
+    /**
+     * alloc
+     */
+    int alloc(hb_mc_pod_id_t pod_id, size_t size, hb_mc_eva_t *eva) {
+        BSG_CUDA_CALL(hb_mc_device_pod_malloc(&mc, pod_id, size, eva));
+        return 0;
+    }
+
+    /**
+     * alloc aligned
+     */
+    int alloc_aligned(hb_mc_pod_id_t pod_id, size_t size, size_t alignment, hb_mc_eva_t *allocated, hb_mc_eva_t *aligned) {
+        BSG_CUDA_CALL(alloc(pod_id, size + alignment, allocated));
+        hb_mc_eva_t rem = *allocated % alignment;
+        *aligned = *allocated - rem + alignment;
+        return 0;
+    }
+
+    /**
+     * alloc aligned to pods cache array size
+     */
+    int alloc_cache_aligned(hb_mc_pod_id_t pod_id, size_t size, hb_mc_eva_t *allocated, hb_mc_eva_t *aligned) {
+        size_t alignment = mc.mc->config.pod_shape.x * 2 * mc.mc->config.vcache_stripe_words * sizeof(int32_t);
+        BSG_CUDA_CALL(alloc_aligned(pod_id, size, alignment, allocated, aligned));
+        return 0;
+    }
+
     hb_mc_device_t mc; //!< manycore device
     hb_mc_dimension_t tg = {bsg_tiles_X, bsg_tiles_Y}; //!< tile group dimensions
     std::vector<std::vector<hb_mc_dma_htod_t>> jobs_in; //!< dma jobs
