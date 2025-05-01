@@ -3,7 +3,7 @@
 #include <bsg_manycore.h>
 #include <bsg_cuda_lite_barrier.h>
 DRAM(int) *A, *B;
-DRAM(int)   S;
+DRAM(int)  S;
 
 int kernel()
 {
@@ -53,9 +53,10 @@ int kernel()
 #endif
         asm volatile("": : :"memory");
 #if defined(READ)
-        sum += tmp00+tmp01+tmp02+tmp03+tmp04+tmp05+tmp06;
-        sum += tmp07+tmp08+tmp09+tmp10+tmp11+tmp12+tmp13;
-        sum += tmp14+tmp15;
+        sum += tmp00 + tmp01 + tmp02 + tmp03;
+        sum += tmp04 + tmp05 + tmp06 + tmp07;
+        sum += tmp08 + tmp09 + tmp10 + tmp11;
+        sum += tmp12 + tmp13 + tmp14 + tmp15;
 #endif
 
 #if defined(WRITE) || defined(COPY)
