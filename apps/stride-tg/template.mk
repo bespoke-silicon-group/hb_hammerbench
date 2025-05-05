@@ -30,15 +30,23 @@ vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
 
 # TEST_SOURCES is a list of source files that need to be compiled
-TEST_SOURCES += host.cpp
+# TEST_SOURCES += host.cpp
 
-VECTOR_SIZE := -DVECTOR_SIZE=$(vector-size)
+ifeq ($(stride-type),global-tg)
+GLOBAL := -DSTRIDE_GLOBAL_TG
+else
+ifeq ($(stride-type),dram)
+GLOBAL := -DSTRIDE_DRAM
+else
+GLOBAL :=
+endif
+endif
+
+VECTOR_SIZE := -DVECTOR_SIZE=$(shell echo $(stride-size)*$(n) | bc)
 STRIDE_SIZE := -DSTRIDE_SIZE=$(stride-size)
 
-WARM_CACHE-$(warm-cache) := -DWARM_CACHE
-
-DEFINES += -DN=$(n) $(VECTOR_SIZE) $(STRIDE_SIZE) 
-DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE $(WARM_CACHE-yes)
+DEFINES += -DN=$(n) $(GLOBAL) $(VECTOR_SIZE) $(STRIDE_SIZE)
+DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CXXDEFINES +=
 
@@ -64,7 +72,7 @@ include $(EXAMPLES_PATH)/link.mk
 
 # BSG_MANYCORE_KERNELS is a list of manycore executables that should
 # be built before executing.
-RISCV_CCPPFLAGS += -DN=$(n) $(VECTOR_SIZE) $(STRIDE_SIZE)
+RISCV_CCPPFLAGS += -DN=$(n) $(GLOBAL) $(VECTOR_SIZE) $(STRIDE_SIZE)
 RISCV_CCPPFLAGS += -DTILE_X=$(tile-x) -DTILE_Y=$(tile-y) -DPOD_X=$(pod-x) -DPOD_Y=$(pod-y)
 RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)

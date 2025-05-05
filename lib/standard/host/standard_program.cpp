@@ -67,7 +67,10 @@ int program::run() {
     }
     bsg_pr_test_info("%s: executing setup\n", __PRETTY_FUNCTION__);
     BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&this->mc));
-    
+    if (cold_cache()) {
+        BSG_CUDA_CALL(hb_mc_manycore_flush_vcache(mc.mc));
+        BSG_CUDA_CALL(hb_mc_manycore_invalidate_vcache(mc.mc));
+    }
     bsg_pr_test_info("%s: enqueing kernel\n", __PRETTY_FUNCTION__);
     hb_mc_device_foreach_pod_id(&this->mc, pod_id)
     {
