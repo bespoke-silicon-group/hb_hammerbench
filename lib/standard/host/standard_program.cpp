@@ -18,6 +18,23 @@ int program::init(int argc, char **argv) {
     {
         BSG_CUDA_CALL(hb_mc_device_pod_program_init(&this->mc, pod_id, program));
     }
+
+    auto pod_x_p  = find<int>("__bsg_pod_x");
+    auto pod_y_p  = find<int>("__bsg_pod_y");
+    auto pod_id_p = find<int>("__bsg_pod_id");
+    hb_mc_device_foreach_pod_id(&this->mc, pod_id)
+    {
+        auto pod = pod_id_to_coord(pod_id);
+        pod_x_p.set_pod_x(pod.x).set_pod_y(pod.y);
+        pod_y_p.set_pod_x(pod.x).set_pod_y(pod.y);
+        pod_id_p.set_pod_x(pod.x).set_pod_y(pod.y);
+        int x = pod.x;
+        int y = pod.y;
+        int id = y * mc.mc->config.pods.x + x;
+        *pod_x_p = x;
+        *pod_y_p = y;
+        *pod_id_p = id;
+    }
     return 0;
 }
 
@@ -50,7 +67,10 @@ int program::run() {
     }
     bsg_pr_test_info("%s: executing setup\n", __PRETTY_FUNCTION__);
     BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&this->mc));
-    
+    if (cold_cache()) {
+        BSG_CUDA_CALL(hb_mc_manycore_flush_vcache(mc.mc));
+        BSG_CUDA_CALL(hb_mc_manycore_invalidate_vcache(mc.mc));
+    }
     bsg_pr_test_info("%s: enqueing kernel\n", __PRETTY_FUNCTION__);
     hb_mc_device_foreach_pod_id(&this->mc, pod_id)
     {

@@ -12,6 +12,7 @@ $(TESTBENCH): $(TESTBENCH)/tests.mk
 $(TESTBENCH): $(TESTBENCH)/main.c
 $(TESTBENCH): $(TESTBENCH)/kernel.cpp
 $(TESTBENCH): $(TESTBENCH)/.gitignore
+$(TESTBENCH): $(TESTBENCH)/report.py
 
 $(TESTBENCH)/Makefile: $(HB_HAMMERBENCH_PATH)/py/benchmark_makefile_gen.py
 	mkdir -p $(dir $@)
@@ -20,6 +21,10 @@ $(TESTBENCH)/Makefile: $(HB_HAMMERBENCH_PATH)/py/benchmark_makefile_gen.py
 $(TESTBENCH)/template.mk: $(HB_HAMMERBENCH_PATH)/mk/testbench_template.mk
 	mkdir -p $(dir $@)
 	cp $< $@
+
+$(TESTBENCH)/report.py: $(HB_HAMMERBENCH_PATH)/py/benchmark_reportpy_gen.py
+	mkdir -p $(dir $@)
+	python3 $< $(PARAMETERS) > $@
 
 $(TESTBENCH)/app_path.mk:
 	mkdir -p $(dir $@)

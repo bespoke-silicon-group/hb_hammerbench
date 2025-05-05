@@ -1,3 +1,4 @@
+
 #ifndef STANDARD_HOST_PROGRAM
 #define STANDARD_HOST_PROGRAM
 #include <bsg_manycore.h>
@@ -144,6 +145,8 @@ public:
         BSG_CUDA_CALL(alloc_aligned(pod_id, size, alignment, allocated, aligned));
         return 0;
     }
+
+    virtual bool cold_cache() const { return false; }
 
     hb_mc_device_t mc; //!< manycore device
     hb_mc_dimension_t tg = {bsg_tiles_X, bsg_tiles_Y}; //!< tile group dimensions

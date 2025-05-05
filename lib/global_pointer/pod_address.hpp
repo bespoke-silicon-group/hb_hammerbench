@@ -57,6 +57,13 @@ public:
         return;
     }
 
+    static void writePodAddrCSRNoFence(pod_address addr) {
+        unsigned raw = addr.raw_;
+        asm volatile ("csrw 0x360, %0"
+                      :: "r"(raw) : "memory");
+        return;
+    }
+
     pod_address(unsigned raw)
         : raw_(raw) {
     }
@@ -204,7 +211,6 @@ public:
      * set the new pod address
      */
     pod_address_guard(pod_address set) {
-        save_ = get_pod_addr();
         set_pod_addr(set);
     }
 
