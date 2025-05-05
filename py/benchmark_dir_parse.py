@@ -153,6 +153,8 @@ def testdir_get_stat(folder, stat):
     dataframe['tag_type'] = dataframe['tag'].apply(lambda x : CudaStatTag(x).getAction)
     starts = dataframe[dataframe['tag_type']=='Start']
     ends = dataframe[dataframe['tag_type']=='End']
+    stats = ends[stat].sum() - starts[stat].sum()
+    return stats
 
 def testdir_parse(folder, fields, stats):
     df = {field : [testdir_get_field(folder, field)] for field in fields}
@@ -163,4 +165,4 @@ def testdir_parse(folder, fields, stats):
 
 
 
-    
+
