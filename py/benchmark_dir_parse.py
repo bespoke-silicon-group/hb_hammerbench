@@ -164,7 +164,7 @@ def testdir_parse(folder, fields, stats):
     df = {field : [testdir_get_field(folder, field)] for field in fields}
     # data gathered from kernel_ns.log
     try:
-        df['ns'] = testdir_get_nanoseconds(folder)
+        df['wall_clock_ns'] = testdir_get_nanoseconds(folder)
     except FileNotFoundError as e:
         print(f'Warning: {folder}: no ns log found')
 
