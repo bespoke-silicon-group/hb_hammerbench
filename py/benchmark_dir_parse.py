@@ -156,11 +156,25 @@ def testdir_get_stat(folder, stat):
     stats = ends[stat].sum() - starts[stat].sum()
     return stats
 
+def testdir_get_nanoseconds(folder):
+    with open(f'{folder}/kernel_ns.log','r') as ns_log:
+        return int(ns_log.readline())
+
 def testdir_parse(folder, fields, stats):
     df = {field : [testdir_get_field(folder, field)] for field in fields}
-    df['cycles'] = testdir_get_cycles(folder)
-    for stat in stats:
-        df[stat] = testdir_get_stat(folder, stat)
+    # data gathered from kernel_ns.log
+    try:
+        df['ns'] = testdir_get_nanoseconds(folder)
+    except FileNotFoundError as e:
+        print(f'Warning: {folder}: no ns log found')
+
+    # data gathered from vanilla_stats.csv
+    try:
+        df['cycles'] = testdir_get_cycles(folder)
+        for stat in stats:
+            df[stat] = testdir_get_stat(folder, stat)
+    except FileNotFoundError as e:
+        print(f'Warning: {folder}: no stats file found')
     return pd.DataFrame(df)
 
 
