@@ -63,5 +63,5 @@ pchistpdf: $(addsuffix .pchistpdf,$(TESTS))
 purge:
 	rm -rf $(TESTS_DIRS)
 
-report.csv: report.py 
-	PYTHONPATH=$(HB_HAMMERBENCH_PATH)/py python3 report.py $(TESTS)
+report.csv: report.py $(addsuffix .profile,$(TESTS))
+	PYTHONPATH=$(HB_HAMMERBENCH_PATH)/py python3 $< $(TESTS)

@@ -52,7 +52,7 @@ int kernel()
 #define UNROLL_4
     for (int j; j < UPDATES_PER_THREAD; j += SEEDS_PER_THREAD) {
         int i = 0;
-#ifdef UNROLL_8   
+#ifdef UNROLL_8   // this breaks the hardware
         for (; i+8 <= SEEDS_PER_THREAD; i += 8) {
             register unsigned k [8];
             register unsigned v [8];

@@ -1,5 +1,8 @@
 #include <cello/host/program.hpp>
 #include <bsg_manycore_loader.h>
+#include <chrono>
+#include <fstream>
+
 namespace cello
 {
 program::program() {}
@@ -73,7 +76,13 @@ int program::run() {
                                                       "cello_start", argv.size(), argv.data()));
     }
     bsg_pr_test_info("%s: executing main\n", __PRETTY_FUNCTION__);
+    const auto start{std::chrono::steady_clock::now()};
     BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&this->mc));
+    const auto stop {std::chrono::steady_clock::now()};
+    std::ofstream ns_log("kernel_ns.log");
+    const std::chrono::duration<long long, std::nano> ns{stop - start};
+    ns_log << ns.count() << std::endl;
+    bsg_pr_test_info("%s: main executected in %lld ns\n", __PRETTY_FUNCTION__, ns.count());
     bsg_pr_test_info("%s: done\n", __PRETTY_FUNCTION__);
     return 0;
 }

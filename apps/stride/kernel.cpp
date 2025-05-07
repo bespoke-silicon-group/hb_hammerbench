@@ -39,8 +39,11 @@ int setup()
 static int kernel_dram()
 {
     node *p = &dram_node[0];
-    for (int i = 0; i < N; i++) {
+    int i = N;
+    for (; i != 0;) {
+        bsg_fence(); // hangs if no fence here!
         p = p->next;
+        asm volatile ("addi %0, %1, -1" : "=r"(i) : "r"(i) : "memory");
     }
     result_node = p;
     return 0;
