@@ -352,8 +352,8 @@ public:
                 values[pod_id].push_back(valuePtr[j]);
             }
         }
-        // each pod, set last index to nonzeros assigned        
-        for (index_type j = 0; j < bsg_global_pointer::the_device->num_pods; j++) {
+        // each pod, set last index to nonzeros assigned
+        for (index_type j = 0; j < num_pods(); j++) {
             hb_mc_pod_id_t pod_id = outer_host_pod_index(i+j);
             outer_indices.push_back(inner_indices[pod_id].size());
         }
