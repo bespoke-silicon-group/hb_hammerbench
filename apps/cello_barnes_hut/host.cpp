@@ -453,14 +453,14 @@ public:
         BSG_CUDA_CALL(d_bodies->sync_device(jobs_in));
         BSG_CUDA_CALL(d_nodes->sync_device(jobs_in));
         // set the node stack pointer
-        hb_mc_pod_id_t pod_id;
-        hb_mc_device_foreach_pod_id(&this->mc, pod_id) {
+        BSG_CUDA_CALL(foreach_pod([=](hb_mc_coordinate_t pod){
+            hb_mc_pod_id_t pod_id = pod_coord_to_id(pod);;
             hb_mc_eva_t nodestack_base;
             BSG_CUDA_CALL(hb_mc_device_pod_malloc(&this->mc, pod_id, bsg_tiles_X*bsg_tiles_Y*sizeof(global_node_pointer)*STACK_SIZE, &nodestack_base));
-            hb_mc_coordinate_t pod = hb_mc_index_to_coordinate(pod_id, this->mc.mc->config.pod_shape);
             nodestack.set_pod_x(pod.x).set_pod_y(pod.y);
             *nodestack = nodestack_base;
-        }
+            return 0;
+        }));
         return 0;
     }
 
