@@ -102,8 +102,35 @@ public:
         return hb_mc_coordinate_to_index(coord, mc.mc->config.pods);
     }
 
+    /**
+     * do something foreach pod coordinate
+     */
+    template <typename F>
+    int foreach_pod(F && f) {
+        hb_mc_coordinate_t pod;
+        foreach_coordinate(pod, zero, pods) {
+            BSG_CUDA_CALL(f(pod));
+        }
+        return 0;
+    }
+
+    /**
+     * do something foreach pod coordinate
+     */
+    template <typename F>
+    int foreach_pod_id(F && f) {
+        hb_mc_coordinate_t pod;
+        foreach_coordinate(pod, zero, pods) {
+            hb_mc_pod_id_t pod_id = pod_coord_to_id(pod);
+            BSG_CUDA_CALL(f(pod_id));
+        }
+        return 0;
+    }    
+
     hb_mc_device_t mc; //!< manycore device
     hb_mc_dimension_t tg = {bsg_tiles_X, bsg_tiles_Y}; //!< tile group dimensions
+    hb_mc_dimension_t pods = {bsg_pods_X, bsg_pods_Y}; //!< pods dimensions
+    hb_mc_coordinate_t zero = {0, 0}; // zero point origin
     std::vector<std::vector<hb_mc_dma_htod_t>> jobs_in; //!< dma jobs
     std::vector<std::vector<hb_mc_dma_dtoh_t>> jobs_out; //!< dma jobs
     std::vector<cello::config> cfgs; //!< configurations

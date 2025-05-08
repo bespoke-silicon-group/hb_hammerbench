@@ -3,6 +3,9 @@ REPLICANT_PATH ?= $(shell cd $(HB_HAMMERBENCH_PATH)/.. && git rev-parse --show-t
 
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
+PODS_X ?= $(BSG_MACHINE_PODS_X)
+PODS_Y ?= $(BSG_MACHINE_PODS_Y)
+
 CELLO_HOST_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/cello/host/*.cpp)
 CELLO_HOST_LIB_SOURCES := $(foreach src,$(CELLO_HOST_LIB_SOURCES),$(notdir $(src)))
 
@@ -22,7 +25,7 @@ TEST_SOURCES += $(GLOBAL_POINTER_HOST_LIB_SOURCES)
 # host defines
 DEFINES += -DHOST
 DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
-DEFINES += -Dbsg_pods_X=$(BSG_MACHINE_PODS_X) -Dbsg_pods_Y=$(BSG_MACHINE_PODS_Y)
+DEFINES += -Dbsg_pods_X=$(PODS_X) -Dbsg_pods_Y=$(PODS_Y)
 
 # host flags
 CXXFLAGS += -I$(HB_HAMMERBENCH_PATH)/lib

@@ -23,12 +23,14 @@ int cello_main(int argc, char *argv[])
         pr("vec_int.size() = %d\n", vec_int.size());
     });
 #endif
-    vec_int.foreach([](int i, int &v) {
+    vec_int.foreach<cello::parallel>([](int i, int &v) {
+        bsg_print_int(i);
+        bsg_fence();
         if (i != v)
 #ifdef TRACE
             pr("FAIL: vec_int[%2d] = %2d\n", i, v);
 #else
-            bsg_print_int(-i);
+            bsg_print_int(-v);
 #endif
         v = 2*v;
 #ifdef COUNT

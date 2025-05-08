@@ -171,11 +171,16 @@ public:
 
     VECTOR_INDEX_METHODS(vector_host_mirror);
 
-    hb_mc_pod_id_t host_pod_index(size_t i) const {
-        hb_mc_coordinate_t pod = {.x=pod_x(i), .y=pod_y(i)};
+
+    hb_mc_pod_id_t host_pod_index(hb_mc_coordinate_t pod) const {
         return hb_mc_coordinate_to_index(pod, bsg_global_pointer::the_device->mc->config.pods);
     }
-        
+
+    hb_mc_pod_id_t host_pod_index(size_t i) const {
+        hb_mc_coordinate_t pod = {.x=pod_x(i), .y=pod_y(i)};
+        return host_pod_index(pod);
+    }
+
     T& at(size_t i) {
         return data[host_pod_index(i)][lcl(i)];
     }
@@ -189,25 +194,56 @@ public:
     }
 
     /**
+     * do something foreach pod coordinate
+     */
+    template <typename F>
+    int foreach_pod_id(F && f) {
+        hb_mc_coordinate_t pod;
+        constexpr hb_mc_coordinate_t zero = {0,0};
+        constexpr hb_mc_dimension_t pods = {.x=bsg_pods_X, .y=bsg_pods_Y};
+        foreach_coordinate(pod, zero, pods) {
+            BSG_CUDA_CALL(f(host_pod_index(pod)));
+        }
+        return 0;
+    }
+
+
+    /**
+     * do something foreach pod coordinate
+     */
+    template <typename F>
+    int foreach_pod(F && f) {
+        hb_mc_coordinate_t pod;
+        constexpr hb_mc_coordinate_t zero = {0,0};
+        constexpr hb_mc_dimension_t pods = {.x=bsg_pods_X, .y=bsg_pods_Y};
+        foreach_coordinate(pod, zero, pods) {
+            BSG_CUDA_CALL(f(pod));
+        }
+        return 0;
+    }
+
+    /**
      * @brief Construct a vector_host_mirror from a vector
      * @param vptr A pointer to the vector to mirror
      */
     vector_host_mirror(bsg_global_pointer::pointer<vector_type> vptr) : vptr(vptr) {
         data.resize(bsg_global_pointer::the_device->num_pods);
     }
-    
+
     /**
      * @brief Free memory on the device and set the size to 0
      */
     int clear_device() {
-        hb_mc_pod_id_t pod_id;
-        hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
+        BSG_CUDA_CALL(foreach_pod([=](hb_mc_coordinate_t pod) {
+            hb_mc_pod_id_t pod_id = host_pod_index(pod);
+            vptr.set_pod_x(pod.x).set_pod_y(pod.y);
             hb_mc_eva_t eva = vptr->data();
             BSG_CUDA_CALL(hb_mc_device_pod_free(bsg_global_pointer::the_device, pod_id, eva));
             vptr->data() = 0;
             vptr->size() = 0;
             vptr->local_size() = 0;
-        }
+            return 0;
+        }));
         return 0;
     }
 
@@ -228,20 +264,21 @@ public:
      * Set the size to that of the host and allocate memory on the device
      */
     int init_device_from_host() {
-        clear_device();
+        BSG_CUDA_CALL(clear_device());
         hb_mc_pod_id_t pod_id;
-        size_t alloc_sz = (size + (bsg_global_pointer::the_device->num_pods-1))/bsg_global_pointer::the_device->num_pods;
-        hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
+        size_t alloc_sz = (size + (datastructure::num_pods()-1))/datastructure::num_pods();
+        BSG_CUDA_CALL(foreach_pod([=](hb_mc_coordinate_t pod){
+            hb_mc_pod_id_t pod_id = host_pod_index(pod);
             hb_mc_eva_t eva;
             assert(alloc_sz >= data[pod_id].size() && "bad allocation size");
             BSG_CUDA_CALL(hb_mc_device_pod_malloc(bsg_global_pointer::the_device, pod_id, alloc_sz * sizeof(T), &eva));
-            hb_mc_coordinate_t pod = hb_mc_index_to_coordinate(pod_id, bsg_global_pointer::the_device->mc->config.pods);
             vptr.set_pod_x(pod.x)
                 .set_pod_y(pod.y);
             vptr->data() = eva;
             vptr->size() = size;
             vptr->local_size() = data[pod_id].size();
-        }
+            return 0;
+        }));
         return 0;
     }
 
@@ -254,13 +291,12 @@ public:
         clear_host();
         size = vptr->size();
         size_t sz = (size + bsg_global_pointer::the_device->num_pods - 1) / bsg_global_pointer::the_device->num_pods;
-        hb_mc_pod_id_t pod_id;
-        hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
-            hb_mc_coordinate_t pod = hb_mc_index_to_coordinate(pod_id, bsg_global_pointer::the_device->mc->config.pods);
+        BSG_CUDA_CALL(foreach_pod([=](hb_mc_coordinate_t pod){
             vptr.set_pod_x(pod.x)
                 .set_pod_y(pod.y);
-            data[pod_id].resize(vptr->local_size());
-        }
+            data[host_pod_index(pod)].resize(vptr->local_size());
+            return 0;
+        }));
         return 0;
     }
 
@@ -285,12 +321,12 @@ public:
         clear_device();
         init_device_from_host();
 
-        hb_mc_pod_id_t pod_id;
-        hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
+        BSG_CUDA_CALL(foreach_pod_id([&](hb_mc_pod_id_t pod_id){
             jobs_in[pod_id].push_back({
                     vptr->data(), data[pod_id].data(), data[pod_id].size() * sizeof(T)
-            });
-        }
+                });
+            return 0;
+        }));
         return 0;
     }
 
@@ -300,12 +336,12 @@ public:
     int sync_host(std::vector<std::vector<hb_mc_dma_dtoh_t>> & jobs_out) {
         clear_host();
         init_host_from_device();
-        hb_mc_pod_id_t pod_id;
-        hb_mc_device_foreach_pod_id(bsg_global_pointer::the_device, pod_id) {
+        BSG_CUDA_CALL(foreach_pod_id([&](hb_mc_pod_id_t pod_id){
             jobs_out[pod_id].push_back({
                     vptr->data(), data[pod_id].data(), data[pod_id].size() * sizeof(T)
-            });
-        }
+                });
+            return 0;
+        }));
         return 0;
     }
 
