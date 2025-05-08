@@ -9,6 +9,8 @@ TESTS += $(call test-name,g14k16,u14k16)
 TESTS += $(call test-name,roadNet-CA,roadNet-CA)
 TESTS += $(call test-name,u16k4,g16k4)
 TESTS += $(call test-name,web-NotreDame,web-NotreDame)
+TESTS += $(call test-name,offshore,offshore)
+TESTS += $(call test-name,web-Google,web-Google)
 #TESTS += $(call test-name,u7k1,wiki-Vote)
 #TESTS += $(call test-name,u16k16,g16k16)
 
