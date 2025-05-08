@@ -28,7 +28,7 @@ int program::input() {
     BSG_CUDA_CALL(foreach_pod_id([this](hb_mc_pod_id_t pod_id){
         hb_mc_coordinate_t pod = hb_mc_index_to_coordinate(pod_id, this->mc.mc->config.pods);
 
-        this->cfgs[pod_id].dram_buffer_size() = 128*1024*1024;
+        this->cfgs[pod_id].dram_buffer_size() = 256*1024*1024;
         BSG_CUDA_CALL(hb_mc_device_pod_malloc(&this->mc, pod_id, this->cfgs[pod_id].dram_buffer_size(), &this->cfgs[pod_id].dram_buffer()));
         this->cfgs[pod_id].pod_x() = pod.x;
         this->cfgs[pod_id].pod_y() = pod.y;
