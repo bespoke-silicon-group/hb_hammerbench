@@ -448,7 +448,7 @@ public:
         BSG_CUDA_CALL(clear_device());
         BSG_CUDA_CALL(init_device_from_host());
         BSG_CUDA_CALL(outer_pointers.sync_device(jobs_in));
-        BSG_CUDA_CALL(outer_pointers.foreach_pod([=](hb_mc_coordinate_t pod) mutable {
+        BSG_CUDA_CALL(outer_pointers.foreach_pod([&](hb_mc_coordinate_t pod) {
             hb_mc_pod_id_t pod_id = outer_pointers.host_pod_index(pod);
             ptr.set_pod_x(pod.x).set_pod_y(pod.y);
             jobs_in[pod_id].push_back({
