@@ -89,6 +89,7 @@ class program : public cello::program {
         // initialize twiddle
         BSG_CUDA_CALL(foreach_pod_id([=](hb_mc_pod_id_t pod_id){
             jobs_in[pod_id].push_back({d_twiddle.to_local(), &h_twiddle, sizeof(h_twiddle)});
+            return 0;
         }));
         // sync device
         BSG_CUDA_CALL(d_in->sync_device(jobs_in));
