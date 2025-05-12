@@ -68,13 +68,17 @@ int cello_main(int argc, char *argv[])
             float l_co_mass;
             float l_co_pos[3];
             float l_diamsq;
-            l_co_mass = curr_node->CoMass();
-            l_co_pos[0] = curr_node->CoPos(0);
-            l_co_pos[1] = curr_node->CoPos(1);
-            l_co_pos[2] = curr_node->CoPos(2);
-            l_diamsq = curr_node->DiamSq();
-            asm volatile("": : :"memory");
-
+            {
+                HBNode *curr_node_raw = reinterpret_cast<HBNode*>(curr_node.ref().addr().raw());
+                bsg_global_pointer::pod_address_guard
+                    _ (curr_node.ref().addr().ext().pod_addr());
+                l_co_mass = curr_node_raw->co_mass;
+                l_co_pos[0] = curr_node_raw->co_pos[0];
+                l_co_pos[1] = curr_node_raw->co_pos[1];
+                l_co_pos[2] = curr_node_raw->co_pos[2];
+                l_diamsq = curr_node_raw->diamsq;
+                asm volatile("": : :"memory");
+            }
             delta[0] = curr_body.pos[0] - l_co_pos[0];
             delta[1] = curr_body.pos[1] - l_co_pos[1];
             delta[2] = curr_body.pos[2] - l_co_pos[2];
@@ -93,23 +97,28 @@ int cello_main(int argc, char *argv[])
                 // Move down;
                 // Load all child pointers;
                 uint32_t children[8];
-                uint32_t tmp0 = curr_node->Child(0);
-                uint32_t tmp1 = curr_node->Child(1);
-                uint32_t tmp2 = curr_node->Child(2);
-                uint32_t tmp3 = curr_node->Child(3);
-                uint32_t tmp4 = curr_node->Child(4);
-                uint32_t tmp5 = curr_node->Child(5);
-                uint32_t tmp6 = curr_node->Child(6);
-                uint32_t tmp7 = curr_node->Child(7);
-                asm volatile("": : :"memory");
-                children[0] = tmp0;
-                children[1] = tmp1;
-                children[2] = tmp2;
-                children[3] = tmp3;
-                children[4] = tmp4;
-                children[5] = tmp5;
-                children[6] = tmp6;
-                children[7] = tmp7;
+                {
+                    HBNode *curr_node_raw = reinterpret_cast<HBNode*>(curr_node.ref().addr().raw());
+                    bsg_global_pointer::pod_address_guard
+                        _ (curr_node.ref().addr().ext().pod_addr());
+                    uint32_t tmp0 = curr_node_raw->child[0];
+                    uint32_t tmp1 = curr_node_raw->child[1];
+                    uint32_t tmp2 = curr_node_raw->child[2];
+                    uint32_t tmp3 = curr_node_raw->child[3];
+                    uint32_t tmp4 = curr_node_raw->child[4];
+                    uint32_t tmp5 = curr_node_raw->child[5];
+                    uint32_t tmp6 = curr_node_raw->child[6];
+                    uint32_t tmp7 = curr_node_raw->child[7];
+                    asm volatile("": : :"memory");
+                    children[0] = tmp0;
+                    children[1] = tmp1;
+                    children[2] = tmp2;
+                    children[3] = tmp3;
+                    children[4] = tmp4;
+                    children[5] = tmp5;
+                    children[6] = tmp6;
+                    children[7] = tmp7;
+                }
                 asm volatile("": : :"memory");
                 for (int i = 0; i < 8; i++) {
                     if (children[i] == 0) {
@@ -127,11 +136,17 @@ int cello_main(int argc, char *argv[])
                                 float child_mass;
                                 float child_delta[3];
                                 float child_distsq;
-                                child_pos[0] = body_ptr->Pos(0);
-                                child_pos[1] = body_ptr->Pos(1);
-                                child_pos[2] = body_ptr->Pos(2);
-                                child_mass = body_ptr->Mass();
-                                asm volatile("": : :"memory");
+                                {
+                                    HBBody *body_ptr_raw = reinterpret_cast<HBBody*>(body_ptr.ref().addr().raw());
+                                    bsg_global_pointer::pod_address_guard
+                                        _ (body_ptr.ref().addr().ext().pod_addr());
+
+                                    child_pos[0] = body_ptr_raw->pos[0];
+                                    child_pos[1] = body_ptr_raw->pos[1];
+                                    child_pos[2] = body_ptr_raw->pos[2];
+                                    child_mass = body_ptr_raw->mass;
+                                    asm volatile("": : :"memory");
+                                }
                                 child_delta[0] = curr_body.pos[0] - child_pos[0];
                                 child_delta[1] = curr_body.pos[1] - child_pos[1];
                                 child_delta[2] = curr_body.pos[2] - child_pos[2];
