@@ -16,18 +16,16 @@ int program::init(int argc, char **argv) {
     jobs_out.resize(this->mc.num_pods);
 
     //hb_mc_dimension_t tg = mc.mc->config.pod_shape;
-    hb_mc_pod_id_t pod_id;
-    hb_mc_device_foreach_pod_id(&this->mc, pod_id)
-    {
+    BSG_CUDA_CALL(foreach_pod_id([=](hb_mc_pod_id_t pod_id) {
         BSG_CUDA_CALL(hb_mc_device_pod_program_init(&this->mc, pod_id, program));
-    }
+        return 0;
+    }));
 
     auto pod_x_p  = find<int>("__bsg_pod_x");
     auto pod_y_p  = find<int>("__bsg_pod_y");
     auto pod_id_p = find<int>("__bsg_pod_id");
-    hb_mc_device_foreach_pod_id(&this->mc, pod_id)
-    {
-        auto pod = pod_id_to_coord(pod_id);
+    BSG_CUDA_CALL(foreach_pod([&](hb_mc_coordinate_t pod){
+        hb_mc_pod_id_t pod_id = pod_coord_to_id(pod);
         pod_x_p.set_pod_x(pod.x).set_pod_y(pod.y);
         pod_y_p.set_pod_x(pod.x).set_pod_y(pod.y);
         pod_id_p.set_pod_x(pod.x).set_pod_y(pod.y);
@@ -37,7 +35,8 @@ int program::init(int argc, char **argv) {
         *pod_x_p = x;
         *pod_y_p = y;
         *pod_id_p = id;
-    }
+        return 0;
+    }));
     return 0;
 }
 
@@ -50,24 +49,23 @@ int program::input() {
 int program::sync_input() {
     hb_mc_pod_id_t pod_id;
     bsg_pr_test_info("%s\n", __PRETTY_FUNCTION__);
-    hb_mc_device_foreach_pod_id(&this->mc, pod_id)
-    {
+    BSG_CUDA_CALL(foreach_pod_id([=](hb_mc_pod_id_t pod_id){
         BSG_CUDA_CALL(hb_mc_device_set_default_pod(&this->mc, pod_id));
         BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&this->mc, jobs_in[pod_id].data(), jobs_in[pod_id].size()));
         jobs_in[pod_id].clear();
-    }    
+        return 0;
+    }));
     return 0;
 }
 
 int program::run() {
     bsg_pr_test_info("%s: enqueing setup\n", __PRETTY_FUNCTION__);
-    hb_mc_pod_id_t pod_id;
-    hb_mc_device_foreach_pod_id(&this->mc, pod_id)
-    {
+    BSG_CUDA_CALL(foreach_pod_id([=](hb_mc_pod_id_t pod_id){
         BSG_CUDA_CALL(hb_mc_device_pod_kernel_enqueue(&this->mc, pod_id,
                                                       {1,1}, this->tg,
                                                       "setup", 0, 0));
-    }
+        return 0;
+    }));
     bsg_pr_test_info("%s: executing setup\n", __PRETTY_FUNCTION__);
     BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&this->mc));
     if (cold_cache()) {
@@ -75,12 +73,12 @@ int program::run() {
         BSG_CUDA_CALL(hb_mc_manycore_invalidate_vcache(mc.mc));
     }
     bsg_pr_test_info("%s: enqueing kernel\n", __PRETTY_FUNCTION__);
-    hb_mc_device_foreach_pod_id(&this->mc, pod_id)
-    {
+    BSG_CUDA_CALL(foreach_pod_id([=](hb_mc_pod_id_t pod_id){
         BSG_CUDA_CALL(hb_mc_device_pod_kernel_enqueue(&this->mc, pod_id,
                                                       {1,1}, this->tg,
                                                       "kernel", 0, 0));
-    }
+        return 0;
+    }));
     bsg_pr_test_info("%s: executing kernel\n", __PRETTY_FUNCTION__);
     const auto start{std::chrono::steady_clock::now()};
     BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&this->mc));
@@ -94,19 +92,19 @@ int program::run() {
 }
 
 int program::output() {
-  bsg_pr_test_info("%s\n", __PRETTY_FUNCTION__);
+    bsg_pr_test_info("%s\n", __PRETTY_FUNCTION__);
     return 0;
 }
 
 int program::sync_output() {
     hb_mc_pod_id_t pod_id;
     bsg_pr_test_info("%s\n", __PRETTY_FUNCTION__);
-    hb_mc_device_foreach_pod_id(&this->mc, pod_id)
-    {
+    BSG_CUDA_CALL(foreach_pod_id([=](hb_mc_pod_id_t pod_id){
         BSG_CUDA_CALL(hb_mc_device_set_default_pod(&this->mc, pod_id));
         BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&this->mc, jobs_out[pod_id].data(), jobs_out[pod_id].size()));
         jobs_out[pod_id].clear();
-    }
+        return 0;
+    }));
     return 0;
 }
 
@@ -118,10 +116,10 @@ int program::check_output() {
 int program::fini() {
     hb_mc_pod_id_t pod_id;
     bsg_pr_test_info("%s\n", __PRETTY_FUNCTION__);
-    hb_mc_device_foreach_pod_id(&this->mc, pod_id)
-    {
+    BSG_CUDA_CALL(foreach_pod_id([=](hb_mc_pod_id_t pod_id){
         BSG_CUDA_CALL(hb_mc_device_pod_program_finish(&this->mc, pod_id));
-    }
+        return 0;
+    }));
     BSG_CUDA_CALL(hb_mc_device_finish(&this->mc));
     return 0;
 }
