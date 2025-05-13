@@ -87,10 +87,10 @@ class program : public cello::program {
         BSG_CUDA_CALL(d_in->init_host_from(h_in));
         BSG_CUDA_CALL(d_out->init_host_from(h_out));
         // initialize twiddle
-        hb_mc_pod_id_t pod_id;
-        hb_mc_device_foreach_pod_id(&mc, pod_id) {
+        BSG_CUDA_CALL(foreach_pod_id([=](hb_mc_pod_id_t pod_id){
             jobs_in[pod_id].push_back({d_twiddle.to_local(), &h_twiddle, sizeof(h_twiddle)});
-        }
+            return 0;
+        }));
         // sync device
         BSG_CUDA_CALL(d_in->sync_device(jobs_in));
         BSG_CUDA_CALL(d_out->sync_device(jobs_in));

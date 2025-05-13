@@ -12,9 +12,9 @@ class program : public cello::program
         ctx_v = new ctx_vector_t::mirror_type(find<ctx_vector_t>("ctx_v"));
         message_v = new message_vector_t::mirror_type(find<message_vector_t>("message_v"));
         
-        ctx_data.resize(NUM_TILES*NUM_ITERS);
+        ctx_data.resize(NUM_ITERS);
         memset(ctx_data.data(), 0, ctx_data.size() * sizeof(AES_ctx));
-        for (size_t i = 0; i < NUM_TILES*NUM_ITERS; i++) {
+        for (size_t i = 0; i < NUM_ITERS; i++) {
             AES_init_ctx(&ctx_data[i], key.data());
         }
         ctx_v->init_host_from(ctx_data);
@@ -23,8 +23,8 @@ class program : public cello::program
             message[j] = j;
         }
 
-        message_data.resize(NUM_TILES*NUM_ITERS);
-        for (size_t i = 0; i < NUM_TILES*NUM_ITERS; i++) {
+        message_data.resize(NUM_ITERS);
+        for (size_t i = 0; i < NUM_ITERS; i++) {
             message_data[i] = message;
         }
         message_v->init_host_from(message_data);

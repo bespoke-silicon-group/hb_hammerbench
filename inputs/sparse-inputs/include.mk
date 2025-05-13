@@ -80,3 +80,18 @@ $(from_snap_mtx):  $(HB_HAMMERBENCH_PATH)/inputs/sparse-inputs/%.mtx: $(HB_HAMME
 	rm -f $@
 	ln -s $(dir $@)/$*/$*.mtx $@
 
+from_um += offshore.mtx
+
+from_um_mtx := $(addprefix $(HB_HAMMERBENCH_PATH)/inputs/sparse-inputs/,$(from_um))
+from_um_tar := $(patsubst %.mtx,%.tar.gz,$(from_um_mtx))
+
+$(from_um_tar):
+	$(eval tarfile=$(notdir $@))
+	$(eval url=https://suitesparse-collection-website.herokuapp.com/MM/Um/$(tarfile))
+	wget --inet4-only -O $@ $(url)
+
+$(from_um_mtx):  $(HB_HAMMERBENCH_PATH)/inputs/sparse-inputs/%.mtx: $(HB_HAMMERBENCH_PATH)/inputs/sparse-inputs/%.tar.gz
+	tar zxf $< -C $(dir $@)
+	rm -f $@
+	ln -s $(dir $@)/$*/$*.mtx $@
+
