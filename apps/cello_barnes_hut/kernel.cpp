@@ -33,6 +33,17 @@ DRAM(body_vector) bodies;
 DRAM(node_vector) nodes;
 DRAM(int*) nodestack;
 
+#define ROOTS 9
+DMEM(HBNode) roots[ROOTS];
+
+void setup_root()
+{
+    for (int i = 0; i < ROOTS; i++)
+        roots[i] = nodes[i];
+}
+
+cello_constructor(setup_root);
+
 int cello_main(int argc, char *argv[])
 {
     int grain = bodies.local_size()/(cello::threads()*GRAIN_SCALE);
@@ -62,6 +73,7 @@ int cello_main(int argc, char *argv[])
 
         // put the root in the stack
         mystack[0] = 0;
+        global_node_pointer curr_node = global_node_pointer(&roots[0]);
         int* mystack_top = &mystack[1];
 #ifdef TRACE
         bsg_print_int(1000000 + curr);
@@ -71,8 +83,11 @@ int cello_main(int argc, char *argv[])
             mystack_top--;
             int curr_node_idx = *mystack_top;
             //bsg_print_int(2000000 + curr_node_idx);
-            global_node_pointer curr_node = bsg_global_pointer::addressof(nodes[curr_node_idx]);
-
+            if (curr_node_idx < ROOTS) {
+                curr_node = global_node_pointer(&roots[curr_node_idx]);
+            } else {
+                curr_node = bsg_global_pointer::addressof(nodes[curr_node_idx]);
+            }
             // distsq;
             float l_co_mass;
             float l_co_pos[3];
