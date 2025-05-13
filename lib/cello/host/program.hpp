@@ -3,6 +3,7 @@
 
 #include <bsg_manycore_cuda.h>
 #include <bsg_manycore.h>
+#include <bsg_manycore_responder.h>
 #include <bsg_manycore_regression.h>
 #include <global_pointer/global_pointer.hpp>
 #include <cello/config.hpp>
@@ -135,6 +136,7 @@ public:
     std::vector<std::vector<hb_mc_dma_dtoh_t>> jobs_out; //!< dma jobs
     std::vector<cello::config> cfgs; //!< configurations
     hb_mc_eva_t cfg_ptr = 0; //!< config pointer
+    hb_mc_responder_t *trace_ctrl;
 };
 }
 /**
