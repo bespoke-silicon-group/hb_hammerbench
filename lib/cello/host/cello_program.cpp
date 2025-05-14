@@ -1,15 +1,48 @@
 #include <cello/host/program.hpp>
+#include <cello/profile.hpp>
 #include <bsg_manycore_loader.h>
 #include <chrono>
 #include <fstream>
 
 namespace cello
 {
-program::program() {}
+
+static hb_mc_request_packet_id_t trace_ids [] = {
+    RQST_ID(RQST_ID_ANY_X, RQST_ID_ANY_Y,  RQST_ID_ADDR( CELLO_TRACE_TOGGLE_EPA )),
+    { /* sentinal */ }
+};
+
+static int trace_init(hb_mc_responder_t *responder, hb_mc_manycore_t *mc)
+{
+    return 0;
+}
+
+static int trace_quit(hb_mc_responder_t *responder, hb_mc_manycore_t *mc)
+{
+    return 0;
+}
+
+static int trace_respond(hb_mc_responder_t *responder, hb_mc_manycore_t *mc, const hb_mc_request_packet_t *rqst)
+{
+    int s = hb_mc_request_packet_get_data(rqst);
+    if (s == 1) {
+        BSG_CUDA_CALL(hb_mc_manycore_trace_enable(mc));
+    } else if (s == 0) {
+        BSG_CUDA_CALL(hb_mc_manycore_trace_disable(mc));
+    }
+    return 0;
+}
+
+program::program() {
+    trace_ctrl = new hb_mc_responder ("cello_trace_responder", trace_ids, trace_init, trace_quit, trace_respond);
+    trace_ctrl->responder_data = (void*)this;
+    bsg_pr_test_info("initialized responder @ %p\n", trace_ctrl);
+}
 
 int program::init(int argc, char **argv) {
     char *program = argv[1];
     bsg_pr_test_info("%s\n", __PRETTY_FUNCTION__);
+    BSG_CUDA_CALL(hb_mc_responder_add(trace_ctrl));        
     BSG_CUDA_CALL(hb_mc_device_init(&this->mc, "cello_program", HB_MC_DEVICE_ID));
     bsg_global_pointer::the_device = &this->mc;
     jobs_in.resize(this->mc.num_pods);
@@ -114,6 +147,7 @@ int program::fini() {
         return 0;
     }));
     BSG_CUDA_CALL(hb_mc_device_finish(&this->mc));
+    BSG_CUDA_CALL(hb_mc_responder_del(trace_ctrl));
     return 0;
 }
 

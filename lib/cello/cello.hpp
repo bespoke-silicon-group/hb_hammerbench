@@ -10,4 +10,5 @@
 #include <cello/threads.hpp>
 #include <cello/init.hpp>
 #include <cello/allocator.hpp>
+#include <cello/profile.hpp>
 #endif
