@@ -55,7 +55,12 @@ void parallel_foreach(loop_info<Idx> &info, Body &&body)
         tpv[k++] = tp;
         info = info.upper();
     }
-    for (Idx i = info.start(); i < info.stop(); i+= info.step()) {
+    Idx start, stop, step;
+    start = info.start();
+    stop = info.stop();
+    step = info.step();
+    asm volatile ("" ::: "memory");
+    for (Idx i = start; i < stop; i += step) {
         body(i);
     }
     wait(jp);
