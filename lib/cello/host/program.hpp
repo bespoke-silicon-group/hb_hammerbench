@@ -8,6 +8,8 @@
 #include <global_pointer/global_pointer.hpp>
 #include <cello/config.hpp>
 #include <vector>
+#include <chrono>
+
 namespace cello
 {
 /**
@@ -136,7 +138,9 @@ public:
     std::vector<std::vector<hb_mc_dma_dtoh_t>> jobs_out; //!< dma jobs
     std::vector<cello::config> cfgs; //!< configurations
     hb_mc_eva_t cfg_ptr = 0; //!< config pointer
-    hb_mc_responder_t *trace_ctrl;
+    hb_mc_responder_t *responders;
+    bool kernel_start_set = false, kernel_stop_set = false;
+    std::chrono::time_point<std::chrono::steady_clock> kernel_start, kernel_stop;
 };
 }
 /**
