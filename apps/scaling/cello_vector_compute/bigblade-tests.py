@@ -8,7 +8,7 @@ header = """
 # TESTS += $(call test-name,[vsize],[compute],[tiles-x],[tiles-y],[pods-x],[pods-y])
 """
 
-inputs = [(64*1024, 10**e) for e in (0, 3, 4, 5, 6)]
+inputs = [(64*1024*1024, 10**e) for e in (0, 1, 2)]
 
 cores = [( 1,1,1,1),
          ( 1,1,2,1),
