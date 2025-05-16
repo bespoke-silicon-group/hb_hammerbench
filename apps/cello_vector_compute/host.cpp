@@ -13,7 +13,8 @@ class program : public cello::program {
     }
     int input() override {
         BSG_CUDA_CALL(cello::program::input());
-        BSG_CUDA_CALL(V->sync_device(jobs_in));
+        BSG_CUDA_CALL(V->init_device_from_host());
+        //BSG_CUDA_CALL(V->sync_device(jobs_in));
         return 0;
     }
     int output() override {
