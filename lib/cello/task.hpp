@@ -22,11 +22,6 @@ public:
     task() {}
 
     /**
-     * @brief destructor
-     */
-    virtual ~task() {}
-
-    /**
      * @brief runs the task and joins with parent
      */
     virtual void execute() {}
@@ -38,20 +33,20 @@ public:
         return sizeof(*this);
     }
 
-    /**
-     * @brief returns a new task
-     */
-    void *operator new(size_t size) {
-        return allocate(size);
-    }
+    // /**
+    //  * @brief returns a new task
+    //  */
+    // void *operator new(size_t size) {
+    //     return allocate(size);
+    // }
 
-    /**
-     * @brief deletes the task
-     */
-    void operator delete(void *p) {
-        task* t = reinterpret_cast<task*>(p);
-        deallocate(p, t->size());
-    }
+    // /**
+    //  * @brief deletes the task
+    //  */
+    // void operator delete(void *p) {
+    //     task* t = reinterpret_cast<task*>(p);
+    //     deallocate(p, t->size());
+    // }
 
     FIELD(util::list_item, queued);
 };
@@ -72,11 +67,6 @@ public:
     }
 
     /**
-     * destructor
-     */
-    virtual ~functor_task() {}
-    
-    /**
      * run the task
      */
     virtual void execute() {
@@ -91,13 +81,17 @@ public:
         return sizeof(*this);
     }    
 
-    void *operator new(size_t size) {
-        return allocate(sizeof(functor_task<F, Joiner>));
-    }
+    // void *operator new(size_t size) {
+    //     return allocate(sizeof(functor_task<F, Joiner>));
+    // }
 
-    void operator delete(void *p) {
-        deallocate(p, sizeof(functor_task<F, Joiner>));
-    }
+    // void *operator new(size_t size) {
+    //     return allocate(sizeof(functor_task<F, Joiner>));
+    // }    
+
+    // void operator delete(void *p) {
+    //     deallocate(p, sizeof(functor_task<F, Joiner>));
+    // }
 
     typename std::remove_reference<F>::type func; //!< function lambda, no reference
 
@@ -105,9 +99,20 @@ public:
 };
 
 template <typename F, typename Joiner>
-inline task * new_task(F && f, Joiner &j) {
-    return new functor_task<F, Joiner>(std::forward<F>(f), j);
+inline task * new_task(F && f, Joiner &j, void *buf) {
+    using ftask = functor_task<F, Joiner>;    
+    ftask *t =  static_cast<ftask*>(buf);
+    new (t) ftask (std::forward<F>(f), j);
+    return t;
 }
+
+template <typename F, typename Joiner>
+inline task * new_task(F && f, Joiner &j) {
+    using ftask = functor_task<F, Joiner>;
+    ftask *t = static_cast<ftask*>(cello::allocate(sizeof(ftask)));
+    return new_task<F, Joiner>(std::forward<F>(f), j, t);
+}
+
 }
 
 template <>

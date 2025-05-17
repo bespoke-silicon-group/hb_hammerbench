@@ -21,7 +21,7 @@ void parallel_invoke(F0 &&f0, F1 &&f1)
     spawn(t);
     f1();
     wait(jp);
-    delete t;
+    //delete t;
 }
 
 /**
@@ -45,9 +45,9 @@ void parallel_invoke(F0 &&f0, F1 &&f1, F2 &&f2, F3 &&f3)
     spawn(t2);
     f3();
     wait(jp);
-    delete t0;
-    delete t1;
-    delete t2;
+    //delete t0;
+    //delete t1;
+    //delete t2;
 }
 }
 #endif
