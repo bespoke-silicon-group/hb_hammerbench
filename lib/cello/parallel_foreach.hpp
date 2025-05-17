@@ -46,15 +46,25 @@ void parallel_foreach(loop_info<Idx> &info, Body &&body)
     joiner j;
     joiner *jp = bsg_tile_group_remote_pointer<joiner>(__bsg_x, __bsg_y, &j);
     Idx h = info.height();
-    task **tpv = static_cast<task**>(cello::allocate(sizeof(task*)*h));
+    // allocate the memory you need here
+    using parfor_child = parallel_foreach_child<Idx,Body>;
+    using parfor_child_task = functor_task<parallel_foreach_child<Idx,Body>, joiner>;
+    size_t bufsz = sizeof(parfor_child_task)*h;
+    char *buf = static_cast<char*>(cello::allocate(bufsz));
+    parfor_child_task *tasks = reinterpret_cast<parfor_child_task*>(buf);
+
+    // // prefetch here
+    // for (size_t l = 0; l < bufsz; l += BSG_CACHE_LINE_SIZE) {
+    //     asm volatile ("lb x0, %0" :: "m"(&buf[l]) : "memory");
+    // }
+
     size_t k = 0;
     while (info.leafs() > 1) {
-        task *tp = new_task(parallel_foreach_child<Idx,Body>(info.lower(), std::forward<Body>(body)),
-                            *jp);
+        task *tp = new_task(parfor_child(info.lower(), std::forward<Body>(body)), *jp, &tasks[k++]);
         spawn(tp);
-        tpv[k++] = tp;
         info = info.upper();
     }
+    
     Idx start, stop, step;
     start = info.start();
     stop = info.stop();
@@ -64,10 +74,8 @@ void parallel_foreach(loop_info<Idx> &info, Body &&body)
         body(i);
     }
     wait(jp);
-    for (size_t l = 0; l < k; l++) {
-        delete tpv[l];
-    }
-    cello::deallocate(tpv, sizeof(task*)*h);
+
+    cello::deallocate(buf, bufsz);
 #endif
 }
 
