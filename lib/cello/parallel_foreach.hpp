@@ -50,10 +50,10 @@ void parallel_foreach(loop_info<Idx> &info, Body &&body)
     using parfor_child = parallel_foreach_child<Idx,Body>;
     using parfor_child_task = functor_task<parallel_foreach_child<Idx,Body>, joiner>;
     size_t bufsz = sizeof(parfor_child_task)*h;
-    char *buf = static_cast<char*>(cello::allocate(bufsz));
-    parfor_child_task *tasks = reinterpret_cast<parfor_child_task*>(buf);
-
-    // // prefetch here
+    // char *buf = static_cast<char*>(cello::allocate(bufsz));
+    __attribute__((aligned(4))) char buf [bufsz];
+     parfor_child_task *tasks = reinterpret_cast<parfor_child_task*>(buf);
+    // // prefetch heroe
     // for (size_t l = 0; l < bufsz; l += BSG_CACHE_LINE_SIZE) {
     //     asm volatile ("lb x0, %0" :: "m"(&buf[l]) : "memory");
     // }
@@ -61,6 +61,7 @@ void parallel_foreach(loop_info<Idx> &info, Body &&body)
     size_t k = 0;
     while (info.leafs() > 1) {
         task *tp = new_task(parfor_child(info.lower(), std::forward<Body>(body)), *jp, &tasks[k++]);
+        tp = bsg_tile_group_remote_pointer<task>(__bsg_x, __bsg_y, tp);
         spawn(tp);
         info = info.upper();
     }
@@ -75,7 +76,7 @@ void parallel_foreach(loop_info<Idx> &info, Body &&body)
     }
     wait(jp);
 
-    cello::deallocate(buf, bufsz);
+    //cello::deallocate(buf, bufsz);
 #endif
 }
 
