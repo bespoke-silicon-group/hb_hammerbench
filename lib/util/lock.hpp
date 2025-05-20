@@ -26,6 +26,16 @@ public:
     }
 
     /**
+     * @brief try to acquire the lock
+     * return true if the lock is acquired.
+     */
+    bool try_acquire()
+    {
+        int l = locked_.exchange(1, std::memory_order_acquire);
+        return l == 0;
+    }
+
+    /**
      * @brief release the lock
      */
     void release()
@@ -64,6 +74,12 @@ public:
      * @brief acquire the lock
      */
     void acquire();
+
+    /**
+     * @brief try to acquire the lock
+     * return true if the lock is acquired
+     */
+    bool try_acquire();
 
     /**
      * @brief release the lock
@@ -141,6 +157,16 @@ public:
         return r;                                                       \
     }
 
+#define UTIL_LOCKABLE_FUNCTION_CAN_FAIL(data_type, lock_type, return_type, fail_value, method) \
+    template <typename ...Args>                                         \
+    return_type method(Args&&... args) {                                \
+        return_type r = fail_value;                                     \
+        if (lock_.try_acquire()) {                                      \
+            r = data_.method(std::forward<Args>(args)...);              \
+            lock_.release();                                            \
+        }                                                               \
+        return r;                                                       \
+    }
 /**
  * @brief make unsafe delegate function for lockable
  */

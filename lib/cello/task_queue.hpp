@@ -62,7 +62,7 @@ public:
     UTIL_LOCKABLE_INTERNAL(cello::task_queue, Lock);
     UTIL_LOCKABLE_METHOD(cello::task_queue, Lock, owner_push);
     UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task*, owner_pop);
-    UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task*, thief_pop);
+    UTIL_LOCKABLE_FUNCTION_CAN_FAIL(cello::task_queue, Lock, cello::task*, nullptr, thief_pop);
     UTIL_LOCKABLE_FUNCTION_CONST(cello::task_queue, Lock, bool, empty);
 };
 
