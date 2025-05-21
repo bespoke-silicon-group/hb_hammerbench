@@ -62,11 +62,13 @@ public:
             size_t step = STRIDE * num_pods();
             size_t end = size();
             cello::foreach<sched>
-                (start, end, step, [this, f](size_t i){
+                (start, end, step, [this, f, end](size_t i) {
                 size_t start = i;
                 size_t stop = i + STRIDE;
-                if (stop > size()) {
-                    stop = size();
+                size_t sz = end;
+                asm volatile ("" ::: "memory");
+                if (stop > sz) {
+                    stop = sz;
                 }
                 for (size_t j = start; j < stop; j++) {
                     f(j, this->local(j));
