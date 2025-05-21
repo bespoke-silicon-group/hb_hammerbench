@@ -23,8 +23,10 @@ include parameters.mk
 include app_path.mk
 
 # Tile Group Dimensions
-TILE_GROUP_DIM_X ?= $(BSG_MACHINE_POD_TILES_X)
-TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_POD_TILES_Y)
+TILE_GROUP_DIM_X := $(tiles-x)
+TILE_GROUP_DIM_Y ?= $(tiles-y)
+PODS_X := $(pods-x)
+PODS_Y := $(pods-y)
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
