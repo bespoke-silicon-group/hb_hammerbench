@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 from benchmark_dir_parse import *
 
-fields = ['n', 'size', 'dmem']
+fields = ['n', 'size', 'dmem', 'tiles-x', 'tiles-y', 'pods-x', 'pods-y']
 
 stats = [
     # add extra stats to sum like 'instr_addi' e.g.
