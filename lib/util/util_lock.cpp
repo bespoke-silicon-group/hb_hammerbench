@@ -22,6 +22,17 @@ void tile_lock::acquire()
 }
 
 /**
+ * @brief try to acquire the lock
+ * return true if the lock is acquired
+ */
+bool tile_lock::try_acquire()
+{
+    int *lp = reinterpret_cast<int*>(this);
+    int l = bsg_amoswap(lp, 1);
+    return l == 0;
+}
+
+/**
  * @brief release the lock
  */
 void tile_lock::release()
