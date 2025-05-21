@@ -87,7 +87,9 @@ int cello_start(cello::config *config)
     bsg_barrier_tile_group_sync();
     bsg_cuda_print_stat_kernel_start();
     if (cello::my::id() == 0) {
+        cello_timer_start();
         cello_main(0, nullptr);
+        cello_timer_stop();
         should_exit = 1;
     } else {
         scheduler_loop([=](){
