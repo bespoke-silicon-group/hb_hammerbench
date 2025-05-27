@@ -107,5 +107,20 @@ void parallel_foreach(Idx begin, Idx end, Idx step, Body &&body)
     parallel_foreach(info, std::forward<Body>(body));
 }
 
+/**
+ * @brief parallel_foreac
+ * @param begin
+ * @param end
+ * @param step
+ * @param grain
+ * @param body
+ */
+template <typename Idx, typename Body>
+void parallel_foreach(Idx begin, Idx end, Idx step, Idx grain, Body &&body)
+{
+    loop_info<Idx> info(begin, end, step, grain);
+    parallel_foreach(info, std::forward<Body>(body));
+}
+
 }
 #endif

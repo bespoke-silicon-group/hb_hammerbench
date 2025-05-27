@@ -10,6 +10,25 @@ namespace cello {
  * @param end
  * @param step
  * @param body
+ * @param grain
+ */
+template <cello::Schedule sched = parallel, typename Idx, typename Body>
+void foreach(Idx begin, Idx end, Idx step, Idx grain, Body &&body)
+{
+    if (sched == parallel) {
+        parallel_foreach(begin, end, step, grain, std::forward<Body>(body));
+    } else {
+        for (Idx i = begin; i < end; i += step) {
+            body(i);
+        }
+    }
+}
+/**
+ * @brief foreach
+ * @param begin
+ * @param end
+ * @param step
+ * @param body
  */
 template <cello::Schedule sched = parallel, typename Idx, typename Body>
 void foreach(Idx begin, Idx end, Idx step, Body &&body)
