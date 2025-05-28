@@ -8,10 +8,14 @@
 #include <cello/pointer.hpp>
 #include <cello/delegate_queue.hpp>
 #include <cello/joiner.hpp>
+#include <cello/stats.hpp>
 #include <global_pointer/global_pointer.hpp>
 #include <bsg_manycore.h>
 #include <bsg_manycore.hpp>
 #include <bsg_tile_config_vars.h>
+
+CELLO_STAT_DEF(cello_steals);
+
 namespace cello
 {
 
@@ -154,6 +158,7 @@ void schedule()
     auto stolen = victim_tasks->thief_pop();
     if (!is_null(stolen)) {
         //bsg_print_int(1000000 + victim_id*1000 + my::id());            
+        CELLO_STAT_ADD(cello_steals);
         execute_task(victim_id, stolen);
     }
 }
