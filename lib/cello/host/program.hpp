@@ -7,6 +7,7 @@
 #include <bsg_manycore_regression.h>
 #include <global_pointer/global_pointer.hpp>
 #include <cello/config.hpp>
+#include <cello/stats.hpp>
 #include <vector>
 #include <chrono>
 
@@ -56,6 +57,11 @@ public:
     /**
      * @brief check output
      */
+    int collect_statistics();
+
+    /**
+     * @brief check output
+     */
     virtual int check_output();
 
     /**
@@ -74,6 +80,7 @@ public:
         BSG_CUDA_CALL(output());
         BSG_CUDA_CALL(sync_output());
         BSG_CUDA_CALL(check_output());
+        BSG_CUDA_CALL(collect_statistics());
         BSG_CUDA_CALL(fini());
         return 0;
     }

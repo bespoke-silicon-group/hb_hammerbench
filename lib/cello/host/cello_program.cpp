@@ -3,7 +3,7 @@
 #include <bsg_manycore_loader.h>
 #include <chrono>
 #include <fstream>
-
+#include <string>
 namespace cello
 {
 
@@ -144,6 +144,47 @@ int program::sync_output() {
         jobs_out[pod_id].clear();
         return 0;
     }));
+    return 0;
+}
+
+/**
+ * @brief check output
+ */
+int program::collect_statistics() {
+    std::ofstream cello_stats_log("cello_stats.csv");
+
+    // make header
+    cello_stats_log << "pod_x,pod_y,x,y";
+    for (const char *stat : cello_statistics) {
+        cello_stats_log << "," <<  std::string(stat);
+    }
+    cello_stats_log << std::endl;
+
+    hb_mc_coordinate_t core, pod;
+    foreach_coordinate(pod, zero, pods) {
+        foreach_coordinate(core, zero, tg) {
+            cello_stats_log << pod.x << "," << pod.y << "," <<  core.x << "," << core.y;
+            for (const char *stat : cello_statistics) {
+                bsg_pr_test_info("collecting stat: %s\n", stat);
+                // find the symbol for the stat
+                bsg_global_pointer::pointer<int> stat_pointer = find<int>(stat);
+                // set core x and y
+                auto raw = stat_pointer.ref().addr().raw();
+                raw = bsg_global_pointer::to_group_pointer(core.x, core.y, raw);
+                stat_pointer.ref().addr().raw() = raw;
+                // set pod x and y
+                stat_pointer.set_pod_x(pod.x).set_pod_y(pod.y);
+                bsg_pr_test_info("stat_pointer = %08x\n", stat_pointer.ref().addr().raw());
+                // read the stat
+                int data = *stat_pointer;
+                bsg_pr_test_info("stat (core_x = %d, core_y = %d, pod_x = %d, pod_y = %d): %s = %d\n"
+                                 , core.x, core.y, pod.x, pod.y
+                                 , stat, data);
+                cello_stats_log << "," << data;
+            }
+            cello_stats_log << std::endl;
+        }
+    }
     return 0;
 }
 
