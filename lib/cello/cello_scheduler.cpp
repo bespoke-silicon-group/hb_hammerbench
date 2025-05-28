@@ -138,7 +138,7 @@ void schedule()
     t = my_delegates_ptr->owner_pop();
     if (t) {
         t->execute();
-        delete t;
+        //delete t;
         return;
     }
     // 2. check local tasks
