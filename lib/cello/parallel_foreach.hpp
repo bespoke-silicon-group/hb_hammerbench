@@ -50,9 +50,13 @@ void parallel_foreach(loop_info<Idx> &info, Body &&body)
     using parfor_child = parallel_foreach_child<Idx,Body>;
     using parfor_child_task = functor_task<parallel_foreach_child<Idx,Body>, joiner>;
     size_t bufsz = sizeof(parfor_child_task)*h;
+#ifdef PARALLEL_FOREACH_USE_DMEM
+    char buf[bufsz];
+    parfor_child_task *tasks = reinterpret_cast<parfor_child_task*>(buf);
+#else
     char *buf = static_cast<char*>(cello::allocate(bufsz));
     parfor_child_task *tasks = reinterpret_cast<parfor_child_task*>(buf);
-
+#endif
     // // prefetch here
     // for (size_t l = 0; l < bufsz; l += BSG_CACHE_LINE_SIZE) {
     //     asm volatile ("lb x0, %0" :: "m"(&buf[l]) : "memory");
@@ -74,8 +78,9 @@ void parallel_foreach(loop_info<Idx> &info, Body &&body)
         body(i);
     }
     wait(jp);
-
+#ifndef PARALLEL_FOREACH_USE_DMEM
     cello::deallocate(buf, bufsz);
+#endif
 #endif
 }
 
@@ -104,6 +109,21 @@ template <typename Idx, typename Body>
 void parallel_foreach(Idx begin, Idx end, Idx step, Body &&body)
 {
     loop_info<Idx> info(begin, end, step);
+    parallel_foreach(info, std::forward<Body>(body));
+}
+
+/**
+ * @brief parallel_foreac
+ * @param begin
+ * @param end
+ * @param step
+ * @param grain
+ * @param body
+ */
+template <typename Idx, typename Body>
+void parallel_foreach(Idx begin, Idx end, Idx step, Idx grain, Body &&body)
+{
+    loop_info<Idx> info(begin, end, step, grain);
     parallel_foreach(info, std::forward<Body>(body));
 }
 
