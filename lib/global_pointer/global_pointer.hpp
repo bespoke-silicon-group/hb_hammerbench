@@ -3,4 +3,7 @@
 #include <global_pointer/reference.hpp>
 #include <global_pointer/pointer.hpp>
 #include <global_pointer/memcpy.hpp>
+#ifdef HOST
+#include <global_pointer/host/group_pointer.hpp>
+#endif
 #endif
