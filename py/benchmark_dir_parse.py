@@ -140,6 +140,10 @@ def testdir_vanilla_dataframe(folder):
     df = pd.read_csv(f'{folder}/vanilla_stats.csv')
     return df
 
+def testdir_cello_dataframe(folder):
+    df = pd.read_csv(f'{folder}/cello_stats.csv')
+    return df
+
 def testdir_get_cycles(folder):
     dataframe = testdir_vanilla_dataframe(folder)
     dataframe['tag_type'] = dataframe['tag'].apply(lambda x : CudaStatTag(x).getAction)
@@ -156,11 +160,27 @@ def testdir_get_stat(folder, stat):
     stats = ends[stat].sum() - starts[stat].sum()
     return stats
 
+def testdir_get_cello_stat(folder, stat, agg):    
+    dataframe = testdir_cello_dataframe(folder)
+    data = dataframe[stat]
+    if agg == 'max':
+        return data.max()
+    elif agg == 'min':
+        return data.min()
+    elif agg == 'median':
+        return data.median()    
+    elif agg == 'sum':
+        return data.sum()
+    elif agg == 'mean':
+        return data.mean()
+    else:
+        raise RuntimeError(f'Bad aggregator "{agg}"')
+    
 def testdir_get_nanoseconds(folder):
     with open(f'{folder}/kernel_ns.log','r') as ns_log:
         return int(ns_log.readline())
-
-def testdir_parse(folder, fields, stats):
+    
+def testdir_parse(folder, fields, stats, cello_stats = []):
     df = {field : [testdir_get_field(folder, field)] for field in fields}
     # data gathered from kernel_ns.log
     try:
@@ -175,6 +195,14 @@ def testdir_parse(folder, fields, stats):
             df[stat] = testdir_get_stat(folder, stat)
     except FileNotFoundError as e:
         print(f'Warning: {folder}: no stats file found')
+
+    # data gathered from cello_stats.csv
+    try:
+        for (stat, agg) in cello_stats:
+            df[stat + '_' + agg] = testdir_get_cello_stat(folder, stat, agg)
+    except FileNotFoundError as e:
+        print(f'Warning: {folder}: not cello_stats file found')
+    
     return pd.DataFrame(df)
 
 
