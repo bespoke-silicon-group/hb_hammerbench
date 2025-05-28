@@ -9,11 +9,16 @@ stats = [
 ]
 
 cello_stats = [
-    ('cello_steals', 'min'),
-    ('cello_steals', 'max'),
     ('cello_steals', 'sum'),
-    ('cello_steals', 'mean'),
-    ('cello_steals', 'median'),    
+    ('cello_task_execute', 'sum'),
+    ('cello_task_execute', 'min'),
+    ('cello_task_execute', 'max'),
+    ('cello_task_push', 'sum'),
+    ('cello_task_push', 'min'),
+    ('cello_task_push', 'max'),
+    ('cello_owner_lock_acquire_fail', 'sum'),
+    ('cello_owner_lock_acquire_fail', 'min'),
+    ('cello_owner_lock_acquire_fail', 'max'),
 ]
 
 df = pd.DataFrame()

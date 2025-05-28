@@ -1,6 +1,7 @@
 #ifndef CELLO_TASK_QUEUE_HPP
 #define CELLO_TASK_QUEUE_HPP
 #include <cello/task.hpp>
+#include <cello/stats.hpp>
 #include <cello/pointer.hpp>
 #include <util/list.hpp>
 #include <util/class_field.hpp>
@@ -61,7 +62,16 @@ class util::lockable<cello::task_queue, Lock>
 public:
     UTIL_LOCKABLE_INTERNAL(cello::task_queue, Lock);
     UTIL_LOCKABLE_METHOD(cello::task_queue, Lock, owner_push);
-    UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task*, owner_pop);
+    //UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task*, owner_pop);
+    cello::task *owner_pop() {
+        cello::task* r;
+        while (!lock_.try_acquire()) {
+            CELLO_STAT_ADD(cello_owner_lock_acquire_fail);
+        }
+        r = data_.owner_pop();
+        lock_.release();
+        return r;
+    }
     UTIL_LOCKABLE_FUNCTION_CAN_FAIL(cello::task_queue, Lock, cello::task*, nullptr, thief_pop);
     UTIL_LOCKABLE_FUNCTION_CONST(cello::task_queue, Lock, bool, empty);
 };

@@ -91,10 +91,9 @@
 
 CELLO_STAT_DECL_START()
 CELLO_STAT_DECL(cello_steals)
+CELLO_STAT_DECL(cello_task_push)
+CELLO_STAT_DECL(cello_task_execute)
+CELLO_STAT_DECL(cello_owner_lock_acquire_fail)
 CELLO_STAT_DECL_STOP()
-
-// CELLO_STAT_DECL(cello_task_push);
-// CELLO_STAT_DECL(cello_task_execute);
-// CELLO_STAT_DECL(cello_owner_lock_acquire_fail);
 
 #endif

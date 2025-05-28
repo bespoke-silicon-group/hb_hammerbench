@@ -15,6 +15,9 @@
 #include <bsg_tile_config_vars.h>
 
 CELLO_STAT_DEF(cello_steals);
+CELLO_STAT_DEF(cello_task_push);
+CELLO_STAT_DEF(cello_task_execute);
+CELLO_STAT_DEF(cello_owner_lock_acquire_fail);
 
 namespace cello
 {
@@ -85,11 +88,13 @@ void scheduler_initialize(config *cfg)
 void spawn(task * t)
 {
     my_tasks_ptr->owner_push(t);
+    CELLO_STAT_ADD(cello_task_push);
 }
 
 void execute_task(int victim_id, task * t)
 {
     t->execute();
+    CELLO_STAT_ADD(cello_task_execute);
 }
 
 void execute_task(int victim_id, global_pointer<task> t)
@@ -108,6 +113,7 @@ void execute_task(int victim_id, global_pointer<task> t)
     }else {
         t->execute();
     }
+    CELLO_STAT_ADD(cello_task_execute);
 }
 
 
@@ -143,6 +149,7 @@ void schedule()
     t = my_delegates_ptr->owner_pop();
     if (t) {
         t->execute();
+        CELLO_STAT_ADD(cello_task_execute);
         //delete t;
         return;
     }
@@ -150,6 +157,7 @@ void schedule()
     t = my_tasks_ptr->owner_pop();
     if (t) {
         t->execute();
+        CELLO_STAT_ADD(cello_task_execute);
         return;
     }
     // 3. steal work

@@ -165,7 +165,6 @@ int program::collect_statistics() {
         foreach_coordinate(core, zero, tg) {
             cello_stats_log << pod.x << "," << pod.y << "," <<  core.x << "," << core.y;
             for (const char *stat : cello_statistics) {
-                bsg_pr_test_info("collecting stat: %s\n", stat);
                 // find the symbol for the stat
                 bsg_global_pointer::pointer<int> stat_pointer = find<int>(stat);
                 // set core x and y
@@ -174,12 +173,8 @@ int program::collect_statistics() {
                 stat_pointer.ref().addr().raw() = raw;
                 // set pod x and y
                 stat_pointer.set_pod_x(pod.x).set_pod_y(pod.y);
-                bsg_pr_test_info("stat_pointer = %08x\n", stat_pointer.ref().addr().raw());
                 // read the stat
                 int data = *stat_pointer;
-                bsg_pr_test_info("stat (core_x = %d, core_y = %d, pod_x = %d, pod_y = %d): %s = %d\n"
-                                 , core.x, core.y, pod.x, pod.y
-                                 , stat, data);
                 cello_stats_log << "," << data;
             }
             cello_stats_log << std::endl;
