@@ -61,7 +61,14 @@ class util::lockable<cello::task_queue, Lock>
 {
 public:
     UTIL_LOCKABLE_INTERNAL(cello::task_queue, Lock);
-    UTIL_LOCKABLE_METHOD(cello::task_queue, Lock, owner_push);
+    //UTIL_LOCKABLE_METHOD(cello::task_queue, Lock, owner_push);
+    void owner_push(cello::task *t) {
+        while (!lock_.try_acquire()) {
+            CELLO_STAT_ADD(cello_owner_lock_acquire_fail);
+        }
+        data_.owner_push(t);
+        lock_.release();
+    }
     //UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task*, owner_pop);
     cello::task *owner_pop() {
         cello::task* r;
