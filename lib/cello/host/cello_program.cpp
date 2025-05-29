@@ -151,6 +151,7 @@ int program::sync_output() {
  * @brief check output
  */
 int program::collect_statistics() {
+#ifdef CELLO_GATHER_STATISTICS
     std::ofstream cello_stats_log("cello_stats.csv");
 
     // make header
@@ -180,6 +181,7 @@ int program::collect_statistics() {
             cello_stats_log << std::endl;
         }
     }
+#endif
     return 0;
 }
 
