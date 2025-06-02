@@ -59,6 +59,16 @@ public:
     bool empty() const {
         return head().next() == &head();
     }
+
+    /**
+     * @brief true if list is empty - cannot be compiled out
+     */
+    bool empty_volatile() const {
+        item_ptr n;
+        asm volatile ("lw %0, %1" : "=r" (n) : "m" (head().next()) : "memory");
+        return n == &head();
+    }
+
     /**
      * @brief push an item to front of the list
      */

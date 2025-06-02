@@ -52,6 +52,13 @@ public:
         return task_list().empty();
     }
 
+    /**
+     * @brief check if the queue is empty - cannot be compiled out
+     */
+    bool empty_volatile() const {
+        return task_list().empty_volatile();
+    }
+
     FIELD(util::list, task_list);
 };
 }
@@ -71,6 +78,9 @@ public:
     }
     //UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task*, owner_pop);
     cello::task *owner_pop() {
+        if (data_.empty_volatile())
+            return nullptr;
+
         cello::task* r;
         while (!lock_.try_acquire()) {
             CELLO_STAT_ADD(cello_owner_lock_acquire_fail);
@@ -81,6 +91,7 @@ public:
     }
     UTIL_LOCKABLE_FUNCTION_CAN_FAIL(cello::task_queue, Lock, cello::task*, nullptr, thief_pop);
     UTIL_LOCKABLE_FUNCTION_CONST(cello::task_queue, Lock, bool, empty);
+    UTIL_LOCKABLE_FUNCTION_CONST(cello::task_queue, Lock, bool, empty_volatile);
 };
 
 template <typename Lock>
