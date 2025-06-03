@@ -2,7 +2,7 @@
 #define CELLO_STATS_HPP
 #include <util/statics.hpp>
 
-#define CELLO_GATHER_STATISTICS
+//#define CELLO_GATHER_STATISTICS
 #ifdef  CELLO_GATHER_STATISTICS
 #ifndef HOST
 /**
