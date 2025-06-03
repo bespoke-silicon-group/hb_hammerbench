@@ -162,6 +162,9 @@ void schedule()
     }
     // 3. steal work
     int victim_id = fast_random() % my::num_tiles();
+    if (victim_id == my::tile_id())
+        return;
+
     auto victim_tasks = tasks_of(victim_id);
     auto stolen = victim_tasks->thief_pop();
     if (!is_null(stolen)) {
