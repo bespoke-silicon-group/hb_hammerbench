@@ -6,7 +6,7 @@
 
 #define CELLO_MMIO_EPA 0xEB00
 #define CELLO_TRACE_TOGGLE_EPA  (CELLO_MMIO_EPA+0)
-#define CELLO_NS_TIMER_EPA (CELLO_MMIO_EPA+4)
+#define CELLO_NS_TIMER_EPA      (CELLO_MMIO_EPA+4)
 
 #ifndef HOST
 #define cello_trace_on()                                                \

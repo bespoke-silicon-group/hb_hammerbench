@@ -3,7 +3,7 @@
 #include <bsg_manycore_loader.h>
 #include <chrono>
 #include <fstream>
-
+#include <string>
 namespace cello
 {
 
@@ -144,6 +144,44 @@ int program::sync_output() {
         jobs_out[pod_id].clear();
         return 0;
     }));
+    return 0;
+}
+
+/**
+ * @brief check output
+ */
+int program::collect_statistics() {
+#ifdef CELLO_GATHER_STATISTICS
+    std::ofstream cello_stats_log("cello_stats.csv");
+
+    // make header
+    cello_stats_log << "pod_x,pod_y,x,y";
+    for (const char *stat : cello_statistics) {
+        cello_stats_log << "," <<  std::string(stat);
+    }
+    cello_stats_log << std::endl;
+
+    hb_mc_coordinate_t core, pod;
+    foreach_coordinate(pod, zero, pods) {
+        foreach_coordinate(core, zero, tg) {
+            cello_stats_log << pod.x << "," << pod.y << "," <<  core.x << "," << core.y;
+            for (const char *stat : cello_statistics) {
+                // find the symbol for the stat
+                bsg_global_pointer::pointer<int> stat_pointer = find<int>(stat);
+                // set core x and y
+                auto raw = stat_pointer.ref().addr().raw();
+                raw = bsg_global_pointer::to_group_pointer(core.x, core.y, raw);
+                stat_pointer.ref().addr().raw() = raw;
+                // set pod x and y
+                stat_pointer.set_pod_x(pod.x).set_pod_y(pod.y);
+                // read the stat
+                int data = *stat_pointer;
+                cello_stats_log << "," << data;
+            }
+            cello_stats_log << std::endl;
+        }
+    }
+#endif
     return 0;
 }
 

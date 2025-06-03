@@ -11,4 +11,5 @@
 #include <cello/init.hpp>
 #include <cello/allocator.hpp>
 #include <cello/profile.hpp>
+#include <cello/stats.hpp>
 #endif

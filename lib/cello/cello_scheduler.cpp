@@ -8,10 +8,17 @@
 #include <cello/pointer.hpp>
 #include <cello/delegate_queue.hpp>
 #include <cello/joiner.hpp>
+#include <cello/stats.hpp>
 #include <global_pointer/global_pointer.hpp>
 #include <bsg_manycore.h>
 #include <bsg_manycore.hpp>
 #include <bsg_tile_config_vars.h>
+
+CELLO_STAT_DEF(cello_steals);
+CELLO_STAT_DEF(cello_task_push);
+CELLO_STAT_DEF(cello_task_execute);
+CELLO_STAT_DEF(cello_owner_lock_acquire_fail);
+
 namespace cello
 {
 
@@ -20,8 +27,19 @@ DMEM(int) scheduler_seed = 0;
 // Not great in terms of randomness, but should be faster than rand()
 inline int fast_random()
 {
+#ifdef CELLO_FAST_RANDOM_XORSHIFT
+    unsigned s = scheduler_seed;
+    s ^= s >> 13;
+    s ^= s << 17;
+    s ^= s >> 5;
+    scheduler_seed = s;
+    if (scheduler_seed < 0)
+        scheduler_seed *= -1;
+    return scheduler_seed;
+#else
     scheduler_seed = ( 214013 * scheduler_seed + 2531011 );
-    return ( scheduler_seed >> 16 ) & 0x7FFF;
+    return (scheduler_seed >> 16) & 0x7FFF;
+#endif
 }
 
 using work_queue = util::lockable<task_queue, util::tile_lock>;
@@ -81,11 +99,13 @@ void scheduler_initialize(config *cfg)
 void spawn(task * t)
 {
     my_tasks_ptr->owner_push(t);
+    CELLO_STAT_ADD(cello_task_push);
 }
 
 void execute_task(int victim_id, task * t)
 {
     t->execute();
+    CELLO_STAT_ADD(cello_task_execute);
 }
 
 void execute_task(int victim_id, global_pointer<task> t)
@@ -104,6 +124,7 @@ void execute_task(int victim_id, global_pointer<task> t)
     }else {
         t->execute();
     }
+    CELLO_STAT_ADD(cello_task_execute);
 }
 
 
@@ -139,6 +160,7 @@ void schedule()
     t = my_delegates_ptr->owner_pop();
     if (t) {
         t->execute();
+        CELLO_STAT_ADD(cello_task_execute);
         //delete t;
         return;
     }
@@ -146,14 +168,19 @@ void schedule()
     t = my_tasks_ptr->owner_pop();
     if (t) {
         t->execute();
+        CELLO_STAT_ADD(cello_task_execute);
         return;
     }
     // 3. steal work
     int victim_id = fast_random() % my::num_tiles();
+    if (victim_id == my::tile_id())
+        return;
+
     auto victim_tasks = tasks_of(victim_id);
     auto stolen = victim_tasks->thief_pop();
     if (!is_null(stolen)) {
         //bsg_print_int(1000000 + victim_id*1000 + my::id());            
+        CELLO_STAT_ADD(cello_steals);
         execute_task(victim_id, stolen);
     }
 }
