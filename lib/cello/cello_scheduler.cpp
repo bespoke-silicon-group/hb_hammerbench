@@ -27,8 +27,19 @@ DMEM(int) scheduler_seed = 0;
 // Not great in terms of randomness, but should be faster than rand()
 inline int fast_random()
 {
+#ifdef CELLO_FAST_RANDOM_XORSHIFT
+    unsigned s = scheduler_seed;
+    s ^= s >> 13;
+    s ^= s << 17;
+    s ^= s >> 5;
+    scheduler_seed = s;
+    if (scheduler_seed < 0)
+        scheduler_seed *= -1;
+    return scheduler_seed;
+#else
     scheduler_seed = ( 214013 * scheduler_seed + 2531011 );
-    return ( scheduler_seed >> 16 ) & 0x7FFF;
+    return (scheduler_seed >> 16) & 0x7FFF;
+#endif
 }
 
 using work_queue = util::lockable<task_queue, util::tile_lock>;
