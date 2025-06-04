@@ -1,7 +1,17 @@
+
 ####################
 # CHANGE ME: TESTS #
 ####################
 # TESTS += $(call test-name,[num-seq],[tiles-x],[tiles-y],[pods-x],[pods-y])
-TESTS += $(call test-name,512,16,8,4,2)
 
-
+TESTS += $(call test-name,32768,1,1,1,1)
+TESTS += $(call test-name,32768,1,1,2,1)
+TESTS += $(call test-name,32768,1,1,2,2)
+TESTS += $(call test-name,32768,1,1,4,2)
+TESTS += $(call test-name,32768,2,1,4,2)
+TESTS += $(call test-name,32768,2,2,4,2)
+TESTS += $(call test-name,32768,4,2,4,2)
+TESTS += $(call test-name,32768,4,4,4,2)
+TESTS += $(call test-name,32768,8,4,4,2)
+TESTS += $(call test-name,32768,8,8,4,2)
+TESTS += $(call test-name,32768,16,8,4,2)

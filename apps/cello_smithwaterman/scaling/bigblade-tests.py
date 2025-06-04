@@ -8,7 +8,7 @@ header = """
 # TESTS += $(call test-name,[num-seq],[tiles-x],[tiles-y],[pods-x],[pods-y])
 """
 
-inputs = [512]
+inputs = [32*1024]
 
 cores = [( 1,1,1,1),
          ( 1,1,2,1),

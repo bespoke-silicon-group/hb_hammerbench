@@ -27,4 +27,4 @@ print(header)
 for inp in inputs:
     for (tiles_x,tiles_y,pods_x,pods_y) in cores:
         print(test_str(inp,inp,tiles_x,tiles_y,pods_x,pods_y))
-OB
+
