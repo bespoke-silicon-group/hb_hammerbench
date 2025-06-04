@@ -11,11 +11,13 @@ DRAM(matrix) twiddle;
 
 DMEM(FP32Complex) fft_workset[NUM_POINTS];
 
+#define GRAIN (NUM_POINTS/(2*cello::threads()))
+
 int cello_main(int argc, char *argv[])
 {
     in.foreach<cello::serial>([](int i, matrix & in_matrix) {
         matrix &out_matrix = out.local(i);
-        cello::foreach<cello::parallel>(0, NUM_POINTS, [&in_matrix, &out_matrix](int col){
+        cello::foreach<cello::parallel>(0, NUM_POINTS, 1, GRAIN, [&in_matrix, &out_matrix](int col){
             // load_strided
             load_strided(fft_workset, &in_matrix[0][col]);
             //fft256
@@ -27,7 +29,7 @@ int cello_main(int argc, char *argv[])
             store_strided(const_cast<FP32Complex*>(&in_matrix[0][col]), fft_workset);
         });
 
-        cello::foreach<cello::parallel>(0, NUM_POINTS, [&in_matrix, &out_matrix](int row){
+        cello::foreach<cello::parallel>(0, NUM_POINTS, 1, GRAIN, [&in_matrix, &out_matrix](int row){
             // load sequential
             load_sequential(fft_workset, &in_matrix[row][0]);
             // fft256
