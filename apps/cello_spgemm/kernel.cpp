@@ -3,6 +3,10 @@
 #include <algorithm>
 #include "common.hpp"
 
+#ifndef GRAIN_SCALE
+#define GRAIN_SCALE 8
+#endif
+
 DRAM(csx_type) A;
 DRAM(csx_type) B;
 DRAM(csx_type) C;
@@ -79,10 +83,13 @@ inline void exclusive_scan
     for (index_type i = 0; i < tree_size; i++) {
         tree[i] = 0;
     }
+    index_type grain = REGIONS/(cello::threads()*GRAIN_SCALE);
     // perform exclusive scan on each region
-    cello::foreach<cello::parallel>
+    cello::parallel_foreach
         (static_cast<index_type>(0),
          static_cast<index_type>(REGIONS),
+         static_cast<index_type>(1),
+         grain,
          [=](index_type tid){
         // calculate range
         index_type region_size = (n + (REGIONS-1))/REGIONS;
@@ -122,9 +129,11 @@ inline void exclusive_scan
     dbg("exclusive_scan: tree[0]=%d\n", tree[0]);
     
     // update with offset for each region
-    cello::foreach<cello::parallel>
+    cello::parallel_foreach
         (static_cast<index_type>(0ul),
          static_cast<index_type>(REGIONS),
+         static_cast<index_type>(1),
+         grain,
          [=](index_type tid){
         // calculate range
         index_type region_size = (n + (REGIONS-1))/REGIONS;
@@ -161,10 +170,14 @@ inline void exclusive_scan
 
 int cello_main(int argc, char *argv[])
 {
+    index_type grain = C_product.local_size()/(cello::threads()*GRAIN_SCALE);
+    if (grain < 1)
+        grain = 1;
+
     dbg("A: %d rows, %d columns, %d non-zeros\n", A.rows(), A.cols(), A.nnz());
     dbg("B: %d rows, %d columns, %d non-zeros\n", B.rows(), B.cols(), B.nnz());
     bsg_print_hexadecimal(0xa);
-    C_product.foreach([](int i, partial_table & result) {
+    C_product.foreach(grain, [](int i, partial_table & result) {
         partial_table accum;
         //new (&accum) partial_table();
         auto [A_idx_start, A_idx_end, A_val_start, A_val_end] = A.inner_indices_values_range_lcl(i);        
@@ -217,7 +230,7 @@ int cello_main(int argc, char *argv[])
         }
     });
     bsg_print_hexadecimal(0xc);
-    C_product.foreach([](index_type i, partial_table &nonzeros) {
+    C_product.foreach(grain, [](index_type i, partial_table &nonzeros) {
         auto [C_idx_p, _, C_val_p, __] = C.inner_indices_values_range_lcl(i);
         for (partial_table::iterator it(&nonzeros); it.good(); it.next()) {
             index_type C_idx = it->key;

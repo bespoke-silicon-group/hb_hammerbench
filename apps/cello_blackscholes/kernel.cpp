@@ -6,12 +6,20 @@
 DRAM(vector_type) data;
 DRAM(OptionData) output;
 
+#ifndef GRAIN_SCALE
+#define GRAIN_SCALE 8
+#endif
+
 int cello_main(int argc, char *argv[])
 {
 #ifdef TRACE
     bsg_print_hexadecimal(0x1000+0xAAA);
 #endif
-    data.foreach([](int i, OptionData &dram_data){
+    int grain = data.local_size()/(cello::threads()*GRAIN_SCALE);
+    if (grain < 1)
+        grain = 1;
+
+    data.foreach(grain, [](int i, OptionData &dram_data){
 #ifdef TRACE
         bsg_print_int(i);
 #endif

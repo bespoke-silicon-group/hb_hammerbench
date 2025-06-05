@@ -6,6 +6,9 @@
 #include "HBBody.hpp"
 
 //#define TRACE
+#ifndef GRAIN_SCALE
+#define GRAIN_SCALE 8
+#endif
 
 // Constants;
 #define itolsq  (1.0f/(0.5f*0.5f))
@@ -30,8 +33,12 @@ DRAM(int*) nodestack;
 
 int cello_main(int argc, char *argv[])
 {
+    int grain = bodies.local_size()/(cello::threads()*GRAIN_SCALE);
+    if (grain < 1)
+        grain = 1;
+
 #if 1
-    bodies.foreach([](int curr, HBBody &rcurr_body){
+    bodies.foreach(grain, [](int curr, HBBody &rcurr_body){
         HBBody *pcurr_body = &rcurr_body;
         HBBody curr_body = *pcurr_body;
 

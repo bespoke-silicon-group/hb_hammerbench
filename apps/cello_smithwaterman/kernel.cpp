@@ -13,6 +13,10 @@ DMEM(scorev) F_spm;
 DMEM(scorev) H_spm;
 DMEM(scorev) H_prev_spm;
 
+#ifndef GRAIN_SCALE
+#define GRAIN_SCALE 8
+#endif
+
 // DMEM(scorev) E_spm;
 // DMEM(scorev) F_spm;
 // DMEM(scorev) H_spm;
@@ -90,7 +94,11 @@ inline void align(sequence& seqa, sequence& seqb, score& output) {
 
 int  cello_main(int argc, char *argv[])
 {
-    query.foreach([](int i, sequence &dram_query) {
+    int grain = query.local_size()/(cello::threads()*GRAIN_SCALE);
+    if (grain < 1)
+        grain = 1;
+
+    query.foreach(grain, [](int i, sequence &dram_query) {
         sequence& dram_ref= ref.local(i);
         score& dram_output = output.local(i);
         l_query = dram_query;
