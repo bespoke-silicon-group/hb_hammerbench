@@ -89,7 +89,7 @@ $(APPS_all_rules):
 
 
 
-RECURSE_APPS = memcpy vector_add sgemm
+RECURSE_APPS = memcpy vector_add sgemm aes
 
 recurse-all: $(foreach n, $(RECURSE_APPS), recurse-$(n))
 recurse-memcpy:
@@ -102,6 +102,9 @@ recurse-vector_add:
 recurse-sgemm:
 	$(MAKE) -C sgemm generate
 	$(MAKE) -C sgemm/N_64__NITER_2 exec.log
+recurse-aes:
+	$(MAKE) -C aes generate
+	$(MAKE) -C aes/NUM-ITER_2 exec.log
 
 recurse-clean: $(foreach n, $(RECURSE_APPS), recurse-clean-$(n))
 recurse-clean-%:

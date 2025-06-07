@@ -39,8 +39,8 @@ int kernel(struct AES_ctx *ctx, uint8_t* buf, size_t length, int niters, int pod
   bsg_fence();
 
   // Kernel start;
-  bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
-  bsg_cuda_print_stat_kernel_start();
+  //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  //bsg_cuda_print_stat_kernel_start();
 
 
   for (int i = 0; i < niters; i++) {
@@ -53,7 +53,7 @@ int kernel(struct AES_ctx *ctx, uint8_t* buf, size_t length, int niters, int pod
 
   // kernel end;
   bsg_fence();
-  bsg_cuda_print_stat_kernel_end();
+  //bsg_cuda_print_stat_kernel_end();
   bsg_fence();
   bsg_barrier_tile_group_sync();
   return 0;
