@@ -284,8 +284,8 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
 
 
   // start kernel
-  //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
-  //bsg_cuda_print_stat_kernel_start();
+  bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  bsg_cuda_print_stat_kernel_start();
 
 
   // reset output;
@@ -326,7 +326,7 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
   // end kernel
   bsg_fence();
   bsg_barrier_tile_group_sync();
-  //bsg_cuda_print_stat_kernel_end();
+  bsg_cuda_print_stat_kernel_end();
   bsg_fence();
   bsg_barrier_tile_group_sync();
   return 0;
