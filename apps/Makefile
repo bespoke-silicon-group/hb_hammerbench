@@ -89,22 +89,32 @@ $(APPS_all_rules):
 
 
 
-RECURSE_APPS = memcpy vector_add sgemm aes
+RECURSE_APPS = memcpy vector_add-yes vector_add-no sgemm aes jacobi-yes jacobi-no
 
 recurse-all: $(foreach n, $(RECURSE_APPS), recurse-$(n))
 recurse-memcpy:
 	$(MAKE) -C memcpy generate
 	$(MAKE) -C memcpy/tile-x_4__tile-y_4__buffer-size_4096__warm-cache_no exec.log
-recurse-vector_add:
+recurse-vector_add-yes:
 	$(MAKE) -C vector_add generate
-	$(MAKE) -C vector_add/vector-size_4096__warm-cache_yes exec.log
-	$(MAKE) -C vector_add/vector-size_4096__warm-cache_no exec.log
+	$(MAKE) -C vector_add/vector-size_65536__warm-cache_yes exec.log
+recurse-vector_add-no:
+	sleep 10
+	$(MAKE) -C vector_add generate
+	$(MAKE) -C vector_add/vector-size_65536__warm-cache_no exec.log
 recurse-sgemm:
 	$(MAKE) -C sgemm generate
 	$(MAKE) -C sgemm/N_64__NITER_2 exec.log
 recurse-aes:
 	$(MAKE) -C aes generate
 	$(MAKE) -C aes/NUM-ITER_2 exec.log
+recurse-jacobi-yes:
+	$(MAKE) -C jacobi generate
+	$(MAKE) -C jacobi/nx_32__ny_8__nz_512__warm-cache_yes exec.log
+recurse-jacobi-no:
+	sleep 10
+	$(MAKE) -C jacobi generate
+	$(MAKE) -C jacobi/nx_64__ny_8__nz_512__warm-cache_no exec.log
 
 recurse-clean: $(foreach n, $(RECURSE_APPS), recurse-clean-$(n))
 recurse-clean-%:
