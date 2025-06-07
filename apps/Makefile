@@ -86,3 +86,27 @@ $(APPS_all_rules):
 	@echo Running $(macro) for $(app)
 	@$(MAKE) -C $(app_dir) $(macro)
 
+
+
+
+RECURSE_APPS = memcpy vector_add sgemm
+
+recurse-all: $(foreach n, $(RECURSE_APPS), recurse-$(n))
+recurse-memcpy:
+	$(MAKE) -C memcpy generate
+	$(MAKE) -C memcpy/tile-x_4__tile-y_4__buffer-size_4096__warm-cache_no exec.log
+recurse-vector_add:
+	$(MAKE) -C vector_add generate
+	$(MAKE) -C vector_add/vector-size_4096__warm-cache_yes exec.log
+	$(MAKE) -C vector_add/vector-size_4096__warm-cache_no exec.log
+recurse-sgemm:
+	$(MAKE) -C sgemm generate
+	$(MAKE) -C sgemm/N_64__NITER_2 exec.log
+
+recurse-clean: $(foreach n, $(RECURSE_APPS), recurse-clean-$(n))
+recurse-clean-%:
+	$(MAKE) -C $* purge
+
+recurse-summary:
+	@grep --color -r PASSED */*/exec.log || true
+	@grep --color -r FAILED */*/exec.log || true
