@@ -135,7 +135,5 @@ recurse-clean-%:
 	$(MAKE) -C $* purge
 
 recurse-summary:
-	@grep --color -r PASSED   */*/exec.log || true
-	@grep --color -r PASSED */*/*/exec.log || true
-	@grep --color -r FAILED   */*/exec.log || true
-	@grep --color -r FAILED */*/*/exec.log || true
+	@grep --color -r PASSED */*/exec.log || true
+	@grep --color -r FAILED */*/exec.log || true
