@@ -90,6 +90,7 @@ $(APPS_all_rules):
 
 
 RECURSE_APPS = memcpy vector_add-yes vector_add-no sgemm aes jacobi-yes jacobi-no
+RECURSE_CLEANS = memcpy vector_add sgemm aes jacobi
 
 recurse-all: $(foreach n, $(RECURSE_APPS), recurse-$(n))
 recurse-memcpy:
@@ -116,7 +117,7 @@ recurse-jacobi-no:
 	$(MAKE) -C jacobi generate
 	$(MAKE) -C jacobi/nx_64__ny_8__nz_512__warm-cache_no exec.log
 
-recurse-clean: $(foreach n, $(RECURSE_APPS), recurse-clean-$(n))
+recurse-clean: $(foreach n, $(RECURSE_CLEANS), recurse-clean-$(n))
 recurse-clean-%:
 	$(MAKE) -C $* purge
 
