@@ -89,8 +89,8 @@ $(APPS_all_rules):
 
 
 
-RECURSE_APPS = memcpy vector_add-yes vector_add-no sgemm aes jacobi-yes jacobi-no blackscholes smithwaterman fft_128m-yes fft_128m-no
-RECURSE_CLEANS = memcpy vector_add sgemm aes jacobi blackscholes smithwaterman fft_128m
+RECURSE_APPS = memcpy vector_add-yes vector_add-no sgemm aes jacobi-yes jacobi-no blackscholes smithwaterman fft_128m-yes fft_128m-no bfs pagerank
+RECURSE_CLEANS = memcpy vector_add sgemm aes jacobi blackscholes smithwaterman fft_128m bfs pagerank
 
 recurse-all: $(foreach n, $(RECURSE_APPS), recurse-$(n))
 recurse-memcpy:
@@ -129,6 +129,12 @@ recurse-fft_128m-no:
 	sleep 10
 	$(MAKE) -C fft_128m generate
 	$(MAKE) -C fft_128m/num-iter_1__warm-cache_no exec.log
+recurse-bfs:
+	$(MAKE) -C bfs generate
+	$(MAKE) -C bfs/graph_roadNet-CA__niter_131__pod-id_0 exec.log
+recurse-pagerank:
+	$(MAKE) -C pagerank generate
+	$(MAKE) -C pagerank/graph_roadNet-CA__pod-id_44 exec.log
 
 recurse-clean: $(foreach n, $(RECURSE_CLEANS), recurse-clean-$(n))
 recurse-clean-%:
