@@ -89,8 +89,8 @@ $(APPS_all_rules):
 
 
 
-RECURSE_APPS = memcpy vector_add-yes vector_add-no sgemm aes jacobi-yes jacobi-no
-RECURSE_CLEANS = memcpy vector_add sgemm aes jacobi
+RECURSE_APPS = memcpy vector_add-yes vector_add-no sgemm aes jacobi-yes jacobi-no blackscholes smithwaterman fft_128m-yes fft_128m-no
+RECURSE_CLEANS = memcpy vector_add sgemm aes jacobi blackscholes smithwaterman fft_128m
 
 recurse-all: $(foreach n, $(RECURSE_APPS), recurse-$(n))
 recurse-memcpy:
@@ -116,11 +116,26 @@ recurse-jacobi-no:
 	sleep 10
 	$(MAKE) -C jacobi generate
 	$(MAKE) -C jacobi/nx_64__ny_8__nz_512__warm-cache_no exec.log
+recurse-blackscholes:
+	$(MAKE) -C blackscholes generate
+	$(MAKE) -C blackscholes/num-option_32768 exec.log
+recurse-smithwaterman:
+	$(MAKE) -C smithwaterman generate
+	$(MAKE) -C smithwaterman/num-seq_512 exec.log
+recurse-fft_128m-yes:
+	$(MAKE) -C fft_128m generate
+	$(MAKE) -C fft_128m/num-iter_1__warm-cache_yes exec.log
+recurse-fft_128m-no:
+	sleep 10
+	$(MAKE) -C fft_128m generate
+	$(MAKE) -C fft_128m/num-iter_1__warm-cache_no exec.log
 
 recurse-clean: $(foreach n, $(RECURSE_CLEANS), recurse-clean-$(n))
 recurse-clean-%:
 	$(MAKE) -C $* purge
 
 recurse-summary:
-	@grep --color -r PASSED */*/exec.log || true
-	@grep --color -r FAILED */*/exec.log || true
+	@grep --color -r PASSED   */*/exec.log || true
+	@grep --color -r PASSED */*/*/exec.log || true
+	@grep --color -r FAILED   */*/exec.log || true
+	@grep --color -r FAILED */*/*/exec.log || true
