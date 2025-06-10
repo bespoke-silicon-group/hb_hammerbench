@@ -30,6 +30,12 @@
  */
 #define CELLO_STAT_ADD(stat_name)               \
     do { stat_name++; } while (0)
+/**
+ * add to a cello statistic
+ * does nothing on host
+ */
+#define CELLO_STAT_ADDM(stat_name, num)         \
+    do { stat_name += num; } while (0)
 #else
 /**
  * start of cello statistics declaration
@@ -59,6 +65,12 @@
  */
 #define CELLO_STAT_ADD(stat_name)               \
     do { stat_name++; } while (0)
+/**
+ * add to a cello statistic
+ * does nothing on host
+ */
+#define CELLO_STAT_ADDM(stat_name, num)         \
+    do { stat_name += num; } while (0)
 #endif
 #else
 /**
@@ -87,6 +99,13 @@
  */
 #define CELLO_STAT_ADD(stat_name)               \
     ;
+/**
+ * add to a cello statistic
+ * does nothing on host
+ */
+#define CELLO_STAT_ADDM(stat_name, num)         \
+    ;
+
 #endif
 
 CELLO_STAT_DECL_START()
@@ -94,6 +113,7 @@ CELLO_STAT_DECL(cello_steals)
 CELLO_STAT_DECL(cello_task_push)
 CELLO_STAT_DECL(cello_task_execute)
 CELLO_STAT_DECL(cello_owner_lock_acquire_fail)
+CELLO_STAT_DECL(cello_flops)
 CELLO_STAT_DECL_STOP()
 
 #endif

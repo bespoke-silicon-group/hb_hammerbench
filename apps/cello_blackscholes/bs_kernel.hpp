@@ -1,6 +1,7 @@
 #pragma once
 #include "option_data.hpp"
 #include <math.h>
+#include <cello/cello.hpp>
 
 // Cumulative Normal Distribution Function
 // See Hull, Section 11.8, P.243-244
@@ -33,6 +34,7 @@
 __attribute__ ((always_inline))
 float my_logf(float x)
 {
+  CELLO_STAT_ADDM(cello_flops, 10);    
   float diff = x - 1.0f;
   const float c5 =  0.20000000f;
   const float c4 = -0.25000000f;
@@ -51,6 +53,7 @@ float my_logf(float x)
 // Approximating expf(x) around x=0
 __attribute__ ((always_inline))
 float expf_0(float x) {
+  CELLO_STAT_ADDM(cello_flops, 10);
   const float f5 = 0.0083333338f; // 1/120
   const float f4 = 0.04166667f;   // 1/24
   const float f3 = 0.16666666f;   // 1/6
@@ -70,26 +73,32 @@ float expf_0(float x) {
 __attribute__ ((always_inline))
 float fast_expf(float x) {
   // if it's too small, return 0;
+  CELLO_STAT_ADDM(cello_flops, 1);
   if (x < -15.0f) {
     return 0.0f;
   }
 
   // calculate the integral part of the exponen;
   float part1 = 1.0f;
+  CELLO_STAT_ADDM(cello_flops, 1);  
   while (x <= -1.0f) {
     part1 *=  0.36787945f; // e^(-1)
     x += 1.0f;
+    CELLO_STAT_ADDM(cello_flops, 3);    
   }
 
   // calculate the 0.5 part of the exponent;
+  CELLO_STAT_ADDM(cello_flops, 1);    
   if (x <= -0.5f) {
     part1 *= 0.60653066f; // e^(-0.5)
     x += 0.5f;
+    CELLO_STAT_ADDM(cello_flops, 2);
   }
 
   // calculate the fractional part of the exponent;
   float part2 = expf_0(x);
-  
+
+  CELLO_STAT_ADDM(cello_flops, 1);
   // return the combined result;
   return part1 * part2;
 }
@@ -105,6 +114,7 @@ void dual_CNDF(float x1, float x2, float& out1, float& out2) {
   // check for negative values
   float x1_abs, x2_abs;
   int sign1, sign2;
+  CELLO_STAT_ADDM(cello_flops, 42);
   flt_asm(sign1, x1, zerof);   
   flt_asm(sign2, x2, zerof);   
   fsgnj_asm(x1_abs, x1, zerof);
@@ -177,10 +187,13 @@ void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
     if (s_reg == strike_reg) {
       logValues = 0.0f;
     } else {
+        CELLO_STAT_ADDM(cello_flops, 1);
       logValues = my_logf(s_reg / strike_reg);
     }
 
-    float xD1, xD2; 
+    CELLO_STAT_ADDM(cello_flops, 17);
+
+    float xD1, xD2;
     fmadd_asm(xD1, v_reg*v_reg, halff, r_reg);
     fmadd_asm(xD1, xD1, t_reg, logValues);
     float xDen = v_reg * sqrt_time;
