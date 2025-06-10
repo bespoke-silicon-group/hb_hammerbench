@@ -95,6 +95,7 @@ inline float
 opt_fft_sinf(int x) {
     const int No2 = MAX_NUM_POINTS >> 1; // 128
     const int No4 = MAX_NUM_POINTS >> 2; // 64
+    CELLO_STAT_ADDM(cello_flops, 3);
     if ((x >= No4) && (x < No2)) {
         x = No2 - x;
     }
@@ -106,8 +107,10 @@ opt_fft_cosf(int x) {
     const int No2 = MAX_NUM_POINTS >> 1; // 128
     const int No4 = MAX_NUM_POINTS >> 2; // 64
     if ((x >= No4) && (x < No2)) {
+    CELLO_STAT_ADDM(cello_flops, 3);
       return -sinf_pi_over_2[x-No4];
     } else {
+      CELLO_STAT_ADDM(cello_flops, 2);        
       return sinf_pi_over_2[No4-x];
     }
 }
@@ -221,6 +224,7 @@ void fft256_specialized(FP32Complex *list) {
       even_idx = k;
       odd_idx = k + half_n;
       for (int i = 0; i < NUM_POINTS; i += 2*n) {
+        CELLO_STAT_ADDM(cello_flops, 20);
         odd1_re = list[odd_idx].real();
         odd1_im = list[odd_idx].imag();
         odd2_re = list[odd_idx+n].real();
@@ -283,6 +287,7 @@ void fft256_specialized(FP32Complex *list) {
   // last stage
   odd_idx  = NUM_POINTS/2;
   for (int i = 0; i < NUM_POINTS/2; i += 2) {
+    CELLO_STAT_ADDM(cello_flops,20);
     exp1_re = opt_fft_cosf(i);
     exp1_im = opt_fft_sinf(i);
     exp2_re = opt_fft_cosf(i+1);
@@ -360,7 +365,7 @@ void twiddle_scaling( FP32Complex *local_lst,
   float res1_re, res1_im, res1_re_temp, res1_im_temp;
   float res2_re, res2_im, res2_re_temp, res2_im_temp;
   float res3_re, res3_im, res3_re_temp, res3_im_temp;
-
+  CELLO_STAT_ADDM(cello_flops, (NUM_POINTS*6));
   for (int c = 0; c < NUM_POINTS; c += 4) {
     w0_re = tw[c+0].real();
     w0_im = tw[c+0].imag();

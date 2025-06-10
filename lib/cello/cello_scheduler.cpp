@@ -18,6 +18,7 @@ CELLO_STAT_DEF(cello_steals);
 CELLO_STAT_DEF(cello_task_push);
 CELLO_STAT_DEF(cello_task_execute);
 CELLO_STAT_DEF(cello_owner_lock_acquire_fail);
+CELLO_STAT_DEF(cello_flops);
 
 namespace cello
 {
@@ -86,6 +87,7 @@ global_pointer<del_queue> delegates_of(int id)
  */
 void scheduler_initialize(config *cfg)
 {
+    CELLO_STAT_ADDM(cello_flops, 1);
     scheduler_seed = my::tile_id();
     my_tasks_ptr = bsg_tile_group_remote_pointer<work_queue>(my::tile_x(), my::tile_y(), &my_tasks);
     new (my_tasks_ptr) work_queue;

@@ -200,8 +200,10 @@ int cello_main(int argc, char *argv[])
                 value_type C_val = A_val * B_val;
                 auto C_entry = accum.find(B_idx);
                 if (C_entry == nullptr) {
+                    CELLO_STAT_ADDM(cello_flops, 1);
                     accum.insert(B_idx, C_val);
                 } else {
+                    CELLO_STAT_ADDM(cello_flops, 2);
                     value_type C_val = C_entry->val;
                     fmadd_asm(C_val, A_val, B_val, C_val);
                     C_entry->val = C_val;
