@@ -16,6 +16,7 @@
 #define dthf    (0.25f)
 
 inline void updateForce(float* force, float* delta, float distsq, float mass) {
+  CELLO_STAT_ADDM(cello_flops, 9);
   float idr =  1.0f / sqrtf(distsq + epssq);
   float scale = mass * idr * idr * idr;
   force[0] = delta[0] * scale;
@@ -24,6 +25,7 @@ inline void updateForce(float* force, float* delta, float distsq, float mass) {
 }
 
 inline float dist2(float x, float y, float z) {
+  CELLO_STAT_ADDM(cello_flops, 5);
   return (x*x) + (y*y) + (z*z);
 }
 
@@ -87,11 +89,12 @@ int cello_main(int argc, char *argv[])
             delta[2] = curr_body.pos[2] - l_co_pos[2];
             float curr_diamsq = itolsq * l_diamsq;
             distsq = dist2(delta[0], delta[1], delta[2]);
-
+            CELLO_STAT_ADDM(cello_flops, 1);
             if (distsq >= curr_diamsq) {
                 // far away; compute summarized force;
                 float node_force[3];
                 updateForce(node_force, delta, distsq, l_co_mass);
+                CELLO_STAT_ADDM(cello_flops, 3);
                 curr_body.acc[0] += node_force[0];
                 curr_body.acc[1] += node_force[1];
                 curr_body.acc[2] += node_force[2];
@@ -129,6 +132,7 @@ int cello_main(int argc, char *argv[])
                             uint32_t body_idx = children[i] & ~leaf;
                             bsg_global_pointer::pointer<HBBody> body_ptr = bsg_global_pointer::addressof(bodies[body_idx]);
                             if (body_ptr != pcurr_body) {
+                                CELLO_STAT_ADDM(cello_flops, 6);
                                 // child is not self;
                                 float child_pos[3];
                                 float child_mass;
@@ -164,6 +168,7 @@ int cello_main(int argc, char *argv[])
         }
 
         // Finished traversal;
+        CELLO_STAT_ADDM(cello_flops, 9);
         float new_vel[3]; 
         new_vel[0] = dthf * (curr_body.acc[0] - prev_acc[0]);
         new_vel[1] = dthf * (curr_body.acc[1] - prev_acc[1]);
