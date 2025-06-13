@@ -280,6 +280,7 @@ void insert_into_tree(
 void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
 {
   std::vector<int> nodes_visit_count(nodes.size(), 0);
+  std::vector<int> bodies_visit_count(bodies.size(), 0);
   size_t max_stack_size = 0;
   for (size_t b = 0; b < bodies.size(); b++) {
       //bsg_pr_test_info("body %zu\n", b);
@@ -330,7 +331,8 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
           if (curr_node.is_leaf[i]) {
             // child is a leaf;
             if (b != curr_node.child[i]) {
-              // leaf is not self;
+              bodies_visit_count[curr_node.child[i]]++;
+              // leaf is not self;                
               Body child = bodies[curr_node.child[i]];
               float child_delta[3];
               child_delta[0] = curr_body.pos[0] - child.pos[0];
@@ -380,6 +382,13 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
   for (int n = 0; n < nodes_visit_count.size(); n++) {
       o << n << "," << nodes_visit_count[n] << std::endl;
   }
+
+  std::ofstream ob("bodies_visit.csv");
+  ob << "body,visited" << std::endl;
+  for (int n = 0; n < bodies_visit_count.size(); n++) {
+      ob << n << "," << bodies_visit_count[n] << std::endl;
+  }
+
   printf("max_stack_size = %zu\n", max_stack_size);
 }
 
