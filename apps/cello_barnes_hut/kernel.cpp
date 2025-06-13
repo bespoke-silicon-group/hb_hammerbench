@@ -31,7 +31,14 @@ inline float dist2(float x, float y, float z) {
 DRAM(body_vector) bodies;
 DRAM(HBNode *) nodes;
 DRAM(int*) nodestack;
+DMEM(body_vector) l_bodies;
 
+void load_bodies(void)
+{
+    l_bodies = bodies;
+    return;
+}
+cello_constructor(load_bodies);
 
 int cello_main(int argc, char *argv[])
 {
@@ -40,7 +47,7 @@ int cello_main(int argc, char *argv[])
         grain = 1;
 
 #if 1
-    bodies.foreach(grain, [](int curr, HBBody &rcurr_body){
+    l_bodies.foreach(grain, [](int curr, HBBody &rcurr_body){
         HBBody *pcurr_body = &rcurr_body;
         HBBody curr_body = *pcurr_body;
 
