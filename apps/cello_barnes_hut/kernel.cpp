@@ -28,21 +28,10 @@ inline float dist2(float x, float y, float z) {
   CELLO_STAT_ADDM(cello_flops, 5);
   return (x*x) + (y*y) + (z*z);
 }
-
 DRAM(body_vector) bodies;
-DRAM(node_vector) nodes;
+DRAM(HBNode *) nodes;
 DRAM(int*) nodestack;
 
-#define ROOTS 9
-DMEM(HBNode) roots[ROOTS];
-
-void setup_root()
-{
-    for (int i = 0; i < ROOTS; i++)
-        roots[i] = nodes[i];
-}
-
-cello_constructor(setup_root);
 
 int cello_main(int argc, char *argv[])
 {
@@ -73,7 +62,7 @@ int cello_main(int argc, char *argv[])
 
         // put the root in the stack
         mystack[0] = 0;
-        global_node_pointer curr_node = global_node_pointer(&roots[0]);
+        HBNode *curr_node = &nodes[0];
         int* mystack_top = &mystack[1];
 #ifdef TRACE
         bsg_print_int(1000000 + curr);
@@ -83,26 +72,19 @@ int cello_main(int argc, char *argv[])
             mystack_top--;
             int curr_node_idx = *mystack_top;
             //bsg_print_int(2000000 + curr_node_idx);
-            if (curr_node_idx < ROOTS) {
-                curr_node = global_node_pointer(&roots[curr_node_idx]);
-            } else {
-                curr_node = bsg_global_pointer::addressof(nodes[curr_node_idx]);
-            }
+            curr_node = &nodes[curr_node_idx];
+
             // distsq;
             float l_co_mass;
             float l_co_pos[3];
             float l_diamsq;
-            {
-                HBNode *curr_node_raw = reinterpret_cast<HBNode*>(curr_node.ref().addr().raw());
-                bsg_global_pointer::pod_address_guard
-                    _ (curr_node.ref().addr().ext().pod_addr());
-                l_co_mass = curr_node_raw->co_mass;
-                l_co_pos[0] = curr_node_raw->co_pos[0];
-                l_co_pos[1] = curr_node_raw->co_pos[1];
-                l_co_pos[2] = curr_node_raw->co_pos[2];
-                l_diamsq = curr_node_raw->diamsq;
-                asm volatile("": : :"memory");
-            }
+            l_co_mass = curr_node->co_mass;
+            l_co_pos[0] = curr_node->co_pos[0];
+            l_co_pos[1] = curr_node->co_pos[1];
+            l_co_pos[2] = curr_node->co_pos[2];
+            l_diamsq = curr_node->diamsq;
+            asm volatile("": : :"memory");
+
             delta[0] = curr_body.pos[0] - l_co_pos[0];
             delta[1] = curr_body.pos[1] - l_co_pos[1];
             delta[2] = curr_body.pos[2] - l_co_pos[2];
@@ -122,29 +104,26 @@ int cello_main(int argc, char *argv[])
                 // Move down;
                 // Load all child pointers;
                 uint32_t children[8];
-                {
-                    HBNode *curr_node_raw = reinterpret_cast<HBNode*>(curr_node.ref().addr().raw());
-                    bsg_global_pointer::pod_address_guard
-                        _ (curr_node.ref().addr().ext().pod_addr());
-                    uint32_t tmp0 = curr_node_raw->child[0];
-                    uint32_t tmp1 = curr_node_raw->child[1];
-                    uint32_t tmp2 = curr_node_raw->child[2];
-                    uint32_t tmp3 = curr_node_raw->child[3];
-                    uint32_t tmp4 = curr_node_raw->child[4];
-                    uint32_t tmp5 = curr_node_raw->child[5];
-                    uint32_t tmp6 = curr_node_raw->child[6];
-                    uint32_t tmp7 = curr_node_raw->child[7];
-                    asm volatile("": : :"memory");
-                    children[0] = tmp0;
-                    children[1] = tmp1;
-                    children[2] = tmp2;
-                    children[3] = tmp3;
-                    children[4] = tmp4;
-                    children[5] = tmp5;
-                    children[6] = tmp6;
-                    children[7] = tmp7;
-                }
+                uint32_t tmp0 = curr_node->child[0];
+                uint32_t tmp1 = curr_node->child[1];
+                uint32_t tmp2 = curr_node->child[2];
+                uint32_t tmp3 = curr_node->child[3];
+                uint32_t tmp4 = curr_node->child[4];
+                uint32_t tmp5 = curr_node->child[5];
+                uint32_t tmp6 = curr_node->child[6];
+                uint32_t tmp7 = curr_node->child[7];
                 asm volatile("": : :"memory");
+
+                children[0] = tmp0;
+                children[1] = tmp1;
+                children[2] = tmp2;
+                children[3] = tmp3;
+                children[4] = tmp4;
+                children[5] = tmp5;
+                children[6] = tmp6;
+                children[7] = tmp7;
+                asm volatile("": : :"memory");
+
                 for (int i = 0; i < 8; i++) {
                     if (children[i] == 0) {
                         // skip null pointer;

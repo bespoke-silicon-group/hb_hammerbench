@@ -389,7 +389,7 @@ public:
     int init(int argc, char *argv[]) override {
         BSG_CUDA_CALL(cello::program::init(argc, argv));
         d_bodies = new body_vector::mirror(find<body_vector>("bodies"));
-        d_nodes  = new node_vector::mirror(find<node_vector>("nodes"));
+        d_nodes = find<hb_mc_eva_t>("nodes");
         nodestack = find<hb_mc_eva_t>("nodestack");
         nbodies = atoi(argv[2]);
         bsg_pr_test_info("Barnes Hut with %d bodies\n", nbodies);
@@ -450,7 +450,6 @@ public:
         set_diamsq(diamsq, 0, nodes, hbnodes.data());
 
         BSG_CUDA_CALL(d_bodies->init_host_from(hbbodies));
-        BSG_CUDA_CALL(d_nodes->init_host_from(hbnodes));
 
         printf("host: sizeof(*nodestack) = %zu\n", sizeof(int));
         return 0;
@@ -459,10 +458,15 @@ public:
     int input() override {
         BSG_CUDA_CALL(cello::program::input());
         BSG_CUDA_CALL(d_bodies->sync_device(jobs_in));
-        BSG_CUDA_CALL(d_nodes->sync_device(jobs_in));
         // set the node stack pointer
         BSG_CUDA_CALL(foreach_pod([=](hb_mc_coordinate_t pod){
             hb_mc_pod_id_t pod_id = pod_coord_to_id(pod);;
+            hb_mc_eva_t nodes_base;
+            BSG_CUDA_CALL(hb_mc_device_pod_malloc(&this->mc, pod_id, hbnodes.size()*sizeof(HBNode), &nodes_base));
+            d_nodes.set_pod_x(pod.x).set_pod_y(pod.y);
+            *d_nodes = nodes_base;
+            jobs_in[pod_id].push_back({nodes_base, hbnodes.data(), hbnodes.size()*sizeof(HBNode)});
+
             hb_mc_eva_t nodestack_base;
             BSG_CUDA_CALL(hb_mc_device_pod_malloc(&this->mc, pod_id, bsg_tiles_X*bsg_tiles_Y*sizeof(global_node_pointer)*STACK_SIZE, &nodestack_base));
             nodestack.set_pod_x(pod.x).set_pod_y(pod.y);
@@ -475,7 +479,6 @@ public:
     int output() override {
         BSG_CUDA_CALL(cello::program::output());
         BSG_CUDA_CALL(d_bodies->sync_host(jobs_out));
-        BSG_CUDA_CALL(d_nodes->sync_host(jobs_out));
         return 0;
     }
 
@@ -523,7 +526,6 @@ public:
         }
 
         delete d_bodies;
-        delete d_nodes;
         return 0;
     }
     std::vector<Node> nodes;
@@ -531,7 +533,7 @@ public:
     std::vector<HBBody> hbbodies;
     std::vector<HBNode> hbnodes;
     body_vector::mirror *d_bodies = nullptr;
-    node_vector::mirror *d_nodes = nullptr;
+    bsg_global_pointer::pointer<hb_mc_eva_t> d_nodes = 0;
     bsg_global_pointer::pointer<hb_mc_eva_t> nodestack;
     int nbodies = 0;
 };
