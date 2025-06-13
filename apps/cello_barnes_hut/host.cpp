@@ -1,5 +1,7 @@
 #include <cello/host/cello.hpp>
 #include <random>
+#include <iostream>
+#include <fstream>
 #include "common.hpp"
 #include "Body.hpp"
 #include "Node.hpp"
@@ -277,6 +279,7 @@ void insert_into_tree(
 // calculate force;
 void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
 {
+  std::vector<int> nodes_visit_count(nodes.size(), 0);
   size_t max_stack_size = 0;
   for (size_t b = 0; b < bodies.size(); b++) {
       //bsg_pr_test_info("body %zu\n", b);
@@ -300,7 +303,7 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
       //printf("curr_node_id: %d\n", curr_node_id);
       stack.pop_back();
       Node curr_node = nodes[curr_node_id]; 
-
+      nodes_visit_count[curr_node_id]++;
       // distsq
       float delta[3];
       delta[0] = curr_body.pos[0] - curr_node.co_pos[0];
@@ -372,6 +375,11 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
     bodies[b].acc[2] = curr_body.acc[2];
   }
 
+  std::ofstream o("nodes_visit.csv");
+  o << "node,visited" << std::endl;
+  for (int n = 0; n < nodes_visit_count.size(); n++) {
+      o << n << "," << nodes_visit_count[n] << std::endl;
+  }
   printf("max_stack_size = %zu\n", max_stack_size);
 }
 
