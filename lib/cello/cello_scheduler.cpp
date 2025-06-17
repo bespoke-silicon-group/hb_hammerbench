@@ -54,7 +54,7 @@ DMEM(work_queue *) my_tasks_ptr = &my_tasks;
 DMEM(del_queue) my_delegates;
 DMEM(del_queue *) my_delegates_ptr = &my_delegates;
 
-#ifdef GLOBAL_STEALING
+#ifdef CELLO_GLOBAL_STEALING
 global_pointer<work_queue>
 #else
 work_queue*
@@ -65,8 +65,9 @@ tasks_of(int id)
     thread_id_decode(&decode, id);
 
     work_queue *lcl = bsg_tile_group_remote_pointer<work_queue>(decode.tile_x, decode.tile_y, &my_tasks);
-#ifdef GLOBAL_STEALING
+#ifdef CELLO_GLOBAL_STEALING
     global_pointer<work_queue> glbl = global_pointer<work_queue>::onPodXY(decode.pod_x, decode.pod_y, lcl);
+    return glbl;
 #else
     return lcl;
 #endif
@@ -104,13 +105,13 @@ void spawn(task * t)
     CELLO_STAT_ADD(cello_task_push);
 }
 
-void execute_task(int victim_id, task * t)
+static void execute_task(int victim_id, task * t)
 {
     t->execute();
     CELLO_STAT_ADD(cello_task_execute);
 }
 
-void execute_task(int victim_id, global_pointer<task> t)
+static void execute_task(int victim_id, global_pointer<task> t)
 {
     thread_id_decoded decode;
     thread_id_decode(&decode, victim_id);
@@ -174,10 +175,15 @@ void schedule()
         return;
     }
     // 3. steal work
+#ifdef CELLO_GLOBAL_STEALING
+    int victim_id = fast_random() % my::num_tiles_total();
+    if (victim_id == my::id())
+        return;
+#else
     int victim_id = fast_random() % my::num_tiles();
     if (victim_id == my::tile_id())
         return;
-
+#endif
     auto victim_tasks = tasks_of(victim_id);
     auto stolen = victim_tasks->thief_pop();
     if (!is_null(stolen)) {
