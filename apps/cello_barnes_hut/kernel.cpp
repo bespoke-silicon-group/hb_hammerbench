@@ -6,6 +6,23 @@
 #include "HBBody.hpp"
 
 //#define TRACE
+#ifdef TRACE
+#define trace(i)                                \
+    bsg_print_int(i)
+#else
+#define trace(i)
+#endif
+
+
+template <typename T>
+using gref = bsg_global_pointer::reference<T>;
+template <typename T>
+using gptr = bsg_global_pointer::pointer<T>;
+using guard = bsg_global_pointer::pod_address_guard;
+
+#define GADDRESSOF(gref)                        \
+    bsg_global_pointer::addressof(gref)
+
 #ifndef GRAIN_SCALE
 #define GRAIN_SCALE 8
 #endif
@@ -39,11 +56,15 @@ int cello_main(int argc, char *argv[])
     if (grain < 1)
         grain = 1;
 
-#if 1
+#ifdef CELLO_GLOBAL_STEALING
+    bodies.foreach_unrestricted(grain, [](int curr, gref<HBBody> rcurr_body){
+        gptr<HBBody> pcurr_body = GADDRESSOF(rcurr_body);
+        HBBody curr_body = *pcurr_body;
+#else
     bodies.foreach(grain, [](int curr, HBBody &rcurr_body){
         HBBody *pcurr_body = &rcurr_body;
         HBBody curr_body = *pcurr_body;
-
+#endif
         // delta;
         float delta[3];
         float distsq;
@@ -63,9 +84,7 @@ int cello_main(int argc, char *argv[])
         // put the root in the stack
         mystack[0] = 0;
         int* mystack_top = &mystack[1];
-#ifdef TRACE
-        bsg_print_int(1000000 + curr);
-#endif
+        trace(1000000 + curr);
         while (mystack_top != mystack) {
             // take one off the stack;
             mystack_top--;
@@ -130,8 +149,8 @@ int cello_main(int argc, char *argv[])
                         if (is_leaf) {
                             // child is leaf;
                             uint32_t body_idx = children[i] & ~leaf;
-                            bsg_global_pointer::pointer<HBBody> body_ptr = bsg_global_pointer::addressof(bodies[body_idx]);
-                            if (body_ptr != pcurr_body) {
+                            if (body_idx != curr) {
+                                bsg_global_pointer::pointer<HBBody> body_ptr = bsg_global_pointer::addressof(bodies[body_idx]);
                                 CELLO_STAT_ADDM(cello_flops, 6);
                                 // child is not self;
                                 float child_pos[3];
@@ -183,7 +202,6 @@ int cello_main(int argc, char *argv[])
         bodies[curr].Acc(1) = curr_body.acc[1];
         bodies[curr].Acc(2) = curr_body.acc[2];
     });
-#endif
 
     return 0;
 }
