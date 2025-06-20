@@ -294,6 +294,12 @@ public:
     unsigned pod_y() const {                                            \
         return addr().pod_y();                                          \
     }                                                                   \
+    /**                                                                 \
+     * @brief to local pointer                                          \
+     */                                                                 \
+    uintptr to_local() const {                                          \
+        return addr().to_local();                                       \
+    }                                                                   \
     FIELD(address, addr); //!< the address information
 
 /**
