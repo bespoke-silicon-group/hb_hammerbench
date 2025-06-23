@@ -7,7 +7,7 @@
 #define GRAIN_SCALE 8
 #endif
 
-#define TRACE
+//#define TRACE
 #ifdef TRACE
 #define trace(x) \
     bsg_print_int(x)
@@ -29,8 +29,8 @@ int cello_main(int argc, char *argv[])
     if (grain < 1)
         grain = 1;
 
-    bsg_print_int(message_v.size());
-    bsg_print_int(grain);
+    //bsg_print_int(message_v.size());
+    //bsg_print_int(grain);
 #ifdef CELLO_GLOBAL_STEALING
     message_v.foreach_unrestricted(grain, [](int i, gref<message_t> message) {
         trace(i);
