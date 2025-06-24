@@ -21,7 +21,7 @@ template <typename T>
 using gref = bsg_global_pointer::reference<T>;
 using guard = bsg_global_pointer::pod_address_guard;
 
-#define TRACE
+//#define TRACE
 #ifdef TRACE
 #define trace(x) \
     bsg_print_int(x)
