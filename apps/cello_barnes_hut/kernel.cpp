@@ -52,7 +52,11 @@ DRAM(int*) nodestack;
 
 int cello_main(int argc, char *argv[])
 {
+#ifdef CELLO_GLOBAL_STEALING
+    int grain = bodies.size()/(cello::threads()*GRAIN_SCALE);
+#else
     int grain = bodies.local_size()/(cello::threads()*GRAIN_SCALE);
+#endif
     if (grain < 1)
         grain = 1;
 
