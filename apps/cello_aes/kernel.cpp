@@ -25,7 +25,11 @@ using guard = bsg_global_pointer::pod_address_guard;
 
 int cello_main(int argc, char *argv[])
 {
+#ifdef CELLO_GLOBAL_STEALING
+    int grain = message_v.size()/(cello::threads()*GRAIN_SCALE);
+#else
     int grain = message_v.local_size()/(cello::threads()*GRAIN_SCALE);
+#endif
     if (grain < 1)
         grain = 1;
 
