@@ -70,6 +70,7 @@ include $(EXAMPLES_PATH)/link.mk
 RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+RISCV_CCPPFLAGS += -DGRAIN_SCALE=2
 ifeq ($(unrestricted),yes)
 RISCV_CCPPFLAGS += -DCELLO_GLOBAL_STEALING
 endif
