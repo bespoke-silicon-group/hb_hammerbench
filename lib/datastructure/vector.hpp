@@ -1,5 +1,10 @@
 #ifndef DATASTRUCTURE_VECTOR_HPP
 #define DATASTRUCTURE_VECTOR_HPP
+
+#ifdef CELLO_GLOBAL_STEALING
+//#error "unrestricted work stealing not supported"
+#endif
+
 #include <global_pointer/global_pointer.hpp>
 #include <datastructure/types.hpp>
 #include <datastructure/id.hpp>
@@ -105,6 +110,49 @@ public:
             //bsg_print_int(2000000+cello::my::pod_id());
         });
         wait(&j);
+    }
+
+    template <typename cello::Schedule sched = cello::parallel, typename F>
+    void foreach_unrestricted(size_t grain, F && f) {
+        using namespace cello;
+        size_t start = 0;
+        size_t end = size();
+        size_t step = STRIDE;
+        cello::foreach<sched>
+            (start, end, stride, grain, [this, f, end](size_t i){
+                size_t start = i;
+                size_t stop = i + STRIDE;
+                size_t sz = end;
+                asm volatile ("" ::: "memory");
+                if (stop > sz) {
+                    stop = sz;
+                }
+                for (size_t j = start; j < stop; j++) {
+                    f(j, this->at(j));
+                }
+        });
+    }
+
+
+    template <typename cello::Schedule sched = cello::parallel, typename F>
+    void foreach_unrestricted(F && f) {
+        using namespace cello;
+        size_t start = 0;
+        size_t end = size();
+        size_t step = STRIDE;
+        cello::foreach<sched>
+            (start, end, stride, [this, f, end](size_t i){
+                size_t start = i;
+                size_t stop = i + STRIDE;
+                size_t sz = end;
+                asm volatile ("" ::: "memory");
+                if (stop > sz) {
+                    stop = sz;
+                }
+                for (size_t j = start; j < stop; j++) {
+                    f(j, this->at(j));
+                }
+        });
     }
 
     value_reference local(size_t i) {
