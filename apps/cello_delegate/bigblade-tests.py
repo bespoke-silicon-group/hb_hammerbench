@@ -9,7 +9,7 @@ header = """
 ####################
 # TESTS += $(call test-name,[n],[task_size],[opt_memcpy],[opt_pod_address],[tiles-x],[tiles-y],[pods-x],[pods-y],[run])
 """
-testing = True
+testing = False
 
 if testing:
     n_v = [9000]
@@ -22,7 +22,7 @@ if testing:
     runs = 1    
 else:
     n_v = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000]
-    task_size_v = [0, 16, 32, 48, 64, 72, 80, 88, 96]
+    task_size_v = [0, 24, 28, 32]
     opt_memcpy_v = ["yes","no"]
     opt_podaddr_v = ["yes","no"]    
     cores = [
