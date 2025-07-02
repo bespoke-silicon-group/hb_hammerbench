@@ -84,6 +84,9 @@ inline void exclusive_scan
         tree[i] = 0;
     }
     index_type grain = REGIONS/(cello::threads()*GRAIN_SCALE);
+    if (grain < 1)
+        grain = 1;
+
     // perform exclusive scan on each region
     cello::parallel_foreach
         (static_cast<index_type>(0),
