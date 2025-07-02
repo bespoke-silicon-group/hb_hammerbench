@@ -143,6 +143,15 @@ public:
     }
 
     /**
+     * @brief addition operator by integer
+     */
+    template <typename I, typename = typename std::enable_if<std::is_integral<I>::value>::type>
+    pointer<T> &operator+=(I i) {
+        *this = *this + i;
+        return *this;
+    }
+
+    /**
      * @brief post-increment operator
      */
     pointer<T> operator++(int) {
@@ -194,6 +203,13 @@ public:
      */
     uintptr to_local() const {
         return ref().to_local();
+    }
+
+    /**
+     * @ brief get the pod address
+     */
+    pod_address pod_addr() {
+        return ref().pod_addr();
     }
 
     FIELD(reference<T>, ref); //!< reference object

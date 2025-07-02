@@ -145,6 +145,13 @@ public:
     }
 
     /**
+     * @ brief get the pod address
+     */
+    pod_address pod_addr() {
+        return addr().ext().pod_addr();
+    }
+
+    /**
      * @brief to local pointer
      */
     uintptr to_local() const {
@@ -299,6 +306,12 @@ public:
      */                                                                 \
     uintptr to_local() const {                                          \
         return addr().to_local();                                       \
+    }                                                                   \
+    /**                                                                 \
+     * @ brief get the pod address                                      \
+     */                                                                 \
+    pod_address pod_addr() {                                            \
+        return addr().ext().pod_addr();                                 \
     }                                                                   \
     FIELD(address, addr); //!< the address information
 

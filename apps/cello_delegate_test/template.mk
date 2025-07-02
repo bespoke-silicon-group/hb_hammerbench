@@ -12,9 +12,12 @@
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+REPLICANT_PATH := $(shell cd $(HB_HAMMERBENCH_PATH)/.. && git rev-parse --show-toplevel)
+#BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X2Y1_ruche_X4Y2_hbm
+#BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X4Y2_hbm_one_pseudo_channel
+
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 include $(HB_HAMMERBENCH_PATH)/mk/cello.mk
-
 ###############################################################################
 # Host code compilation flags and flow
 ###############################################################################
@@ -23,19 +26,18 @@ include parameters.mk
 include app_path.mk
 
 # Tile Group Dimensions
-TILE_GROUP_DIM_X := $(tiles-x)
-TILE_GROUP_DIM_Y ?= $(tiles-y)
-PODS_X := $(pods-x)
-PDOS_Y := $(pods-y)
+TILE_GROUP_DIM_X ?= $(BSG_MACHINE_POD_TILES_X)
+TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_POD_TILES_Y)
+#TILE_GROUP_DIM_X ?= 1
+#TILE_GROUP_DIM_Y ?= 1
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
 
-# TEST_SOURCES is a list of source files that need to be compiled
-# TEST_SOURCES += main.cpp
+#TEST_SOURCES := main.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
-CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
+DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
@@ -64,16 +66,10 @@ include $(EXAMPLES_PATH)/link.mk
 RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
-RISCV_CCPPFLAGS += -DTASK_SIZE=$(task-size)
-RISCV_CCPPFLAGS += -DN=$(n)
-ifeq ($(opt-pod-address),yes)
-RISCV_CCPPFLAGS += -DBSG_GLOBAL_POINTER_OPT_POD_ADDRESS
-endif
-ifeq ($(opt-memcpy),yes)
-RISCV_CCPPFLAGS += -DBSG_GLOBAL_POINTER_OPT_MEMCPY
-endif
+
 RISCV_TARGET_OBJECTS += kernel.rvo
-BSG_MANYCORE_KERNELS := main.riscv
+BSG_MANYCORE_KERNELS  = main.riscv
+
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 ###############################################################################

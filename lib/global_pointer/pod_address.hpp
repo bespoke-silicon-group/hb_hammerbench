@@ -30,6 +30,11 @@ namespace bsg_global_pointer
 #error "BSG_PODS_Y is not defined"
 #endif
 
+#ifdef  BSG_GLOBAL_POINTER_OPT_POD_ADDRESS
+#define BSG_GLOBAL_POINTER_POD_ADDRESS_NO_CSR_SET_ZERO_CONSTRUCTOR
+#define BSG_GLOBAL_POINTER_POD_ADDRESS_NO_FENCE_SET_POD_ADDR
+#endif
+
 /**
  * @brief pod address class
  */
@@ -74,7 +79,10 @@ public:
     }
 
     pod_address()
-        : raw_(0) {
+#ifndef BSG_GLOBAL_POINTER_POD_ADDRESS_NO_CSR_SET_ZERO_CONSTRUCTOR
+        : raw_(0)
+#endif
+    {
         *this = readPodAddrCSR();
     }
 
@@ -233,7 +241,11 @@ public:
      * @brief sets the pod address in the CSR
      */
     void set_pod_addr(pod_address addr) {
+#ifdef BSG_GLOBAL_POINTER_POD_ADDRESS_NO_FENCE_SET_POD_ADDR
+        return pod_address::writePodAddrCSRNoFence(addr);
+#else
         return pod_address::writePodAddrCSR(addr);
+#endif
     }
 #else
     pod_address get_pod_addr() {
