@@ -209,7 +209,7 @@ public:
      */    
     static void linkv_fwd(item_ptr v, size_t n, size_t stride) {
         item_ptr curr = v, next;
-        for (size_t i = 0; i < n-1; i++) {
+        for (size_t i = 1; i < n; i++) {
             next = reinterpret_cast<item_ptr>(reinterpret_cast<uintptr_t>(curr) + stride);
             curr->next() = next;
             next->prev() = curr;
@@ -225,7 +225,7 @@ public:
      */    
     static void linkv_rev(item_ptr v, size_t n, size_t stride) {
         item_ptr curr = v, prev;
-        for (size_t i = 0; i < n-1; i++) {
+        for (size_t i = 1; i < n; i++) {
             prev = reinterpret_cast<item_ptr>(reinterpret_cast<uintptr_t>(curr) + stride);
             curr->prev() = prev;
             prev->next() = curr;

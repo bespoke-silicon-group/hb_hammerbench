@@ -105,6 +105,12 @@ void spawn(task * t)
     CELLO_STAT_ADD(cello_task_push);
 }
 
+void spawn(task *first, task *last)
+{
+    my_tasks_ptr->owner_push(first, last);
+    CELLO_STAT_ADD(cello_task_push);
+}
+
 static void execute_task(int victim_id, task * t)
 {
     t->execute();

@@ -16,6 +16,11 @@ void scheduler_initialize(config *cfg);
 void spawn(task *t);
 
 /**
+ * detach multiple tasks from the current thread of execution
+ */
+void spawn(task *first, task *last);
+
+/**
  * delegate a task to a tile
  */
 void delegate(int id, task *t);
