@@ -103,6 +103,16 @@ void pop_back()
     return;
 }
 
+void extend_front()
+{
+    util::list l;
+    util::list_item iv[4];
+    util::list::linkv_fwd(iv, 4, sizeof(util::list_item));
+    l.extend_front(&iv[0], &iv[3]);
+    return;
+}
+
+
 struct item {
 public:
     item(int _i, float _v) : i_(_i), v_(_v) {}
@@ -133,5 +143,6 @@ extern "C" int kernel()
     pop_front();
     pop_back();
     items();
+    extend_front();
     return 0;
 }
