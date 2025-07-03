@@ -70,6 +70,13 @@ public:
     }
 
     /**
+     * @brief clear the list
+     */
+    void clear() {
+        head().next() = head().prev() = &head();
+    }
+
+    /**
      * @brief push an item to front of the list
      */
     void push_front(item_ptr ip) {

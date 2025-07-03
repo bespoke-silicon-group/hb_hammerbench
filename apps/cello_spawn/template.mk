@@ -63,6 +63,12 @@ include $(EXAMPLES_PATH)/link.mk
 RISCV_CCPPFLAGS-$(dmem) += -DALLOCATE_TASK_IN_DMEM
 RISCV_CCPPFLAGS-yes += -DTASK_SIZE=$(size)
 RISCV_CCPPFLAGS-yes += -DN=$(n)
+ifeq ($(one-child-joiner),yes)
+RISCV_CCPPFLAGS-yes += -DONE_CHILD_JOINER
+endif
+ifeq ($(no-spawn),yes)
+RISCV_CCPPFLAGS-yes += -DNO_SPAWN
+endif
 RISCV_CCPPFLAGS += $(RISCV_CCPPFLAGS-yes)
 RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
