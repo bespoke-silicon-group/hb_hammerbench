@@ -106,9 +106,87 @@ void pop_back()
 void extend_front()
 {
     util::list l;
-    util::list_item iv[4];
-    util::list::linkv_fwd(iv, 4, sizeof(util::list_item));
-    l.extend_front(&iv[0], &iv[3]);
+    {
+        util::list_item p;
+        util::list_item iv[4];
+        util::list::linkv_fwd(iv, 4, sizeof(util::list_item));
+        l.push_front(&p);
+        l.extend_front(&iv[0], &iv[3]);
+        TEST_EQ(PTR, l.front(), &iv[0]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[1]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[2]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[3]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &p);
+        l.pop_front();
+        TEST_EQ(BOOL, l.empty(), true);
+    }
+    {
+        util::list_item p;
+        util::list_item iv[4];
+        util::list::linkv_rev(iv, 4, sizeof(util::list_item));
+        l.push_front(&p);
+        l.extend_front(&iv[3], &iv[0]);
+        TEST_EQ(PTR, l.front(), &iv[3]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[2]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[1]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[0]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &p);
+        l.pop_front();
+        TEST_EQ(BOOL, l.empty(), true);
+    }
+    {
+        util::list_item p;
+        util::list_item iv[4];
+        util::list::linkv_fwd(iv, 4, sizeof(util::list_item));
+        l.push_back(&p);
+        l.extend_back(&iv[0], &iv[3]);
+        TEST_EQ(PTR, l.front(), &p);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[0]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[1]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[2]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[3]);
+        l.pop_front();
+        TEST_EQ(BOOL, l.empty(), true);
+    }
+    {
+        util::list_item p;
+        util::list_item iv[4];
+        util::list::linkv_rev(iv, 4, sizeof(util::list_item));
+        l.push_back(&p);
+        l.extend_back(&iv[3], &iv[0]);
+        TEST_EQ(PTR, l.front(), &p);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[3]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[2]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[1]);
+        l.pop_front();
+        TEST_EQ(PTR, l.front(), &iv[0]);
+        l.pop_front();
+        TEST_EQ(BOOL, l.empty(), true);
+    }
+    {
+        util::list_item iv;
+        util::list::linkv_fwd(&iv, 1, sizeof(util::list_item));
+        l.extend_front(&iv, &iv);
+        TEST_EQ(PTR, l.front(), &iv);
+        TEST_EQ(PTR, l.back(), &iv);
+        l.pop_front();
+        TEST_EQ(BOOL, l.empty(), true);
+    }
     return;
 }
 

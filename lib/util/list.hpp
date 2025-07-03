@@ -213,6 +213,7 @@ public:
             next = reinterpret_cast<item_ptr>(reinterpret_cast<uintptr_t>(curr) + stride);
             curr->next() = next;
             next->prev() = curr;
+            curr = next;
         }
     }
 
@@ -228,6 +229,7 @@ public:
             prev = reinterpret_cast<item_ptr>(reinterpret_cast<uintptr_t>(curr) + stride);
             curr->prev() = prev;
             prev->next() = curr;
+            curr = prev;
         }
     }
 
