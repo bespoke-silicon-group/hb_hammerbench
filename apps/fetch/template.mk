@@ -13,6 +13,10 @@
 ###############################################################################
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
+
+PODS_X := 1
+PODS_Y := 1
+
 include $(HB_HAMMERBENCH_PATH)/mk/standard.mk
 
 ###############################################################################
