@@ -31,7 +31,7 @@ int program::init(int argc, char **argv) {
         pod_id_p.set_pod_x(pod.x).set_pod_y(pod.y);
         int x = pod.x;
         int y = pod.y;
-        int id = y * mc.mc->config.pods.x + x;
+        int id = y * bsg_pods_X + x;
         *pod_x_p = x;
         *pod_y_p = y;
         *pod_id_p = id;
