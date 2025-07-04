@@ -61,13 +61,27 @@ void parallel_foreach(loop_info<Idx> &info, Body &&body)
     // for (size_t l = 0; l < bufsz; l += BSG_CACHE_LINE_SIZE) {
     //     asm volatile ("lb x0, %0" :: "m"(&buf[l]) : "memory");
     // }
-
     size_t k = 0;
     while (info.leafs() > 1) {
         task *tp = new_task(parfor_child(info.lower(), std::forward<Body>(body)), *jp, &tasks[k++]);
+#ifndef CELLO_PARALLEL_FOREACH_MULTISPAWN
         spawn(tp);
+# else
+        // for some reason creating too many tasks
+        // in a row stalls the system out
+        // periodic fences prevent this
+        // too frequent fences defeat the purpose of the optimization
+        if (k & 7u == 7u) bsg_fence();
+#endif
         info = info.upper();
     }
+#ifdef CELLO_PARALLEL_FOREACH_MULTISPAWN
+    if (k != 0) {
+        util::list::linkv_rev(&tasks->queued(), k, sizeof(parfor_child_task));
+        //bsg_fence();
+        spawn(&tasks[k-1], &tasks[0]);
+    }
+#endif
     
     Idx start, stop, step;
     start = info.start();

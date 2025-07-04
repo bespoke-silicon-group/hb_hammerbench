@@ -24,6 +24,13 @@ public:
     }
 
     /**
+     * @brief push multiple tasks on the queue as the owner
+     */
+    void owner_push(task *first, task *last) {
+        task_list().extend_front(&first->queued(), &last->queued());
+    }
+
+    /**
      * @brief pop a task from the queue as the owner
      */
     task * owner_pop() {
@@ -76,6 +83,13 @@ class util::lockable<cello::task_queue, Lock>
 public:
     UTIL_LOCKABLE_INTERNAL(cello::task_queue, Lock);
     //UTIL_LOCKABLE_METHOD(cello::task_queue, Lock, owner_push);
+    void owner_push(cello::task *first, cello::task *last) {
+        while (!lock_.try_acquire()) {
+            CELLO_STAT_ADD(cello_owner_lock_acquire_fail);
+        }
+        data_.owner_push(first, last);
+        lock_.release();
+    }
     void owner_push(cello::task *t) {
         while (!lock_.try_acquire()) {
             CELLO_STAT_ADD(cello_owner_lock_acquire_fail);

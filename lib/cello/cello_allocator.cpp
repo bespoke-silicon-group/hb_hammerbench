@@ -43,7 +43,7 @@ void *allocate(size_t size) {
         bsg_fence();
         while (1);
     }
-    //bsg_fence(); // for some reason the hardware crashes and burns without this
+    bsg_fence(); // for some reason the hardware crashes and burns without this
     //memset(reinterpret_cast<void *>(mem), 0, size);
     return reinterpret_cast<void *>(mem);
 }

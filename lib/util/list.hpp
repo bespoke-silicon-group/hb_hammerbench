@@ -2,6 +2,7 @@
 #define UTIL_LIST_HPP
 #include <util/class_field.hpp>
 #include <util/container_of.hpp>
+#include <cstdint>
 namespace util
 {
 
@@ -133,6 +134,103 @@ public:
             return f;
         }
         return nullptr;
+    }
+
+    /**
+     * extend entire list to back
+     */
+    void extend_back(item_ptr first, item_ptr last) {
+        // link first with head.prev()
+        first->prev() = this->head().prev();
+        this->head().prev()->next() = first;
+        // link last with head
+        last->next() = &this->head();
+        this->head().prev() = last;
+    }
+
+    /**
+     * extend entire list to front
+     */
+    void extend_front(item_ptr first, item_ptr last) {
+        // link last with head.next()
+        last->next() = this->head().next();
+        this->head().next()->prev() = last;
+        // link first with head
+        first->prev() = &this->head();
+        this->head().next() = first;
+    }
+    
+
+    /**
+     * extend entire list to back
+     * assumes l is non-empty
+     * assumes l will not be used after
+     */
+    void extend_back_fast(list *l) {
+        extend_back(l->fast_front(), l->fast_back());
+    }
+
+    /**
+     * extend entire list to front
+     * assumes l is non-empty
+     * assumes l will not be used after     
+     */    
+    void extend_front_fast(list *l) {
+        extend_front(l->fast_front(), l->fast_back());
+    }
+
+    /**
+     * extend entire list to back
+     * l is cleared after call
+     */
+    void extend_back(list *l) {
+        if (!l->empty()) {
+            extend_back(l->fast_front(), l->fast_back());
+            l->clear();
+        }
+    }
+
+    /**
+     * extend entire list to front
+     * l is cleared after call
+     */
+    void extend_front(list *l) {
+        if (!l->empty()) {
+            extend_front(l->fast_front(), l->fast_back());
+            l->clear();
+        }
+    }
+
+    /**
+     * link an array of items together
+     * @param first - v vector of items to link
+     * @param last - n size of the vector
+     * @param stride - distance between items in vector
+     */    
+    static void linkv_fwd(item_ptr v, size_t n, size_t stride) {
+        item_ptr curr = v, next;
+        for (size_t i = 1; i < n; i++) {
+            next = reinterpret_cast<item_ptr>(reinterpret_cast<uintptr_t>(curr) + stride);
+            curr->next() = next;
+            next->prev() = curr;
+            curr = next;
+        }
+    }
+
+    /**
+     * link an array of items together
+     * @param first - v vector of items to link
+     * @param last - n size of the vector
+     * @param stride - distance between items in vector
+     */    
+    static void linkv_rev(item_ptr v, size_t n, size_t stride) {
+        item_ptr curr = v, prev;
+        for (size_t i = 1; i < n; i++) {
+            prev = reinterpret_cast<item_ptr>(reinterpret_cast<uintptr_t>(curr) + stride);
+            curr->prev() = prev;
+            prev->next() = curr;
+            curr = prev;
+        }
     }
 
     FIELD(list_item, head);
