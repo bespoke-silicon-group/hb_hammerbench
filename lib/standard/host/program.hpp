@@ -1,4 +1,3 @@
-
 #ifndef STANDARD_HOST_PROGRAM
 #define STANDARD_HOST_PROGRAM
 #include <bsg_manycore.h>
@@ -135,12 +134,11 @@ public:
     void write_all_pods(bsg_global_pointer::pointer<T>&p, const T&v) {
         hb_mc_pod_id_t pod_id;
         hb_mc_coordinate_t save = {.x = p.pod_x(), .y = p.pod_y()};
-        hb_mc_device_foreach_pod_id(&mc, pod_id) {
-            hb_mc_coordinate_t pod = pod_id_to_coord(pod_id);
+        foreach_pod([p, v](hb_mc_coordinate_t pod){
             p.set_pod_x(pod.x);
             p.set_pod_y(pod.y);
             *p = v;
-        }
+        });
         p.set_pod_x(save.x).set_pod_y(save.y);
     }
 
