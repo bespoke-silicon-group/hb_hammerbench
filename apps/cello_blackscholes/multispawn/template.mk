@@ -12,13 +12,10 @@
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
-REPLICANT_PATH:=$(shell cd $(HB_HAMMERBENCH_PATH)/.. && git rev-parse --show-toplevel)
-#BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X2Y1_ruche_X4Y2_hbm
+REPLICANT_PATH := $(shell cd $(HB_HAMMERBENCH_PATH)/.. && git rev-parse --show-toplevel)
+#BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X4Y2_hbm_one_pseudo_channel
 #BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X2Y2_ruche_X4Y2_hbm
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
-include $(HB_HAMMERBENCH_PATH)/mk/cello.mk
-
-TINY_AES_PATH := $(HB_HAMMERBENCH_PATH)/apps/aes/tiny-AES-c
 
 ###############################################################################
 # Host code compilation flags and flow
@@ -30,24 +27,23 @@ include app_path.mk
 # Tile Group Dimensions
 TILE_GROUP_DIM_X := $(tiles-x)
 TILE_GROUP_DIM_Y := $(tiles-y)
+
 PODS_X := $(pods-x)
 PODS_Y := $(pods-y)
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
-vpath %.c   $(TINY_AES_PATH)
-vpath %.cpp $(TINY_AES_PATH)
+
+include $(HB_HAMMERBENCH_PATH)/mk/cello.mk
 
 # TEST_SOURCES is a list of source files that need to be compiled
 TEST_SOURCES += host.cpp
-TEST_SOURCES += aes.c
 
-DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE -DNUM_ITERS=$(num-iter)
+DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
-FLAGS    += -I$(TINY_AES_PATH)
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++11 $(FLAGS)
 
@@ -70,17 +66,15 @@ include $(EXAMPLES_PATH)/link.mk
 # BSG_MANYCORE_KERNELS is a list of manycore executables that should
 # be built before executing.
 
-#RISCV_CCPPFLAGS += -DTRACE # Enable tracing
-RISCV_CCPPFLAGS += -O3 -std=c++14 -DNUM_ITERS=$(num-iter)
+# RISCV_CCPPFLAGS += -DTRACE # unccomment this to have hearbeat trace enabled
+RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 ifeq ($(multispawn),yes)
 RISCV_CCPPFLAGS += -DCELLO_PARALLEL_FOREACH_MULTISPAWN
 endif
-
 RISCV_TARGET_OBJECTS += kernel.rvo
-RISCV_TARGET_OBJECTS += aes_kernel.rvo
-BSG_MANYCORE_KERNELS := main.riscv
+BSG_MANYCORE_KERNELS += main.riscv
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 ###############################################################################
@@ -91,9 +85,14 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 #
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
-C_ARGS ?= $(BSG_MANYCORE_KERNELS)
+C_ARGS ?= $(BSG_MANYCORE_KERNELS) $(num_options) $(APP_PATH)/in_10M.txt
 
 SIM_ARGS ?=
+
+exec.log debug.log profile.log pc_histogram.log: $(APP_PATH)/in_10M.txt
+
+$(APP_PATH)/in_10M.txt: $(APP_PATH)/in_10M.txt.xz
+	xz -d -k $<
 
 # Include platform-specific execution rules
 include $(EXAMPLES_PATH)/execution.mk
