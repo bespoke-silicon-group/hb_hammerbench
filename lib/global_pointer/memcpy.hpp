@@ -37,7 +37,8 @@ inline void memcpy(pointer<char> dst, const char *src, size_t n) {
 
 inline void memcpy(char *dst, pointer<char> src, size_t n) {
     size_t i = 0;
-    for (; i + 32 <= n; i += 32) {
+
+    for (; i + 16 <= n; i += 16) {
         int *dstw = reinterpret_cast<int*>(dst);
         int* srcw = reinterpret_cast<int*>(src.to_local());
         register int r[4];
@@ -54,8 +55,8 @@ inline void memcpy(char *dst, pointer<char> src, size_t n) {
         dstw[2] = r[2];
         dstw[3] = r[3];
         asm volatile ("" ::: "memory");
-        dst += 32;
-        src += 32;
+        dst += 16;
+        src += 16;
     }
 
     for (; i + 4 <= n; i += 4) {
