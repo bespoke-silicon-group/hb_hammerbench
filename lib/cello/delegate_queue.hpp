@@ -50,7 +50,17 @@ class util::lockable<cello::delegate_queue, Lock>
 public:
     UTIL_LOCKABLE_INTERNAL(cello::delegate_queue, Lock);
     UTIL_LOCKABLE_METHOD(cello::delegate_queue, Lock, delegater_push);
-    UTIL_LOCKABLE_FUNCTION(cello::delegate_queue, Lock, cello::task *, owner_pop);
+    //UTIL_LOCKABLE_FUNCTION(cello::delegate_queue, Lock, cello::task *, owner_pop);
+    cello::task *owner_pop() {
+        cello::task* r;
+        if (!lock_.try_acquire()) {
+            CELLO_STAT_ADD(cello_owner_lock_acquire_fail);
+            return nullptr;
+        }
+        r = data_.owner_pop();
+        lock_.release();
+        return r;
+    }
     UTIL_LOCKABLE_FUNCTION(cello::delegate_queue, Lock, bool, empty);
 };
 
