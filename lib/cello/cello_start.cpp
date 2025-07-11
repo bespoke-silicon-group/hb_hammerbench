@@ -13,7 +13,11 @@ namespace  cello
 /**
  * set to 1 when main completes
  */
+#ifndef CELLO_BASELINE_TERMINATION_DETECTION
 DMEM(int) should_exit;
+#else
+DRAM(int) should_exit;
+#endif
 }
 
 using namespace cello;
@@ -23,6 +27,8 @@ using namespace cello;
  */
 static void signal_neighbors(int *local_var, int signal)
 {
+#ifndef CELLO_BASELINE_TERMINATION_DETECTION
+#ifndef CELLO_SINGLE_SOURCE_TERMINATION_DETECTION
     thread_id_decoded decode;
     thread_id_decode(&decode, cello::my::id());
 
@@ -60,6 +66,19 @@ static void signal_neighbors(int *local_var, int signal)
         global_pointer<int> glb_ptr = global_pointer<int>::onPodXY(south.pod_x, south.pod_y, tg_ptr);
         *glb_ptr = signal;
     }
+#else
+    for (int px = 0; px < my::num_pods_x(); px++) {
+        for (int py = 0; py < my::num_pods_y(); py++) {
+            for (int x = 0; x < my::num_tiles_x(); x++) {
+                for (int y = 0; y < my::num_tiles_y(); y++) {
+                    int *tg_ptr = bsg_tile_group_remote_pointer<int>(x,y,local_var);
+                    *global_pointer<int>::onPodXY(px, py, tg_ptr) = signal;
+                }
+            }
+        }
+    }
+#endif
+#endif
 }
 
 int cello_setup(cello::config *config)
@@ -93,7 +112,11 @@ int cello_start(cello::config *config)
         should_exit = 1;
     } else {
         scheduler_loop([=](){
+#ifndef CELLO_BASELINE_TERMINATION_DETECTION
             return should_exit == 1;
+#else
+            return *global_pointer<int>::onPodXY(0, 0, &should_exit) == 1;
+#endif
         });
     }
     signal_neighbors(&should_exit, 1);
