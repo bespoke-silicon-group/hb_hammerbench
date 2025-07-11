@@ -23,7 +23,11 @@ public:
      */
     void acquire()
     {
+#ifndef UTIL_LOCK_NO_EXPONENTIAL_BACKOFF
         exponential_backoff<16>([this]() { return locked_.exchange(1, std::memory_order_acquire) == 1; });
+#else
+        while (locked_.exchange(1, std::memory_order_acquire) == 1);
+#endif
     }
 
     /**
@@ -76,7 +80,11 @@ public:
      */
     void acquire() {
         int *lp = reinterpret_cast<int*>(this);
+#ifndef UTIL_LOCK_NO_EXPONENTIAL_BACKOFF
         exponential_backoff<16>([=]() { return bsg_amoswap(lp, 1) == 1; });
+#else
+        while (bsg_amoswap(lp, 1) == 1);
+#endif
     }
 
     /**

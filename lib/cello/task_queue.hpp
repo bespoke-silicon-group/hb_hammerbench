@@ -110,7 +110,11 @@ public:
         lock_.release();
         return r;
     }
+#ifndef CELLO_THIEF_LOCK
+    UTIL_LOCKABLE_FUNCTION(cello::task_queue, Lock, cello::task*, thief_pop);
+#else
     UTIL_LOCKABLE_FUNCTION_CAN_FAIL(cello::task_queue, Lock, cello::task*, nullptr, thief_pop);
+#endif
     UTIL_LOCKABLE_METHOD_UNSAFE(cello::task_queue, Lock, clear);
     UTIL_LOCKABLE_FUNCTION_CONST(cello::task_queue, Lock, bool, empty);
     UTIL_LOCKABLE_FUNCTION_CONST(cello::task_queue, Lock, bool, empty_volatile);
