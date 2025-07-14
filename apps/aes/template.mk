@@ -32,6 +32,7 @@ DEFINES += -DNUM_ITER=$(NUM-ITER)
 DEFINES += -DECB=0 -DCTR=0
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable -I../tiny-AES-c -DHOST
+FLAGS    += -I$(HB_HAMMERBENCH_PATH)/lib/profile
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++11 $(FLAGS)
 
@@ -53,6 +54,7 @@ RISCV_CCPPFLAGS += -DBSG_MACHINE_GLOBAL_Y=$(BSG_MACHINE_GLOBAL_Y)
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_CCPPFLAGS += -DNUM_ITER=$(NUM-ITER)
+RISCV_CCPPFLAGS += -I$(HB_HAMMERBENCH_PATH)/lib/profile
 
 RISCV_TARGET_OBJECTS = kernel.rvo aes_kernel.rvo
 BSG_MANYCORE_KERNELS = main.riscv
