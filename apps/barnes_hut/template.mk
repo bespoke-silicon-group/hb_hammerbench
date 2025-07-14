@@ -3,10 +3,10 @@ include app_path.mk
 
 # Hardware;
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
-NUMPODS?=64
+NUMPODS?=1
 tile-x?=16
 tile-y?=8
-override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
+#override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 # Tile group DIM
@@ -14,8 +14,8 @@ TILE_GROUP_DIM_X ?= $(tile-x)
 TILE_GROUP_DIM_Y ?= $(tile-y)
 
 # number of pods participating in barrier;
-NUM_POD_X=$(BSG_MACHINE_PODS_X)
-NUM_POD_Y=$(BSG_MACHINE_PODS_X)
+NUM_POD_X=1
+NUM_POD_Y=1
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
@@ -35,6 +35,7 @@ DEFINES += -DNBODIES=$(nbodies)
 DEFINES += -DSTACK_SIZE=$(STACK_SIZE)
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
+FLAGS    += -DHOST -I$(HB_HAMMERBENCH_PATH)/lib/profile
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++11 $(FLAGS)
 
@@ -51,6 +52,7 @@ include $(EXAMPLES_PATH)/link.mk
 # Device Code;
 RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -I$(HB_HAMMERBENCH_PATH)/apps/common
+RISCV_CCPPFLAGS += -I$(HB_HAMMERBENCH_PATH)/lib/profile
 RISCV_CCPPFLAGS += -DNUM_POD_X=$(NUM_POD_X)
 RISCV_CCPPFLAGS += -DBSG_MACHINE_GLOBAL_X=$(BSG_MACHINE_GLOBAL_X)
 RISCV_CCPPFLAGS += -DBSG_MACHINE_GLOBAL_Y=$(BSG_MACHINE_GLOBAL_Y)
