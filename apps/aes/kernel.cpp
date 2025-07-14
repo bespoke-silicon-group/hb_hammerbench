@@ -2,6 +2,7 @@
 #include <bsg_cuda_lite_barrier.h>
 #include "bsg_barrier_multipod.h"
 #include "aes_kernel.hpp"
+#include "profile.hpp"
 
 // Multipod barrier;
 volatile int done[NUM_POD_X]={0};
@@ -40,6 +41,8 @@ int kernel(struct AES_ctx *ctx, uint8_t* buf, size_t length, int niters, int pod
 
   // Kernel start;
   bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  if (__bsg_id==0) cello_timer_start();
+  bsg_fence();
   bsg_cuda_print_stat_kernel_start();
 
 
@@ -54,6 +57,7 @@ int kernel(struct AES_ctx *ctx, uint8_t* buf, size_t length, int niters, int pod
   // kernel end;
   bsg_fence();
   bsg_cuda_print_stat_kernel_end();
+  if (__bsg_id==0) cello_timer_stop();
   bsg_fence();
   bsg_barrier_tile_group_sync();
   return 0;

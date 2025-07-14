@@ -1,5 +1,5 @@
 #include "aes_kernel.hpp"
-
+#include "profile.hpp"
 
 // Private data;
 const uint8_t sbox[256] __attribute__((section(".dmem")))= {
