@@ -1,3 +1,7 @@
-# $(call test-name,[num-iter],[warm-cache])
-TESTS += $(call test-name,1,yes)
-TESTS += $(call test-name,5,no)
+####################
+# CHANGE ME: TESTS #
+####################
+# TESTS += $(call test-name,[num-iter],[warm-cache])
+TESTS += $(call test-name,16,no)
+
+

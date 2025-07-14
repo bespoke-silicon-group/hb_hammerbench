@@ -2,6 +2,7 @@
 #include <bsg_cuda_lite_barrier.h>
 #include "fft256.hpp"
 #include "bsg_barrier_multipod.h"
+#include "profile.hpp"
 
 #define N (NUM_POINTS*NUM_POINTS)
 #define NUM_TILES (bsg_tiles_X*bsg_tiles_Y)
@@ -49,6 +50,7 @@ kernel(FP32Complex * in,
 
     // Kernel start;
     bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+    if (__bsg_id == 0) cello_timer_start();    
     bsg_cuda_print_stat_kernel_start();
 
     for (int i = 0; i < num_iter; i++) {
@@ -88,6 +90,7 @@ kernel(FP32Complex * in,
 
     // Kernel end
     bsg_cuda_print_stat_kernel_end();
+    if (__bsg_id == 0) cello_timer_stop();    
     bsg_fence();
     bsg_barrier_tile_group_sync();
 
