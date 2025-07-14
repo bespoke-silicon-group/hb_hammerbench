@@ -3,6 +3,7 @@
 #include "bs_kernel.hpp"
 #include "option_data.hpp"
 #include "bsg_barrier_multipod.h"
+#include "profile.hpp"
 
 #define NUM_TILES (bsg_tiles_X*bsg_tiles_Y)
 
@@ -34,6 +35,7 @@ int kernel(OptionData *data, int num_option, int pod_id)
 
   // kernel start;
   bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  if (__bsg_id==0) cello_timer_start();  
   bsg_cuda_print_stat_kernel_start();
 
   for (int i = __bsg_id*CHUNK_SIZE; i < num_option; i+=NUM_TILES*CHUNK_SIZE) {
@@ -108,6 +110,7 @@ int kernel(OptionData *data, int num_option, int pod_id)
   // Kernel end;
   bsg_fence();
   bsg_cuda_print_stat_kernel_end();
+  if (__bsg_id==0) cello_timer_stop();  
   bsg_fence();
   bsg_barrier_tile_group_sync();
   return 0;
