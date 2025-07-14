@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <algorithm>
 #include "hb_list.h"
+#include "profile.hpp"
 
 #define fmadd_asm(rd_p, rs1_p, rs2_p, rs3_p) \
     asm volatile ("fmadd.s %[rd], %[rs1], %[rs2], %[rs3]" \
@@ -192,7 +193,9 @@ extern "C" int kernel(
 
   // Multi-pod barrier;
   bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  if (__bsg_id==0) cello_timer_start();  
   bsg_cuda_print_stat_kernel_start();
+  bsg_fence();
 
   // KERNEL START;
   // solve rows;
@@ -404,6 +407,7 @@ extern "C" int kernel(
   // KERNEL END;
   bsg_barrier_tile_group_sync();
   bsg_cuda_print_stat_kernel_end();
+  if (__bsg_id==0) cello_timer_stop();  
   bsg_fence();
   bsg_barrier_tile_group_sync();
   return 0;
