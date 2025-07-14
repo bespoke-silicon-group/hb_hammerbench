@@ -151,13 +151,7 @@ int aes_multipod(int argc, char **argv)
   // FINISH;
   BSG_CUDA_CALL(hb_mc_device_finish(&device));
   HOST_PROFILE_EPILOGUE;
-  if (prog.kernel_start_set and prog.kernel_stop_set) {  
-      std::ofstream ns_log("kernel_ns.log");
-      const std::chrono::duration<long long, std::nano> ns{prog.kernel_stop - prog.kernel_start};
-      ns_log << ns.count() << std::endl;
-  }
-  BSG_CUDA_CALL(hb_mc_responder_del(&responder));
-
+  
   if (fail) {
     return HB_MC_FAIL;
   } else {
