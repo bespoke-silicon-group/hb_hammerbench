@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 from benchmark_dir_parse import *
 
-fields = ['nbodies', 'pod-id']
+fields = ['nbodies', 'pod-id', 'run']
 
 stats = [
     # add extra stats to sum like 'instr_addi' e.g.

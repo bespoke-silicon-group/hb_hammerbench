@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 from benchmark_dir_parse import *
 
-fields = ['num-iter', 'warm-cache']
+fields = ['num-iter', 'warm-cache', 'run']
 
 stats = [
     # add extra stats to sum like 'instr_addi' e.g.

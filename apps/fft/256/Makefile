@@ -4,11 +4,12 @@ HB_HAMMERBENCH_PATH = $(shell git rev-parse --show-toplevel)
 all: generate
 
 # call to generate a test name
-test-name = num-iter_$(1)__warm-cache_$(2)
+test-name = num-iter_$(1)__warm-cache_$(2)__run_$(3)
 
 # call to get parameter from test name
 get-num-iter = $(lastword $(subst _, ,$(filter num-iter_%,$(subst __, ,$(1)))))
 get-warm-cache = $(lastword $(subst _, ,$(filter warm-cache_%,$(subst __, ,$(1)))))
+get-run = $(lastword $(subst _, ,$(filter run_%,$(subst __, ,$(1)))))
 
 # defines tests
 TESTS =
@@ -23,6 +24,7 @@ $(addsuffix /parameters.mk,$(TESTS_DIRS)): %/parameters.mk:
 	@echo test-name  = $* >> $@
 	@echo num-iter = $(call get-num-iter,$*) >> $@
 	@echo warm-cache = $(call get-warm-cache,$*) >> $@
+	@echo run = $(call get-run,$*) >> $@
 
 include $(HB_HAMMERBENCH_PATH)/mk/testbench_common.mk
 
