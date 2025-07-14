@@ -15,7 +15,7 @@ POD_RANGE = $(shell seq -s " " 0 63)
 
 
 # known-slow pods;
-TESTS += $(call test-name,wiki-Vote,0)
+#TESTS += $(call test-name,wiki-Vote,0)
 #TESTS += $(call test-name,offshore,0)
-#TESTS += $(call test-name,roadNet-CA,0)
+TESTS += $(call test-name,roadNet-CA,0)
 #TESTS += $(call test-name,road-central,0)

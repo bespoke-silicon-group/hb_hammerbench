@@ -2,7 +2,7 @@ include parameters.mk
 include app_path.mk
 
 # config.mk
-include ../config.$(graph).mk
+include $(APP_PATH)/config.$(graph).mk
 
 # Hardware;
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
