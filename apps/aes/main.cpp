@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <vector>
 #include "aes.hpp"
+#include "profile.hpp"
 
 #define ALLOC_NAME "default_allocator"
 #define NUM_TILES (bsg_tiles_X*bsg_tiles_Y)
@@ -29,25 +30,29 @@ int aes_multipod(int argc, char **argv)
   // parameters;
   const int num_iter = NUM_ITER;
   const int msg_len = MSG_LEN;
-  printf("num_iter=%d\n", num_iter);  // # of iter per tile;
-  printf("msg_len=%d\n", msg_len);    // in bytes;
-
+  bsg_pr_test_info("num_iter=%d\n", num_iter);  // # of iter per tile;
+  bsg_pr_test_info("msg_len=%d\n", msg_len);    // in bytes;
 
   // Host memory;
-  uint8_t buf[NUM_TILES*NUM_ITER*MSG_LEN];
-  struct AES_ctx ctx[NUM_TILES*NUM_ITER];
+  //uint8_t buf[NUM_TILES*NUM_ITER*MSG_LEN];
+  //struct AES_ctx ctx[NUM_TILES*NUM_ITER];  
+  std::vector<uint8_t> buf;
+  buf.resize(NUM_TILES*NUM_ITER*MSG_LEN);
+  
+  std::vector<AES_ctx> ctx;
+  ctx.resize(NUM_TILES*NUM_ITER);
 
   for (int i = 0; i < NUM_TILES*NUM_ITER; i++) {
     for (int j = 0; j < MSG_LEN; j++) {
-      buf[(MSG_LEN*i)+j] = (uint8_t) j;
+        buf[(MSG_LEN*i)+j] = (uint8_t) j;
     }
   }
   
-  memset(ctx, 0, sizeof(ctx));
+  //memset(&ctx[0], 0, sizeof(ctx));
   uint8_t key[AES_KEYLEN] = {0, 1, 2, 3, 4, 5, 6, 7,
                              8, 9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
   for (int i = 0; i < NUM_TILES*NUM_ITER; i++) {
-    AES_init_ctx(&ctx[i], key);
+      AES_init_ctx(&ctx[i], key);
   }
 
 
@@ -63,7 +68,7 @@ int aes_multipod(int argc, char **argv)
   
   AES_CBC_encrypt_buffer(&expected_ctx, expected_buf, MSG_LEN);
 
-
+  HOST_PROFILE_PROLOGUE;  
 
   // Initialize device;
   hb_mc_device_t device;
@@ -72,22 +77,22 @@ int aes_multipod(int argc, char **argv)
   eva_t d_ctx;
   eva_t d_buf;
 
-  hb_mc_pod_id_t pod;
-  hb_mc_device_foreach_pod_id(&device, pod)
+  hb_mc_pod_id_t pod = 0;
+  //hb_mc_device_foreach_pod_id(&device, pod)
   {
-    printf("Loading program for pod %d\n", pod);
+    bsg_pr_test_info("Loading program for pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
   
     // Allocate memory on device;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(ctx), &d_ctx));
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(buf), &d_buf));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(AES_ctx)*ctx.size(), &d_ctx));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(uint8_t)*buf.size(), &d_buf));
 
     // DMA transfer;
-    printf("Transferring data: pod %d\n", pod);
+    bsg_pr_test_info("Transferring data: pod %d\n", pod);
     std::vector<hb_mc_dma_htod_t> htod_job;
-    htod_job.push_back({d_ctx, &ctx[0], sizeof(ctx)});
-    htod_job.push_back({d_buf, &buf[0], sizeof(buf)});
+    htod_job.push_back({d_ctx, &ctx[0], sizeof(AES_ctx)*ctx.size()});
+    htod_job.push_back({d_buf, &buf[0], sizeof(uint8_t)*buf.size()});
     BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_job.data(), htod_job.size()));
 
 
@@ -98,22 +103,24 @@ int aes_multipod(int argc, char **argv)
     uint32_t cuda_argv[CUDA_ARGC] = {d_ctx, d_buf, MSG_LEN, NUM_ITER, pod};
 
     // Enqueue kernel;
-    printf("Enqueue Kernel: pod %d\n", pod);
+    bsg_pr_test_info("Enqueue Kernel: pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel", CUDA_ARGC, cuda_argv));
   }
 
 
   // Launch pod;
-  printf("Launching all pods\n");
+  bsg_pr_test_info("Launching all pods\n");
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
  
 
   // Read from devices;
-  uint8_t actual_buf[NUM_TILES*NUM_ITER*MSG_LEN];
+  //uint8_t actual_buf[NUM_TILES*NUM_ITER*MSG_LEN];
+  std::vector<uint8_t> actual_buf(NUM_TILES*NUM_ITER*MSG_LEN);
 
   bool fail = false;
-  hb_mc_device_foreach_pod_id(&device, pod) {
-    printf("Reading results: pods %d\n", pod);
+  //hb_mc_device_foreach_pod_id(&device, pod)
+  {
+    bsg_pr_test_info("Reading results: pods %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
 
     // clear buf;
@@ -123,7 +130,7 @@ int aes_multipod(int argc, char **argv)
 
     // DMA transfer: device -> host;
     std::vector<hb_mc_dma_dtoh_t> dtoh_job;
-    dtoh_job.push_back({d_buf, actual_buf, NUM_TILES*NUM_ITER*MSG_LEN*sizeof(uint8_t)});
+    dtoh_job.push_back({d_buf, &actual_buf[0], NUM_TILES*NUM_ITER*MSG_LEN*sizeof(uint8_t)});
     BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_job.data(), dtoh_job.size()));
 
 
@@ -133,7 +140,7 @@ int aes_multipod(int argc, char **argv)
         uint8_t actual = actual_buf[(MSG_LEN*i)+j];
         uint8_t expected = expected_buf[j];
         if (actual != expected) {
-          printf("Mismatch: i=%d, j=%d, actual=%d, expected=%d\n", i, j, actual, expected);
+          bsg_pr_test_info("Mismatch: i=%d, j=%d, actual=%d, expected=%d\n", i, j, actual, expected);
           fail = true;
         }
       }
@@ -143,6 +150,8 @@ int aes_multipod(int argc, char **argv)
  
   // FINISH;
   BSG_CUDA_CALL(hb_mc_device_finish(&device));
+  HOST_PROFILE_EPILOGUE;
+  
   if (fail) {
     return HB_MC_FAIL;
   } else {

@@ -5,6 +5,7 @@
 #include "bsg_barrier_multipod.h"
 #include "HBNode.hpp"
 #include "HBBody.hpp"
+#include "profile.hpp"
 
 // Constants;
 #define itolsq  (1.0f/(0.5f*0.5f))
@@ -42,6 +43,7 @@ extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
   l_body_start = *body_start;
   bsg_fence(); 
   bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  if (__bsg_id == 0) cello_timer_start();
   bsg_cuda_print_stat_kernel_start();
 
   int curr;
@@ -213,6 +215,7 @@ extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
   */
   bsg_barrier_tile_group_sync();
   bsg_cuda_print_stat_kernel_end();
+  if (__bsg_id == 0) cello_timer_stop();
   bsg_fence();
   bsg_barrier_tile_group_sync();
   return 0;

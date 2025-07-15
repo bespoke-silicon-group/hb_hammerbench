@@ -6,12 +6,12 @@ HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 
 tile-x?=16
 tile-y?=8
-override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
+#override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 # number of pods participating in barrier;
-NUM_POD_X=$(BSG_MACHINE_PODS_X)
-NUM_POD_Y=$(BSG_MACHINE_PODS_X)
+NUM_POD_X=1
+NUM_POD_Y=1
 # Tile group DIM
 TILE_GROUP_DIM_X ?= $(tile-x)
 TILE_GROUP_DIM_Y ?= $(tile-y)
@@ -28,6 +28,7 @@ DEFINES += -DNUM_POD_X=$(NUM_POD_X) # number of pods simulating now;
 DEFINES += -DNUM_SEQ=$(num-seq)
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
+FLAGS    += -DHOST -I$(HB_HAMMERBENCH_PATH)/lib/profile
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++11 $(FLAGS)
 
@@ -49,6 +50,7 @@ RISCV_CCPPFLAGS += -DBSG_MACHINE_GLOBAL_Y=$(BSG_MACHINE_GLOBAL_Y)
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 RISCV_CCPPFLAGS += -DNUM_SEQ=$(num-seq)
+RISCV_CCPPFLAGS += -I$(HB_HAMMERBENCH_PATH)/lib/profile
 
 RISCV_TARGET_OBJECTS = kernel.rvo
 BSG_MANYCORE_KERNELS = main.riscv

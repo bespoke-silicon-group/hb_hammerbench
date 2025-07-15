@@ -1,21 +1,26 @@
-POD_RANGE = $(shell seq -s " " 0 63)
 
-# test
-#TESTS += $(call test-name,test4,0)
-#TESTS += $(call test-name,test8,0)
+####################
+# CHANGE ME: TESTS #
+####################
+# TESTS += $(call test-name,[graph],[pod-id],[run])
 
-# wiki-Vote
-#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,wiki-Vote,$(x))))
-# offshore
-#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,offshore,$(x))))
-# road central
-#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,road-central,$(x))))
-# roadNet CA
-#$(foreach x, $(POD_RANGE), $(eval TESTS += $(call test-name,roadNet-CA,$(x))))
-
-
-# known-slow pods;
-TESTS += $(call test-name,wiki-Vote,0)
-TESTS += $(call test-name,offshore,51)
-TESTS += $(call test-name,roadNet-CA,18)
-TESTS += $(call test-name,road-central,16)
+TESTS += $(call test-name,wiki-Vote,0,0)
+TESTS += $(call test-name,roadNet-CA,0,0)
+TESTS += $(call test-name,wiki-Vote,0,1)
+TESTS += $(call test-name,roadNet-CA,0,1)
+TESTS += $(call test-name,wiki-Vote,0,2)
+TESTS += $(call test-name,roadNet-CA,0,2)
+TESTS += $(call test-name,wiki-Vote,0,3)
+TESTS += $(call test-name,roadNet-CA,0,3)
+TESTS += $(call test-name,wiki-Vote,0,4)
+TESTS += $(call test-name,roadNet-CA,0,4)
+TESTS += $(call test-name,wiki-Vote,0,5)
+TESTS += $(call test-name,roadNet-CA,0,5)
+TESTS += $(call test-name,wiki-Vote,0,6)
+TESTS += $(call test-name,roadNet-CA,0,6)
+TESTS += $(call test-name,wiki-Vote,0,7)
+TESTS += $(call test-name,roadNet-CA,0,7)
+TESTS += $(call test-name,wiki-Vote,0,8)
+TESTS += $(call test-name,roadNet-CA,0,8)
+TESTS += $(call test-name,wiki-Vote,0,9)
+TESTS += $(call test-name,roadNet-CA,0,9)

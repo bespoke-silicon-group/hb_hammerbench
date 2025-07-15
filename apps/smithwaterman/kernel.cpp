@@ -2,9 +2,11 @@
 #include <bsg_cuda_lite_barrier.h>
 #include "bsg_barrier_multipod.h"
 #include <cstdint>
+#include "profile.hpp"
 
 #define NUM_TILES (bsg_tiles_X*bsg_tiles_Y)
 #define SEQ_LEN 32
+#define SEQ_LEN_WORD (SEQ_LEN/4)
 #define NUM_SEQ_PER_TILE (NUM_SEQ/NUM_TILES)
 #define NUM_WORD_PER_TILE (SEQ_LEN/4*NUM_SEQ/NUM_TILES)
 
@@ -15,8 +17,8 @@ int alert = 0;
 
 
 // Local storage;
-uint8_t l_query[NUM_SEQ_PER_TILE*SEQ_LEN];
-uint8_t l_ref[NUM_SEQ_PER_TILE*SEQ_LEN];
+uint8_t l_query[SEQ_LEN];
+uint8_t l_ref[SEQ_LEN];
 int E_spm[SEQ_LEN];
 int F_spm[SEQ_LEN];
 int H_spm[SEQ_LEN];
@@ -89,25 +91,30 @@ extern "C" int kernel(uint8_t* query, uint8_t* ref, int* output, int pod_id)
   int* l_query_word = (int*) l_query;
   int* l_ref_word = (int*) l_ref;
 
-  for (int i = 0; i < NUM_WORD_PER_TILE; i++) {
-    l_query_word[i] = query_word[(__bsg_id*NUM_WORD_PER_TILE)+i];
-    l_ref_word[i] = ref_word[(__bsg_id*NUM_WORD_PER_TILE)+i];
-  }
+  // for (int i = 0; i < NUM_WORD_PER_TILE; i++) {
+  //   l_query_word[i] = query_word[(__bsg_id*NUM_WORD_PER_TILE)+i];
+  //   l_ref_word[i] = ref_word[(__bsg_id*NUM_WORD_PER_TILE)+i];
+  // }
   
-  for (int i = 0; i < NUM_SEQ_PER_TILE; i++) {
-    asm volatile ("sw x0, %[p]" :: [p] "m" (output[i+(__bsg_id*NUM_SEQ_PER_TILE)]));
-  }
-  bsg_fence();
+  // for (int i = 0; i < NUM_SEQ_PER_TILE; i++) {
+  //   asm volatile ("sw x0, %[p]" :: [p] "m" (output[i+(__bsg_id*NUM_SEQ_PER_TILE)]));
+  // }
+  // bsg_fence();
 
 
   // kernel start;
   bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  if (__bsg_id==0) cello_timer_start();
   bsg_cuda_print_stat_kernel_start();
 
 
   bsg_unroll(1)
   for (int i = 0; i < NUM_SEQ_PER_TILE; i++) {
-    // clear;
+    for (int j = 0; j < SEQ_LEN_WORD; j++) {          
+      l_query_word[j] = query_word[(__bsg_id*NUM_WORD_PER_TILE + i*SEQ_LEN_WORD) + j];
+      l_ref_word[j] = ref_word[(__bsg_id*NUM_WORD_PER_TILE + i*SEQ_LEN_WORD) + j];
+    }
+    // clear;    
     for (int j = 0; j < SEQ_LEN; j++) {
       E_spm[j] = 0;
       F_spm[j] = 0;
@@ -115,13 +122,14 @@ extern "C" int kernel(uint8_t* query, uint8_t* ref, int* output, int pod_id)
       H_prev_spm[j] = 0;
     }
     // align;
-    align(&l_query[i*SEQ_LEN], &l_ref[i*SEQ_LEN], &output[(__bsg_id*NUM_SEQ_PER_TILE)+i]);
+    align(&l_query[0], &l_ref[0], &output[(__bsg_id*NUM_SEQ_PER_TILE)+i]);
   }
 
 
   // kernel end;
   bsg_fence();
   bsg_cuda_print_stat_kernel_end();
+  if (__bsg_id==0) cello_timer_stop();
   bsg_fence();
   bsg_barrier_tile_group_sync();
   return 0;

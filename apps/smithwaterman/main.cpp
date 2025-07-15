@@ -11,7 +11,7 @@
 #include <cstdint>
 #include <vector>
 #include <map>
-
+#include "profile.hpp"
 #define ALLOC_NAME "default_allocator"
 
 
@@ -56,8 +56,8 @@ int sw_multipod(int argc, char ** argv) {
   // parameters;
   int num_seq = NUM_SEQ; // per pod;
   int seq_len = 32;
-  printf("num_seq=%d\n", num_seq);
-  printf("seq_len=%d\n", seq_len);
+  bsg_pr_test_info("num_seq=%d\n", num_seq);
+  bsg_pr_test_info("seq_len=%d\n", seq_len);
   
   // prepare inputs;
   uint8_t* query = (uint8_t*) malloc(num_seq*seq_len*sizeof(uint8_t));
@@ -67,6 +67,7 @@ int sw_multipod(int argc, char ** argv) {
   read_seq(ref_path, ref, num_seq);
   read_output(output_path, output, num_seq);
 
+  HOST_PROFILE_PROLOGUE;
  
   // initialize device; 
   hb_mc_device_t device;
@@ -76,10 +77,10 @@ int sw_multipod(int argc, char ** argv) {
   eva_t d_ref;
   eva_t d_output;
 
-  hb_mc_pod_id_t pod;
-  hb_mc_device_foreach_pod_id(&device, pod)
+  hb_mc_pod_id_t pod = 0;
+  //hb_mc_device_foreach_pod_id(&device, pod)
   {
-    printf("Loading program for pod %d\n", pod);
+    bsg_pr_test_info("Loading program for pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
@@ -89,7 +90,7 @@ int sw_multipod(int argc, char ** argv) {
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, num_seq*sizeof(int), &d_output));
    
     // DMA transfer;
-    printf("Transferring data: pod %d\n", pod);
+    bsg_pr_test_info("Transferring data: pod %d\n", pod);
     std::vector<hb_mc_dma_htod_t> htod_job;
     htod_job.push_back({d_query, query, num_seq*seq_len*sizeof(uint8_t)});
     htod_job.push_back({d_ref, ref, num_seq*seq_len*sizeof(uint8_t)});
@@ -103,13 +104,13 @@ int sw_multipod(int argc, char ** argv) {
 
 
     // Enqueue kernel;
-    printf("Enqueue Kernel: pod %d\n", pod);
+    bsg_pr_test_info("Enqueue Kernel: pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel", CUDA_ARGC, cuda_argv));
   }
 
 
   // Launch pod;
-  printf("Launching all pods\n");
+  bsg_pr_test_info("Launching all pods\n");
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
 
 
@@ -117,8 +118,9 @@ int sw_multipod(int argc, char ** argv) {
   int* actual_output = (int*) malloc(num_seq*sizeof(int));
 
   bool fail = false;
-  hb_mc_device_foreach_pod_id(&device, pod) {
-    printf("Reading results: pods %d\n", pod);
+  //hb_mc_device_foreach_pod_id(&device, pod)
+  {
+    bsg_pr_test_info("Reading results: pods %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
 
     // clear buf;
@@ -137,7 +139,7 @@ int sw_multipod(int argc, char ** argv) {
       int expected = output[i];
       if (actual != expected) {
         fail = true;
-        printf("Mismatch: i=%d, actual=%d, expected=%d\n", i, actual, expected);
+        bsg_pr_test_info("Mismatch: i=%d, actual=%d, expected=%d\n", i, actual, expected);
       }
     }
   }
@@ -145,6 +147,7 @@ int sw_multipod(int argc, char ** argv) {
 
   // Finish;
   BSG_CUDA_CALL(hb_mc_device_finish(&device));
+  HOST_PROFILE_EPILOGUE;
   if (fail) {
     return HB_MC_FAIL;
   } else {
