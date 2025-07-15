@@ -2,7 +2,7 @@
 ####################
 # CHANGE ME: TESTS #
 ####################
-# TESTS += $(call test-name,[num-iter],[run])
+# TESTS += $(call test-name,[num-iter],[pod-id],[run])
 
 TESTS += $(call test-name,65536,0,0)
 TESTS += $(call test-name,65536,0,1)
