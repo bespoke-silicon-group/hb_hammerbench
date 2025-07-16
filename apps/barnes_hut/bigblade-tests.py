@@ -8,7 +8,7 @@ header = """
 # TESTS += $(call test-name,[num-iter],[pod-id],[run])
 """
 
-inputs = [64*1024]
+inputs = [64*1024, 1024]
 runs = 10
 
 print(header)

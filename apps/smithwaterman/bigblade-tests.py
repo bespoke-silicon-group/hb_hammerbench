@@ -8,7 +8,7 @@ header = """
 # TESTS += $(call test-name,[num-iter],[run])
 """
 
-inputs = [1024*1024]
+inputs = [1024*1024, 8*1024]
 runs = 10
 
 print(header)

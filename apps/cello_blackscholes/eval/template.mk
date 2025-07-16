@@ -25,6 +25,11 @@ include parameters.mk
 include app_path.mk
 
 # Tile Group Dimensions
+tiles-x := 16
+tiles-y := 8
+pods-x := 1
+pods-y := 1
+
 TILE_GROUP_DIM_X := $(tiles-x)
 TILE_GROUP_DIM_Y := $(tiles-y)
 
