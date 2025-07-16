@@ -36,7 +36,7 @@ int kernel(struct AES_ctx *ctx, uint8_t* buf, size_t length, int niters, int pod
 {
   bsg_barrier_tile_group_init();
   bsg_barrier_tile_group_sync();
-  warmup(ctx, buf, length, niters);
+  //warmup(ctx, buf, length, niters);
   bsg_fence();
 
   // Kernel start;
