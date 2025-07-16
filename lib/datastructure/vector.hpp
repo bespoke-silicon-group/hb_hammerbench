@@ -113,6 +113,32 @@ public:
     }
 
     template <typename cello::Schedule sched = cello::parallel, typename F>
+    void foreach_block(size_t grain, F && f) {
+        using namespace cello;
+        using joiner = n_child_joiner;
+        joiner j;
+        joiner *jp = bsg_tile_group_remote_pointer<joiner>(tile_x(), tile_y(), &j);
+        on_every_pod(jp, [this, f, grain](){
+            size_t start = STRIDE * pod_id();
+            size_t step = STRIDE * num_pods();
+            size_t end = size();
+            cello::foreach<sched>
+                (start, end, step, grain, [this, f, end](size_t i) {
+                size_t start = i;
+                size_t stop = i + STRIDE;
+                size_t sz = end;
+                asm volatile ("" ::: "memory");
+                if (stop > sz) {
+                    stop = sz;
+                }
+                f(start, stop, this->local_ptr(start), this->local_ptr(stop));
+            });
+            //bsg_print_int(2000000+cello::my::pod_id());
+        });
+        wait(&j);
+    }
+    
+    template <typename cello::Schedule sched = cello::parallel, typename F>
     void foreach_unrestricted(size_t grain, F && f) {
         using namespace cello;
         size_t start = 0;
@@ -153,6 +179,14 @@ public:
                     f(j, this->at(j));
                 }
         });
+    }
+
+    value_pointer local_ptr(size_t i) {
+        return data()+lcl(i);
+    }
+
+    value_constpointer local_ptr(size_t i) const {
+        return data()+lcl(i);
     }
 
     value_reference local(size_t i) {
