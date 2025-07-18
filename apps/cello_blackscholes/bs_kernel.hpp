@@ -32,7 +32,7 @@
 
 // Using taylor series to approximate ln(x) around x=1
 __attribute__ ((always_inline))
-float my_logf(float x)
+static float my_logf(float x)
 {
   CELLO_STAT_ADDM(cello_flops, 10);    
   float diff = x - 1.0f;
@@ -52,7 +52,7 @@ float my_logf(float x)
 
 // Approximating expf(x) around x=0
 __attribute__ ((always_inline))
-float expf_0(float x) {
+static float expf_0(float x) {
   CELLO_STAT_ADDM(cello_flops, 10);
   const float f5 = 0.0083333338f; // 1/120
   const float f4 = 0.04166667f;   // 1/24
@@ -71,7 +71,7 @@ float expf_0(float x) {
 
 // fast expf for x < 0
 __attribute__ ((always_inline))
-float fast_expf(float x) {
+static float fast_expf(float x) {
   // if it's too small, return 0;
   CELLO_STAT_ADDM(cello_flops, 1);
   if (x < -15.0f) {
@@ -105,7 +105,7 @@ float fast_expf(float x) {
  
 
 __attribute__ ((always_inline))
-void dual_CNDF(float x1, float x2, float& out1, float& out2) {
+static void dual_CNDF(float x1, float x2, float& out1, float& out2) {
   // constants
   const float zerof = 0.0f;
   const float onef  = 1.0f;
@@ -170,7 +170,8 @@ void dual_CNDF(float x1, float x2, float& out1, float& out2) {
 }
 
 
-void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
+__attribute__((always_inline))
+static void BlkSchlsEqEuroNoDiv_kernel(OptionData* option)
 {
     // input reg
     float s_reg = option->s;
