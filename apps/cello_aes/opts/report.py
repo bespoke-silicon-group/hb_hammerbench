@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 from benchmark_dir_parse import *
 
-fields = ['num-iter', 'opt-memcpy', 'opt-restrict-ws', 'opt-lock', 'run']
+fields = ['num-iter', 'tiles-x', 'tiles-y', 'pods-x', 'pods-y', 'opt-memcpy', 'opt-restrict-ws', 'opt-lock', 'opt-rng', 'opt-icache', 'run']
 
 stats = [
     # add extra stats to sum like 'instr_addi' e.g.

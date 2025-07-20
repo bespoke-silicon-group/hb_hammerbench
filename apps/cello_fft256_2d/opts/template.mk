@@ -22,9 +22,12 @@ include $(HB_HAMMERBENCH_PATH)/mk/cello.mk
 include parameters.mk
 include app_path.mk
 
+PODS_X := $(pods-x)
+PODS_Y := $(pods-y)
+
 # Tile Group Dimensions
-TILE_GROUP_DIM_X ?= $(BSG_MACHINE_POD_TILES_X)
-TILE_GROUP_DIM_Y ?= $(BSG_MACHINE_POD_TILES_Y)
+TILE_GROUP_DIM_X := $(tiles-x)
+TILE_GROUP_DIM_Y := $(tiles-y)
 
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
@@ -74,6 +77,9 @@ endif
 ifeq ($(opt-lock),no)
 RISCV_CCPPFLAGS += -DCELLO_THIEF_LOCK
 RISCV_CCPPFLAGS += -DUTIL_LOCK_NO_EXPONENTIAL_BACKOFF
+endif
+ifeq ($(opt-rng),yes)
+RISCV_CCPPFLAGS += -DCELLO_FAST_RANDOM_XORSHIFT
 endif
 RISCV_TARGET_OBJECTS += kernel.rvo
 BSG_MANYCORE_KERNELS += main.riscv
