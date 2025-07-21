@@ -18,6 +18,7 @@ public:
      */
     lock() : locked_(0) {}
 
+#ifdef CELLO_ICACHE_OPT
     /**
      * @brief acquire the lock
      */
@@ -47,7 +48,23 @@ public:
     {
         locked_.store(0, std::memory_order_release);
     }
+#else
+    /**
+     * @brief acquire the lock
+     */
+    void acquire();
 
+    /**
+     * @brief try to acquire the lock
+     * return true if the lock is acquired.
+     */
+    bool try_acquire();
+    
+    /**
+     * @brief release the lock
+     */
+    void release();    
+#endif
     /**
      * @brief locked
      */
@@ -75,6 +92,7 @@ public:
      */
     tile_lock() {}
 
+#ifdef CELLO_ICACHE_OPT
     /**
      * @brief acquire the lock
      */
@@ -104,6 +122,23 @@ public:
         int *lp = reinterpret_cast<int*>(this);
         bsg_amoswap_rl(lp, 0);
     }
+#else
+    /**
+     * @brief acquire the lock
+     */
+    void acquire();
+
+    /**
+     * @brief try to acquire the lock
+     * return true if the lock is acquired
+     */
+    bool try_acquire();
+
+    /**
+     * @brief release the lock
+     */
+    void release();
+#endif
 
     FIELD(lock_ptr, global_this); //!< global this
 };

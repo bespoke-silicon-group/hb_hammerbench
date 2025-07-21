@@ -199,7 +199,7 @@ void schedule()
     }
 }
 
-
+#ifdef CELLO_ICACHE_OPT
 /**
  * @brief check that all children have joined
  */
@@ -220,6 +220,7 @@ bool three_child_joiner::joined() const {
 bool one_child_joiner::joined() const {
     return ready();
 }
+#endif
 
 /**
  * wait for a joiner to be ready

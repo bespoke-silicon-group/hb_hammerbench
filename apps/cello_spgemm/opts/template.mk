@@ -23,6 +23,8 @@ include $(HB_HAMMERBENCH_PATH)/inputs/sparse-inputs/include.mk
 include parameters.mk
 include app_path.mk
 
+CELLO_ICACHE_OPT := $(opt-icache)
+
 PODS_X := $(pods-x)
 PODS_Y := $(pods-y)
 

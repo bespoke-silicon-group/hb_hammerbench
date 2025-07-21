@@ -11,7 +11,7 @@ header = """
 # TESTS += $(call test-name,[num-iter],[tiles-x],[tiles-y],[pods-x],[pods-y],[opt-memcpy],[opt-restrict-ws],[opt-lock],[opt-rng],[opt-icache],[run])
 """
 
-inputs = [8*1024]
+inputs = [64*1024]
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--runs", type=int, default=1, help="how many times to run each setting")
@@ -22,12 +22,12 @@ cores = [(16,8,4,2)]
 runs = args.runs
 opts = [
     # (opt_memcpy, opt_restrict_ws, opt_lock, opt_rng, opt_icache)
-    ("no" ,"no" ,"no" ,"no" ,"no"),
-    ("yes","no" ,"no" ,"no" ,"no"),
-    ("no","yes" ,"no" ,"no" ,"no"),
-    ("no","no","yes","no" ,"no"),
-    ("no","no","no","yes" ,"no"),
-    #("no","no","no","no" ,"yes"),        
+    ( "no" ,"no" ,"no" ,"no" ,"no"),
+    ( "yes","no" ,"no" ,"no" ,"no"),    
+    ( "no" ,"yes","no" ,"no" ,"no"),
+    ( "no" ,"no" ,"yes","no" ,"no"),
+    ( "no" ,"no" ,"no" ,"yes","no"),
+    ( "no" ,"no" ,"no" ,"no" ,"yes"),
 ]
 
 print(header)

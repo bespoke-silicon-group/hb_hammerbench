@@ -22,6 +22,8 @@ include $(HB_HAMMERBENCH_PATH)/mk/cello.mk
 include parameters.mk
 include app_path.mk
 
+CELLO_OPT_ICACHE := $(opt-icache)
+
 stack-size := 4096
 
 PODS_X := $(pods-x)

@@ -27,6 +27,8 @@ TINY_AES_PATH := $(HB_HAMMERBENCH_PATH)/apps/aes/tiny-AES-c
 include parameters.mk
 include app_path.mk
 
+CELLO_ICACHE_OPT := $(opt-icache)
+
 PODS_X := $(pods-x)
 PODS_Y := $(pods-y)
 

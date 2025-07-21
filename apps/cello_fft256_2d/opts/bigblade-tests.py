@@ -22,12 +22,12 @@ cores = [(16,8,4,2)]
 runs = args.runs
 opts = [
     # (opt_memcpy, opt_restrict_ws, opt_lock, opt_rng, opt_icache)
-    ("no" ,"no" ,"no" ,"no" ,"no"),
-    ("yes","no" ,"no" ,"no" ,"no"),
-    ("no","yes" ,"no" ,"no" ,"no"),
-    ("no","no","yes","no" ,"no"),
-    ("no","no","no","yes" ,"no"),
-    #("no","no","no","no" ,"yes"),        
+    ( "no" ,"no" ,"no" ,"no" ,"no"),
+    ( "yes","no" ,"no" ,"no" ,"no"),    
+    ( "no" ,"yes","no" ,"no" ,"no"),
+    ( "no" ,"no" ,"yes","no" ,"no"),
+    ( "no" ,"no" ,"no" ,"yes","no"),
+    ( "no" ,"no" ,"no" ,"no" ,"yes"),
 ]
 
 print(header)
