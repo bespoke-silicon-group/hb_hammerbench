@@ -73,7 +73,7 @@ RISCV_CCPPFLAGS += -DNUM_POINTS=256
 ifeq ($(opt-memcpy),yes)
 RISCV_CCPPFLAGS += -DBSG_GLOBAL_POINTER_OPT_MEMCPY
 endif
-ifeq ($(opt-resrict-ws),no)
+ifeq ($(opt-restrict-ws),no)
 RISCV_CCPPFLAGS += -DCELLO_GLOBAL_STEALING
 endif
 ifeq ($(opt-lock),no)

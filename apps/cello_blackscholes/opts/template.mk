@@ -12,8 +12,10 @@
 # BSG_MANYCORE_DIR: Path to a clone of BSG Manycore
 ###############################################################################
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
+REPLICANT_PATH := $(shell cd $(HB_HAMMERBENCH_PATH)/.. && git rev-parse --show-toplevel)
+#BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X4Y2_hbm_one_pseudo_channel
+#BSG_MACHINE_PATH := $(REPLICANT_PATH)/machines/pod_X2Y2_ruche_X4Y2_hbm
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
-include $(HB_HAMMERBENCH_PATH)/mk/cello.mk
 
 ###############################################################################
 # Host code compilation flags and flow
@@ -22,9 +24,7 @@ include $(HB_HAMMERBENCH_PATH)/mk/cello.mk
 include parameters.mk
 include app_path.mk
 
-CELLO_OPT_ICACHE := $(opt-icache)
-
-stack-size := 4096
+CELLO_ICACHE_OPT := $(opt-icache)
 
 PODS_X := $(pods-x)
 PODS_Y := $(pods-y)
@@ -36,15 +36,17 @@ TILE_GROUP_DIM_Y := $(tiles-y)
 vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
 
+include $(HB_HAMMERBENCH_PATH)/mk/cello.mk
+
 # TEST_SOURCES is a list of source files that need to be compiled
 TEST_SOURCES += host.cpp
 
 DEFINES += -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE
-DEFINES += -DSTACK_SIZE=$(stack-size)
 CDEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 CXXDEFINES +=
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
+#FLAGS    += -DCELLO_GATHER_STATISTICS
 CFLAGS   += -std=c99 $(FLAGS)
 CXXFLAGS += -std=c++11 $(FLAGS)
 
@@ -67,10 +69,10 @@ include $(EXAMPLES_PATH)/link.mk
 # BSG_MANYCORE_KERNELS is a list of manycore executables that should
 # be built before executing.
 
+# RISCV_CCPPFLAGS += -DTRACE # unccomment this to have hearbeat trace enabled
 RISCV_CCPPFLAGS += -O3 -std=c++14
 RISCV_CCPPFLAGS += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X)
 RISCV_CCPPFLAGS += -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
-RISCV_CCPPFLAGS += -DSTACK_SIZE=$(stack-size)
 ifeq ($(opt-memcpy),yes)
 RISCV_CCPPFLAGS += -DBSG_GLOBAL_POINTER_OPT_MEMCPY
 endif
@@ -84,8 +86,9 @@ endif
 ifeq ($(opt-rng),yes)
 RISCV_CCPPFLAGS += -DCELLO_FAST_RANDOM_XORSHIFT
 endif
+#RISCV_CCPPFLAGS += -DCELLO_GATHER_STATISTICS
 RISCV_TARGET_OBJECTS += kernel.rvo
-BSG_MANYCORE_KERNELS := main.riscv
+BSG_MANYCORE_KERNELS += main.riscv
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
 ###############################################################################
@@ -96,9 +99,14 @@ include $(EXAMPLES_PATH)/cuda/riscv.mk
 #
 # SIM_ARGS: Use this to pass arguments to the simulator
 ###############################################################################
-C_ARGS ?= $(BSG_MANYCORE_KERNELS) $(nbodies)
+C_ARGS ?= $(BSG_MANYCORE_KERNELS) $(num_options) $(APP_PATH)/in_10M.txt
 
 SIM_ARGS ?=
+
+exec.log debug.log profile.log pc_histogram.log: $(APP_PATH)/in_10M.txt
+
+$(APP_PATH)/in_10M.txt: $(APP_PATH)/in_10M.txt.xz
+	xz -d -k $<
 
 # Include platform-specific execution rules
 include $(EXAMPLES_PATH)/execution.mk
