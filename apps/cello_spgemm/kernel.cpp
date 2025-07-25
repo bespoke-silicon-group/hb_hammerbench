@@ -179,7 +179,7 @@ int cello_main(int argc, char *argv[])
 
     dbg("A: %d rows, %d columns, %d non-zeros\n", A.rows(), A.cols(), A.nnz());
     dbg("B: %d rows, %d columns, %d non-zeros\n", B.rows(), B.cols(), B.nnz());
-    bsg_print_hexadecimal(0xa);
+    //bsg_print_hexadecimal(0xa);
     C_product.foreach(grain, [](int i, partial_table & result) {
         partial_table accum;
         //new (&accum) partial_table();
@@ -215,7 +215,7 @@ int cello_main(int argc, char *argv[])
         }
         result = accum;
     });
-    bsg_print_hexadecimal(0xb);
+    //bsg_print_hexadecimal(0xb);
     cello::on_every_pod([](){
         exclusive_scan
             (C_product.data(),
@@ -234,7 +234,7 @@ int cello_main(int argc, char *argv[])
             }
         }
     });
-    bsg_print_hexadecimal(0xc);
+    //bsg_print_hexadecimal(0xc);
     C_product.foreach(grain, [](index_type i, partial_table &nonzeros) {
         auto [C_idx_p, _, C_val_p, __] = C.inner_indices_values_range_lcl(i);
         for (partial_table::iterator it(&nonzeros); it.good(); it.next()) {
@@ -244,6 +244,6 @@ int cello_main(int argc, char *argv[])
             *C_val_p++ = C_val;            
         }
     });
-    bsg_print_hexadecimal(0xd);
+    //bsg_print_hexadecimal(0xd);
     return 0;
 }
