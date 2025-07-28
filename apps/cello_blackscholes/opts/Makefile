@@ -4,10 +4,10 @@ HB_HAMMERBENCH_PATH = $(shell git rev-parse --show-toplevel)
 all: generate
 
 # call to generate a test name
-test-name = num-seq_$(1)__tiles-x_$(2)__tiles-y_$(3)__pods-x_$(4)__pods-y_$(5)__opt-memcpy_$(6)__opt-restrict-ws_$(7)__opt-lock_$(8)__opt-rng_$(9)__opt-icache_$(10)__run_$(11)
+test-name = num_options_$(1)__tiles-x_$(2)__tiles-y_$(3)__pods-x_$(4)__pods-y_$(5)__opt-memcpy_$(6)__opt-restrict-ws_$(7)__opt-lock_$(8)__opt-rng_$(9)__opt-icache_$(10)__run_$(11)
 
 # call to get parameter from test name
-get-num-seq = $(lastword $(subst _, ,$(filter num-seq_%,$(subst __, ,$(1)))))
+get-num_options = $(lastword $(subst _, ,$(filter num_options_%,$(subst __, ,$(1)))))
 get-tiles-x = $(lastword $(subst _, ,$(filter tiles-x_%,$(subst __, ,$(1)))))
 get-tiles-y = $(lastword $(subst _, ,$(filter tiles-y_%,$(subst __, ,$(1)))))
 get-pods-x = $(lastword $(subst _, ,$(filter pods-x_%,$(subst __, ,$(1)))))
@@ -30,7 +30,7 @@ $(addsuffix /parameters.mk,$(TESTS_DIRS)): %/parameters.mk:
 	@mkdir -p $(dir $@)
 	@touch $@
 	@echo test-name  = $* >> $@
-	@echo num-seq = $(call get-num-seq,$*) >> $@
+	@echo num_options = $(call get-num_options,$*) >> $@
 	@echo tiles-x = $(call get-tiles-x,$*) >> $@
 	@echo tiles-y = $(call get-tiles-y,$*) >> $@
 	@echo pods-x = $(call get-pods-x,$*) >> $@

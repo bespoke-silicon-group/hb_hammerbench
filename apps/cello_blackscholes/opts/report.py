@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 from benchmark_dir_parse import *
 
-fields = ['nbodies', 'tiles-x', 'tiles-y', 'pods-x', 'pods-y', 'opt-memcpy', 'opt-restrict-ws', 'opt-lock', 'opt-rng', 'opt-icache', 'run']
+fields = ['num_options', 'tiles-x', 'tiles-y', 'pods-x', 'pods-y', 'opt-memcpy', 'opt-restrict-ws', 'opt-lock', 'opt-rng', 'opt-icache', 'run']
 
 stats = [
     # add extra stats to sum like 'instr_addi' e.g.

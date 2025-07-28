@@ -45,15 +45,19 @@ RISCV_CCPPFLAGS += -fno-delete-null-pointer-checks
 RISCV_CCPPFLAGS += -lstdc++
 RISCV_LDFLAGS   += -lstdc++
 
+CELLO_ICACHE_OPT ?= yes
+ifeq ($(CELLO_ICACHE_OPT),yes)
 # kernel sources
-#CELLO_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/cello/*.cpp)
 CELLO_LIB_SOURCES += $(HB_HAMMERBENCH_PATH)/lib/cello/cello_start.cpp
 CELLO_LIB_SOURCES += $(HB_HAMMERBENCH_PATH)/lib/cello/cello_init.cpp
 CELLO_LIB_SOURCES += $(HB_HAMMERBENCH_PATH)/lib/cello/cello_delegate_queue.cpp
 CELLO_LIB_SOURCES += $(HB_HAMMERBENCH_PATH)/lib/cello/cello_allocator.cpp
 CELLO_LIB_SOURCES += $(HB_HAMMERBENCH_PATH)/lib/cello/cello_thread_id.cpp
 CELLO_LIB_SOURCES += $(HB_HAMMERBENCH_PATH)/lib/cello/cello_scheduler.cpp
-
+RISCV_CCPPFLAGS += -DCELLO_ICACHE_OPT
+else
+CELLO_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/cello/*.cpp)
+endif
 
 CELLO_LIB_OBJECTS := $(CELLO_LIB_SOURCES:.cpp=.rvo)
 CELLO_LIB_OBJECTS := $(foreach obj,$(CELLO_LIB_OBJECTS),$(notdir $(obj)))
@@ -61,9 +65,12 @@ CELLO_LIB_OBJECTS := $(foreach obj,$(CELLO_LIB_OBJECTS),$(notdir $(obj)))
 vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/cello
 vpath %.c   $(HB_HAMMERBENCH_PATH)/lib/cello
 
+ifeq ($(CELLO_LIB_OBJECTS),yes)
+else
 UTIL_LIB_SOURCES := $(wildcard $(HB_HAMMERBENCH_PATH)/lib/util/*.cpp)
 UTIL_LIB_OBJECTS := $(UTIL_LIB_SOURCES:.cpp=.rvo)
 UTIL_LIB_OBJECTS := $(foreach obj,$(UTIL_LIB_OBJECTS),$(notdir $(obj)))
+endif
 
 vpath %.cpp $(HB_HAMMERBENCH_PATH)/lib/util
 vpath %.c   $(HB_HAMMERBENCH_PATH)/lib/util

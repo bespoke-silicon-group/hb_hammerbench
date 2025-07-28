@@ -46,11 +46,16 @@ public:
         ready() = 1;
     }
 
+#ifdef CELLO_ICACHE_OPT
     /**
      * join has completed
      */
     bool joined() const override;
-
+#else
+    bool joined() const override {
+        return ready();
+    }
+#endif
     /**
      * returns a created child
      */
@@ -99,6 +104,7 @@ public:
 };
 
 
+#ifdef CELLO_ICACHE_OPT
 /**
  * returns a created child
  */
@@ -106,6 +112,7 @@ inline single_child one_child_joiner::make_child() {
     global_pointer<one_child_joiner> p = global_pointer<one_child_joiner>::onPodXY(my::pod_x(), my::pod_y(), this);
     return single_child(p);
 }
+#endif
 
 }
 
@@ -147,10 +154,16 @@ public:
         ready_->fetch_add(1, std::memory_order_release);
     }
 
+#ifdef CELLO_ICACHE_OPT
     /**
      * @brief check that all children have joined
      */
     bool joined() const override;
+#else
+    bool joined() const override {
+        return ready_->load() == children_;        
+    }
+#endif
 
     std::atomic<int>* ready_;
     int children_ = 0;
@@ -181,6 +194,7 @@ public:
     global_pointer<n_child_joiner> parent_;
 };
 
+#ifdef CELLO_ICACHE_OPT
 /**
  * make a new child
  */
@@ -188,6 +202,7 @@ inline nth_child n_child_joiner::make_child() {
     children_++;
     return nth_child(global_pointer<n_child_joiner>::onPodXY(my::pod_x(), my::pod_y(), this));
 }
+#endif
 
 }
 
@@ -205,11 +220,16 @@ public:
      */
     child make_child();
 
+#ifdef CELLO_ICACHE_OPT
     /**
      * @brief check that all children have joined
      */
     bool joined() const override;
-
+#else
+    bool joined() const {
+        return ready_ == 0x00ffffff;        
+    }    
+#endif
     union {
         uint32_t ready_      = 0;
         char     child_ready_[4];
@@ -230,15 +250,17 @@ public:
     global_pointer<char> ready_;
 };
 
+#ifdef CELLO_ICACHE_OPT
 /**
  * make a new child
  */
 inline triplet_child three_child_joiner::make_child() {
     return triplet_child(global_pointer<char>(&this->child_ready_[children_made_++]));
 }
+#endif
 
 }
-
+#ifdef CELLO_ICACHE_OPT
 inline void bsg_global_pointer::reference<cello::one_child_joiner>::increment_ready_count() {
     register cello::one_child_joiner *p = reinterpret_cast<cello::one_child_joiner*>(addr().raw());
     {
@@ -254,5 +276,5 @@ inline void bsg_global_pointer::reference<cello::n_child_joiner>::increment_read
         p->increment_ready_count();
     }
 }
-
+#endif
 #endif

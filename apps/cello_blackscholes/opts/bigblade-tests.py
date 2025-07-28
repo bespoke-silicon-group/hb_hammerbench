@@ -10,7 +10,8 @@ header = """
 ####################
 # TESTS += $(call test-name,[num-iter],[tiles-x],[tiles-y],[pods-x],[pods-y],[opt-memcpy],[opt-restrict-ws],[opt-lock],[opt-rng],[opt-icache],[run])
 """
-inputs = ['email-Enron', 'roadNet-CA', 'wiki-Vote']
+
+inputs = [256*1024]
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--runs", type=int, default=1, help="how many times to run each setting")
@@ -22,6 +23,7 @@ runs = args.runs
 opts = [
     # (opt_memcpy, opt_restrict_ws, opt_lock, opt_rng, opt_icache)
     # in order of likelihood to be good
+    ("no", "no", "yes", "no", "no"),    
     ("no", "yes", "yes", "no", "no"),
     ("no", "yes", "no", "no", "no"),
     ("no", "yes", "no", "yes", "no"),
