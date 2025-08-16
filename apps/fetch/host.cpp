@@ -8,6 +8,7 @@ class program : public standard::program {
             auto pod_id = pod_coord_to_id(pod);
             hb_mc_eva_t _, buf;
             BSG_CUDA_CALL(alloc_cache_aligned(pod_id, SIZE, &_, &buf));
+            A_p.set_pod_x(pod.x).set_pod_y(pod.y);
             *A_p = buf;
             return 0;
         });
