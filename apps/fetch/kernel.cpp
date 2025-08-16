@@ -2,7 +2,7 @@
 #include <bsg_tile_config_vars.h>
 #include <bsg_cuda_lite_barrier.h>
 
-__attribute__((section(".dram"))) int *A;
+int *A = (int *) 0x80000000;
 
 extern "C" int kernel()
 {
