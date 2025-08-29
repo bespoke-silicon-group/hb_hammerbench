@@ -39,6 +39,8 @@ int kernel_memcpy(int argc, char **argv) {
   hb_mc_device_t device;
   BSG_CUDA_CALL(hb_mc_device_init(&device, test_name, HB_MC_DEVICE_ID));
 
+  eva_t A_device, B_device;
+
   hb_mc_pod_id_t pod;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
@@ -48,7 +50,7 @@ int kernel_memcpy(int argc, char **argv) {
 
     // Allocate a block of memory in host.
     int A_host[SIZE];
-    int B_host[SIZE];
+
     for (int i = 0; i < SIZE; i++) {
       A_host[i] = i;
     }
@@ -73,7 +75,7 @@ int kernel_memcpy(int argc, char **argv) {
 
 
     // Allocate a block of memory in device.
-    eva_t A_device, B_device;
+
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, SIZE * sizeof(int), &A_device));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, SIZE * sizeof(int), &B_device));
 
@@ -100,12 +102,21 @@ int kernel_memcpy(int argc, char **argv) {
     
     // Enqueue Kernel.
     BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel_memcpy", CUDA_ARGC, cuda_argv));
-    
+  }
     // Launch kernel.
     //hb_mc_manycore_trace_enable((&device)->mc);
-    BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(&device));
+    //BSG_CUDA_CALL(hb_mc_device_tile_groups_execute(&device));
     //hb_mc_manycore_trace_disable((&device)->mc);
 
+  printf("Launching all pods\n");
+  BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
+
+  hb_mc_device_foreach_pod_id(&device, pod)
+  {
+    printf("Reading results: pods %d\n", pod);
+    BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
+
+    int B_host[SIZE];
 
     // Copy result and validate.
     hb_mc_dma_dtoh_t dtoh_job [] = {
