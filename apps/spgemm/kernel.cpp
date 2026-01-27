@@ -17,8 +17,8 @@
 #define LIST_NULL_PTR ((HBListNode*) 0)
 
 // multipod barrier;
-volatile int done[NUM_POD_X]={0};
-int alert = 0;
+//volatile int done[NUM_POD_X]={0};
+//int alert = 0;
 
 // amoadd queue;
 __attribute__((section(".dram"))) int g_free_node_q;
@@ -134,6 +134,7 @@ static inline void list_concat(HBList* list1, HBList* list2) {
   }
 }
 
+#define NUM_ITER 4
 
 // Kernel main;
 extern "C" int kernel(
@@ -160,6 +161,8 @@ extern "C" int kernel(
 {
   bsg_barrier_tile_group_init();
   bsg_barrier_tile_group_sync();
+
+for (int k = 0; k < NUM_ITER; k++) {
   // Initialize amo variables + sum tree;
   if (__bsg_id == 0) {
     g_free_node_q = 0;
@@ -191,8 +194,10 @@ extern "C" int kernel(
   }
 
   // Multi-pod barrier;
-  bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
-  bsg_cuda_print_stat_kernel_start();
+  bsg_fence();
+  bsg_barrier_tile_group_sync();
+  //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  //bsg_cuda_print_stat_kernel_start();
 
   // KERNEL START;
   // solve rows;
@@ -400,10 +405,11 @@ extern "C" int kernel(
     }
   }
   bsg_fence();
+  bsg_barrier_tile_group_sync();
+}
 
   // KERNEL END;
-  bsg_barrier_tile_group_sync();
-  bsg_cuda_print_stat_kernel_end();
+  //bsg_cuda_print_stat_kernel_end();
   bsg_fence();
   bsg_barrier_tile_group_sync();
   return 0;
