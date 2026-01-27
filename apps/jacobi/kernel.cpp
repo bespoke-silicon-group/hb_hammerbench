@@ -34,8 +34,8 @@ static int warmup(float *A0, float *Anext, int nx, int ny, int nz)
 
 
 // Multipod barrier;
-volatile int done[NUM_POD_X]={0};
-int alert = 0;
+//volatile int done[NUM_POD_X]={0};
+//int alert = 0;
 
 
 // Local storage;
@@ -65,10 +65,10 @@ int kernel(
 #ifdef WARM_CACHE
   warmup(A0, Anext, nx, ny, nz);
 #endif
-  bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
 
   // kernel start
-  bsg_cuda_print_stat_kernel_start();
+  //bsg_cuda_print_stat_kernel_start();
 
 
   // Remote pointers
@@ -134,8 +134,8 @@ int kernel(
 
 
   // Kernel End.
-  bsg_fence();
-  bsg_cuda_print_stat_kernel_end(); // stat kernel end
+  //bsg_fence();
+  //bsg_cuda_print_stat_kernel_end(); // stat kernel end
   bsg_fence();
   bsg_barrier_tile_group_sync();
 

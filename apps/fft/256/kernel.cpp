@@ -7,8 +7,8 @@
 #define NUM_TILES (bsg_tiles_X*bsg_tiles_Y)
 
 // Multipod barrier;
-volatile int done[NUM_POD_X]={0};
-int alert = 0;
+//volatile int done[NUM_POD_X]={0};
+//int alert = 0;
 
 
 // Cache warming function.
@@ -48,8 +48,8 @@ kernel(FP32Complex * in,
     bsg_barrier_tile_group_sync();
 
     // Kernel start;
-    bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
-    bsg_cuda_print_stat_kernel_start();
+    //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+    //bsg_cuda_print_stat_kernel_start();
 
     for (int i = 0; i < num_iter; i++) {
       FP32Complex *input_sq  = &in[i*N];
@@ -87,7 +87,7 @@ kernel(FP32Complex * in,
 
 
     // Kernel end
-    bsg_cuda_print_stat_kernel_end();
+    //bsg_cuda_print_stat_kernel_end();
     bsg_fence();
     bsg_barrier_tile_group_sync();
 
