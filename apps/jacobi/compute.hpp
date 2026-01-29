@@ -131,10 +131,7 @@ void compute (
   float *a_up,
   float *a_down,
   float *a_self,
-  const int nz,
-  int pod_id,
-  volatile int* done,
-  int* alert
+  const int nz
 ) {
 
   float c0f = (float) c0;
@@ -145,7 +142,7 @@ void compute (
     copySelf(dram_self, a_self, ii, nz);
     prefetch_dram(a_left, a_right, a_up, a_down, ii);
     bsg_fence();
-    bsg_barrier_multipod(pod_id, NUM_POD_X, done, alert);
+    bsg_barrier_tile_group_sync();
 
     // compute 4 at a time
     bsg_unroll(1)
@@ -244,6 +241,6 @@ void compute (
       dram_next[ii+i+3] = next3; 
     }
     bsg_fence();
-    bsg_barrier_multipod(pod_id, NUM_POD_X, done, alert);
+    bsg_barrier_tile_group_sync();
   }
 }

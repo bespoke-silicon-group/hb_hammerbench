@@ -9,12 +9,12 @@ HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 
 tile-x?=16
 tile-y?=8
-override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
+#override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 
 # number of pods participating in barrier;
-NUM_POD_X=$(BSG_MACHINE_PODS_X)
+NUM_POD_X=8
 NUM_POD_Y=$(BSG_MACHINE_PODS_X)
 # Tile group DIM
 TILE_GROUP_DIM_X ?= $(tile-x)

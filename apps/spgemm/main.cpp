@@ -12,6 +12,8 @@
 #include <fstream>
 #include <math.h>
 
+#include <chrono>
+
 #define ALLOC_NAME "default_allocator"
 #define DRAM_LIST_NODES 16777216 // (=2**24)
 
@@ -86,14 +88,14 @@ int spgemm_multipod(int argc, char ** argv)
   int V = VERTEX;
   int E = EDGE;
   int OUTPUT_E = OUTPUT_EDGE;
-  printf("pod_id = %d\n", pod_id);
-  //printf("pod_id_x = %d\n", pod_id_x);
-  //printf("pod_id_y = %d\n", pod_id_y);
-  printf("pod_dim_x= %d\n", pod_dim_x);
-  printf("pod_dim_y= %d\n", pod_dim_y);
-  printf("V=%d\n", V);
-  printf("E=%d\n", E);
-  printf("OUTPUT_E=%d\n", OUTPUT_E);
+  bsg_pr_info("pod_id = %d\n", pod_id);
+  //bsg_pr_info("pod_id_x = %d\n", pod_id_x);
+  //bsg_pr_info("pod_id_y = %d\n", pod_id_y);
+  bsg_pr_info("pod_dim_x= %d\n", pod_dim_x);
+  bsg_pr_info("pod_dim_y= %d\n", pod_dim_y);
+  bsg_pr_info("V=%d\n", V);
+  bsg_pr_info("E=%d\n", E);
+  bsg_pr_info("OUTPUT_E=%d\n", OUTPUT_E);
 
   // Read matrix;
   int *row_offset = (int *) malloc(sizeof(int)*(V+1));
@@ -139,8 +141,9 @@ int spgemm_multipod(int argc, char ** argv)
 
   hb_mc_device_foreach_pod_id(&device, pod)
   {
+      if (pod % 2 == 1) continue;
     // Loading program;
-    printf("Loading program for pod %d\n", pod);
+    bsg_pr_info("Loading program for pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
@@ -158,7 +161,7 @@ int spgemm_multipod(int argc, char ** argv)
     //int nnz_start = row_offset[row_start];
     //int nnz_end = row_offset[row_end];
     //int num_nnz = nnz_end-nnz_start;
-    printf("curr_pod_id=(%d %d), row_start=%d, row_end=%d, col_start=%d, col_end=%d\n",
+    bsg_pr_info("curr_pod_id=(%d %d), row_start=%d, row_end=%d, col_start=%d, col_end=%d\n",
       curr_pod_id_x, curr_pod_id_y,
       row_start, row_end,
       col_start, col_end);
@@ -205,7 +208,7 @@ int spgemm_multipod(int argc, char ** argv)
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, (DRAM_LIST_NODES)*3*sizeof(int), &d_dram_nodes[pod]));
     
     // DMA transfer;
-    printf("Transferring data: pod %d\n", pod);
+    bsg_pr_info("Transferring data: pod %d\n", pod);
     std::vector<hb_mc_dma_htod_t> htod_job;
     // matrix A;
     htod_job.push_back({d_A_row_offset[pod], sub_A_row_offset.data(), sub_A_row_offset.size()*sizeof(int)});
@@ -247,7 +250,7 @@ int spgemm_multipod(int argc, char ** argv)
     };
 
     // Enqueue kernel;
-    printf("Enqueing kernel: pod %d\n", pod);
+    bsg_pr_info("Enqueing kernel: pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_kernel_enqueue(&device, grid_dim, tg_dim, "kernel", CUDA_ARGC, cuda_argv));
 
     // Free;
@@ -255,14 +258,19 @@ int spgemm_multipod(int argc, char ** argv)
   }
 
   // Launch pods;
-  printf("Launching all pods\n");
+  bsg_pr_info("Launching all pods\n");
+  auto start = std::chrono::high_resolution_clock::now();
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
+      auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Time: " << duration.count() << " us" << std::endl; 
 
   // Read from device;
   bool fail = false;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
-    printf("Reading results: pods %d\n", pod);
+      if (pod % 2 == 1) continue;
+    bsg_pr_info("Reading results: pods %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     int curr_pod_id_x = (PODID+pod) % POD_DIM_X;
     int curr_pod_id_y = (PODID+pod) / POD_DIM_X;
@@ -296,10 +304,10 @@ int spgemm_multipod(int argc, char ** argv)
     for (int row = 0; row < sub_C_row_offset.size(); row++) {
       int expected = sub_C_row_offset[row];
       int actual = actual_C_row_offset[row];
-      //printf("row_offset : row=%d, expected=%d, actual=%d\n",
+      //bsg_pr_info("row_offset : row=%d, expected=%d, actual=%d\n",
       //  row, expected, actual);
       if (expected != actual) {
-        printf("row_offset mismatch: row=%d, expected=%d, actual=%d\n",
+        bsg_pr_info("row_offset mismatch: row=%d, expected=%d, actual=%d\n",
           row, expected, actual);
         fail = true;
       }
@@ -308,10 +316,10 @@ int spgemm_multipod(int argc, char ** argv)
     for (int nz = 0; nz < sub_C_col_idx.size(); nz++) {
       int expected = sub_C_col_idx[nz];
       int actual = actual_C_col_idx[nz];
-      //printf("col_idx : nz=%d, expected=%d, actual=%d\n",
+      //bsg_pr_info("col_idx : nz=%d, expected=%d, actual=%d\n",
       //  nz, expected, actual);
       if (expected != actual) {
-        printf("col_idx mismatch: nz=%d, expected=%d, actual=%d\n",
+        bsg_pr_info("col_idx mismatch: nz=%d, expected=%d, actual=%d\n",
           nz, expected, actual);
         fail = true;
       }
@@ -320,10 +328,10 @@ int spgemm_multipod(int argc, char ** argv)
     for (int nz = 0; nz < sub_C_nnz.size(); nz++) {
       float expected = sub_C_nnz[nz];
       float actual = actual_C_nnz[nz];
-      //printf("nnz: nz=%d, expected=%f, actual=%f\n",
+      //bsg_pr_info("nnz: nz=%d, expected=%f, actual=%f\n",
       //  nz, expected, actual);
       if (expected != actual) {
-        printf("nnz mismatch: nz=%d, expected=%f, actual=%f\n",
+        bsg_pr_info("nnz mismatch: nz=%d, expected=%f, actual=%f\n",
           nz, expected, actual);
         fail = true;
       }

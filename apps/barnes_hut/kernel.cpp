@@ -24,10 +24,12 @@ inline float dist2(float x, float y, float z) {
 }
 
 // multipod barrier;
-volatile int done[NUM_POD_X] = {0};
-int alert = 0;
+//volatile int done[NUM_POD_X] = {0};
+//int alert = 0;
 
 int l_body_start;
+
+HBNode* dmem_stack[STACK_SIZE];
 
 // Kernel main;
 extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
@@ -41,14 +43,15 @@ extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
   bsg_barrier_tile_group_sync();   
   l_body_start = *body_start;
   bsg_fence(); 
-  bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
-  bsg_cuda_print_stat_kernel_start();
+  bsg_barrier_tile_group_sync();   
+  //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+  //bsg_cuda_print_stat_kernel_start();
 
   int curr;
   curr = bsg_amoadd(body_start,1);
 
   // my stack in DRAM;
-  HBNode** mystack = &nodestack[__bsg_id*STACK_SIZE];
+  HBNode** mystack = &dmem_stack[0];
   HBNode** max_mystack_ptr = &mystack[STACK_SIZE+1];
 
   // delta;
@@ -211,8 +214,8 @@ extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
   }
   bsg_fence();
   */
-  bsg_barrier_tile_group_sync();
-  bsg_cuda_print_stat_kernel_end();
+  //bsg_barrier_tile_group_sync();
+  //bsg_cuda_print_stat_kernel_end();
   bsg_fence();
   bsg_barrier_tile_group_sync();
   return 0;

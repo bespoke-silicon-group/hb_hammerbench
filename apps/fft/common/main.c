@@ -34,12 +34,12 @@ int verify_fft (float complex *out, int N) {
 
   for (int i = 0; i < N; i++) {
     float rr = crealf(out[i]), ii = cimagf(out[i]);
-    printf("%d-th result is %.6f+%.6fi (0x%08X 0x%08X)\n", i, rr, ii, *(uint32_t*)&rr, *(uint32_t*)&ii);
+    //printf("%d-th result is %.6f+%.6fi (0x%08X 0x%08X)\n", i, rr, ii, *(uint32_t*)&rr, *(uint32_t*)&ii);
   }
 
   for (int i = 0; i < N; i++) {
     double complex ref = 0.0;
-    printf("%d-th component is %.3f+%.3fi\n", i, crealf(out[i]), cimagf(out[i]));
+    //printf("%d-th component is %.3f+%.3fi\n", i, crealf(out[i]), cimagf(out[i]));
     if ((i == r) || (i == ar)) {
       ref = N / 2.0;
     } else {
@@ -47,7 +47,7 @@ int verify_fft (float complex *out, int N) {
     }
 
     if (!is_close(out[i], ref)) {
-      printf("Mismatch: out[%d]: %.3f+%.3fi; ref is %.3f+%.3fi",
+      bsg_pr_info("Mismatch: out[%d]: %.3f+%.3fi; ref is %.3f+%.3fi",
           i , crealf(out[i]), cimagf(out[i]), crealf(ref), cimagf(ref)
       );
       return 1;
@@ -66,8 +66,8 @@ int fft_multipod (int argc, char **argv)
   const char *bin_path = argv[1];
 
   // parameters;
-  printf("NUM_POINTS=%d\n", NUM_POINTS);
-  printf("NUM_ITER=%d\n", NUM_ITER);
+  bsg_pr_info("NUM_POINTS=%d\n", NUM_POINTS);
+  bsg_pr_info("NUM_ITER=%d\n", NUM_ITER);
   const int N = (NUM_POINTS*NUM_POINTS);
 
   // Host data;
@@ -98,6 +98,7 @@ int fft_multipod (int argc, char **argv)
   hb_mc_pod_id_t pod;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
+      if (pod % 2 == 1) continue;
     bsg_pr_info("Loading program for pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
@@ -109,7 +110,7 @@ int fft_multipod (int argc, char **argv)
 
 
     // DMA transfer;
-    printf("Transferring data: pod %d\n", pod);
+    bsg_pr_info("Transferring data: pod %d\n", pod);
     for (int i = 0; i < NUM_ITER; i++) {
       hb_mc_dma_htod_t htod_A_job [] = {
         {
@@ -144,8 +145,13 @@ int fft_multipod (int argc, char **argv)
 
   // Launch pods;
   //hb_mc_manycore_trace_enable((&device)->mc);
-  printf("Launching all pods\n");
+  bsg_pr_info("Launching all pods\n");
+  struct timespec start, end;
+clock_gettime(CLOCK_MONOTONIC, &start);
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
+clock_gettime(CLOCK_MONOTONIC, &end);
+long long ns = (end.tv_sec - start.tv_sec) * 1000000000LL + (end.tv_nsec - start.tv_nsec);
+    bsg_pr_info("Time in ns: %lld\n", ns);
   //hb_mc_manycore_trace_disable((&device)->mc);
 
 
@@ -153,6 +159,7 @@ int fft_multipod (int argc, char **argv)
   int fail = 0;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
+      if (pod % 2 == 1) continue;
     bsg_pr_info("Reading from pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
 

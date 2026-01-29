@@ -126,8 +126,7 @@ int kernel(
       compute(c0, c1,
         dram_self, dram_next,
         a_left, a_right, a_up, a_down, a_self,
-        nz,
-        pod_id, done, &alert);
+        nz);
 
     }
   }

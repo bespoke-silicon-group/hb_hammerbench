@@ -3,10 +3,10 @@ include app_path.mk
 
 # Hardware;
 HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
-NUMPODS?=64
+NUMPODS?=1
 tile-x?=16
 tile-y?=8
-override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
+#override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/pod_X1Y1_ruche_X$(tile-x)Y$(tile-y)_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 # Tile group DIM
@@ -21,7 +21,7 @@ vpath %.c   $(APP_PATH)
 vpath %.cpp $(APP_PATH)
 
 # stack size
-STACK_SIZE=4096
+STACK_SIZE=512
 
 
 # Test sources;

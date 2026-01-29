@@ -12,6 +12,9 @@
 #include <vector>
 #include <bsg_manycore_regression.h>
 
+#include <chrono>
+#include <iostream>
+
 #define ALLOC_NAME "default_allocator"
 #define Index3D(nx,ny,nz,x,y,z) (((((y)*nx)+(x))*nz)+(z))
 
@@ -19,7 +22,7 @@
 void host_jacobi(int c0, int c1, float *A0, float * Anext,
                  const int nx, const int ny, const int nz)
 {
-  printf("host jacobi: nx=%d, ny=%d, nz=%d\n", nx, ny, nz);
+  bsg_pr_info("host jacobi: nx=%d, ny=%d, nz=%d\n", nx, ny, nz);
   float c0f = (float) c0;
   float c1f = (float) c1;
 	for(int x=0; x<nx; x++) {
@@ -60,9 +63,9 @@ int jacobi_multipod (int argc, char **argv)
   int ny = NY; 
   int nz = NZ; 
   int N  = (nx*ny*nz);
-  printf("nx=%d\n",nx);
-  printf("ny=%d\n",ny);
-  printf("nz=%d\n",nz);
+  bsg_pr_info("nx=%d\n",nx);
+  bsg_pr_info("ny=%d\n",ny);
+  bsg_pr_info("nz=%d\n",nz);
   int c0 = 2;
   int c1 = 4;
 
@@ -86,7 +89,9 @@ int jacobi_multipod (int argc, char **argv)
   hb_mc_pod_id_t pod;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
-    printf("Loading program for pod %d\n", pod);
+      if (pod % 2 == 1) continue;
+
+    bsg_pr_info("Loading program for pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
@@ -95,7 +100,7 @@ int jacobi_multipod (int argc, char **argv)
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, N * sizeof(float), &d_Anext));
 
     // DMA transfer;
-    printf("Transferring data: pod %d\n", pod);
+    bsg_pr_info("Transferring data: pod %d\n", pod);
     std::vector<hb_mc_dma_htod_t> htod_job;
     htod_job.push_back({d_A0, A0, N*sizeof(float)});
     BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_job.data(), htod_job.size()));
@@ -108,15 +113,18 @@ int jacobi_multipod (int argc, char **argv)
     uint32_t cuda_argv[CUDA_ARGC] = {c0, c1, d_A0, d_Anext, nx, ny, nz, pod};
 
     // Enqueue kernel.
-    printf("Enqueue Kernel: pod %d\n", pod);
+    bsg_pr_info("Enqueue Kernel: pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_kernel_enqueue(&device, grid_dim, tg_dim, "kernel", CUDA_ARGC, cuda_argv));
   }
 
 
   // Launch pods;
-  printf("Launching all pods\n");
+  bsg_pr_info("Launching all pods\n");
+  auto start = std::chrono::high_resolution_clock::now();
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
-
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Time: " << duration.count() << " us" << std::endl; 
 
 
   // Read from devices;
@@ -124,7 +132,9 @@ int jacobi_multipod (int argc, char **argv)
   float *actual_Anext = (float*) malloc(N*sizeof(float));
 
   hb_mc_device_foreach_pod_id(&device, pod) {
-    printf("Reading results: pods %d\n", pod);
+      if (pod % 2 == 1) continue;
+
+    bsg_pr_info("Reading results: pods %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
 
     // clear;
@@ -146,7 +156,7 @@ int jacobi_multipod (int argc, char **argv)
       int y = i / (nx*nz);
       int z = i % nz;
       if (actual != expected) {
-        printf("mismatch: (%d %d %d) actual=%f, expected=%f\n", x, y, z, actual, expected);
+        bsg_pr_info("mismatch: (%d %d %d) actual=%f, expected=%f\n", x, y, z, actual, expected);
         fail = true;
       }
     }

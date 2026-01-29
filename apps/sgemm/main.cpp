@@ -10,6 +10,9 @@
 #include <bsg_manycore_regression.h>
 #include <bsg_manycore_eva.h>
 
+#include <chrono>
+#include <iostream>
+
 #define ALLOC_NAME "default_allocator"
 
 void host_mm(float *result, float *mat1, float *mat2)
@@ -66,6 +69,7 @@ int sgemm_multipod(int argc, char **argv)
   hb_mc_pod_id_t pod;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
+      if (pod % 2 == 1) continue;
     printf("Loading program for pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
@@ -95,7 +99,11 @@ int sgemm_multipod(int argc, char **argv)
 
   // Launch pods;
   printf("Launching all pods\n");
+  auto start = std::chrono::high_resolution_clock::now();
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
+      auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Time: " << duration.count() << " us" << std::endl; 
 
 
   // Read from devices;
@@ -103,6 +111,7 @@ int sgemm_multipod(int argc, char **argv)
   float *actual_result = (float*) malloc(NITER*N*N*sizeof(float));
 
   hb_mc_device_foreach_pod_id(&device, pod) {
+      if (pod % 2 == 1) continue;
     printf("Reading results: pods %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
 

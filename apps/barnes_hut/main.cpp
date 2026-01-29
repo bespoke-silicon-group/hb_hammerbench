@@ -13,6 +13,8 @@
 #include "HBBody.hpp"
 #include "HBNode.hpp"
 
+#include <chrono>
+
 #define ALLOC_NAME "default_allocator"
 
 // Constants;
@@ -114,7 +116,7 @@ void insert_into_tree(
   float new_center[3] = {0,0,0};
   find_new_center(new_center, curr_center, curr_radius, oct_idx);
   /*
-  printf("insert_into_tree: body_idx=%d, pos=(%f,%f,%f), center=(%f,%f,%f)\n",
+  bsg_pr_info("insert_into_tree: body_idx=%d, pos=(%f,%f,%f), center=(%f,%f,%f)\n",
     body_idx,
     bodies[body_idx].pos[0],
     bodies[body_idx].pos[1],
@@ -127,7 +129,7 @@ void insert_into_tree(
   
   if (nodes[curr_node_idx].is_leaf[oct_idx]==1) {
     /*
-    printf("insert_into_tree: split. body_idx=%d, curr_node_idx=%d, oct_idx=%d, rad=%f\n",
+    bsg_pr_info("insert_into_tree: split. body_idx=%d, curr_node_idx=%d, oct_idx=%d, rad=%f\n",
       body_idx,
       curr_node_idx,
       oct_idx,
@@ -156,7 +158,7 @@ void insert_into_tree(
     if (nodes[curr_node_idx].child[oct_idx] == -1) {
       // insert body here;
       /*
-      printf("insert_into_tree: insert body here. body_idx=%d, curr_node_idx=%d, oct_idx=%d\n",
+      bsg_pr_info("insert_into_tree: insert body here. body_idx=%d, curr_node_idx=%d, oct_idx=%d\n",
         body_idx, curr_node_idx, oct_idx);
       */
       nodes[curr_node_idx].is_leaf[oct_idx] = 1;
@@ -164,7 +166,7 @@ void insert_into_tree(
     } else {
       // traverse down;
       /*
-      printf("insert_into_tree: traverse down. body_idx=%d, curr_node_idx=%d, oct_idx=%d\n",
+      bsg_pr_info("insert_into_tree: traverse down. body_idx=%d, curr_node_idx=%d, oct_idx=%d\n",
         body_idx, curr_node_idx, oct_idx);
       */
       int next_node_idx = nodes[curr_node_idx].child[oct_idx];
@@ -192,7 +194,7 @@ void report_tree(std::vector<Node> nodes) {
         }
       }
     }
-    printf("node_id=%d, leaf=%d, empty=%d, node=%d\n", (int) id, num_leaf, num_empty, num_node);
+    bsg_pr_info("node_id=%d, leaf=%d, empty=%d, node=%d\n", (int) id, num_leaf, num_empty, num_node);
   }
 }
 
@@ -323,6 +325,7 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
 {
   size_t max_stack_size = 0;
   for (size_t b = 0; b < bodies.size(); b++) {
+    //bsg_pr_info("b=%d\n",b);
     std::vector<int> stack;
     Body curr_body = bodies[b];
     
@@ -339,7 +342,7 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
 
     while (!stack.empty()) {
       int curr_node_id = stack.back();
-      //printf("curr_node_id: %d\n", curr_node_id);
+      //bsg_pr_info("curr_node_id: %d\n", curr_node_id);
       stack.pop_back();
       Node curr_node = nodes[curr_node_id]; 
 
@@ -350,14 +353,14 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
       delta[2] = curr_body.pos[2] - curr_node.co_pos[2];
       float curr_diamsq = itolsq * curr_node.diamsq;
       float distsq = dist2(delta[0], delta[1], delta[2]);   
-      //printf("curr_node.co_pos[0]=%f\n", curr_node.co_pos[0]); 
-      //printf("curr_node.co_pos[1]=%f\n", curr_node.co_pos[1]); 
-      //printf("curr_node.co_pos[2]=%f\n", curr_node.co_pos[2]); 
-      //printf("curr_node.diamsq=%f\n", curr_node.diamsq); 
-      //printf("distsq=%f, curr_diamsq=%f\n", distsq, curr_diamsq); 
+      //bsg_pr_info("curr_node.co_pos[0]=%f\n", curr_node.co_pos[0]); 
+      //bsg_pr_info("curr_node.co_pos[1]=%f\n", curr_node.co_pos[1]); 
+      //bsg_pr_info("curr_node.co_pos[2]=%f\n", curr_node.co_pos[2]); 
+      //bsg_pr_info("curr_node.diamsq=%f\n", curr_node.diamsq); 
+      //bsg_pr_info("distsq=%f, curr_diamsq=%f\n", distsq, curr_diamsq); 
       if (distsq >= curr_diamsq) {
         // far away;
-        //printf("far away\n");
+        //bsg_pr_info("far away\n");
         float node_force[3];
         updateForce(node_force, delta, distsq, curr_node.co_mass);
         curr_body.acc[0] += node_force[0];
@@ -414,7 +417,7 @@ void calculate_force(std::vector<Node>& nodes, std::vector<Body>& bodies)
     bodies[b].acc[2] = curr_body.acc[2];
   }
 
-  printf("max_stack_size = %d\n", max_stack_size);
+  bsg_pr_info("max_stack_size = %d\n", max_stack_size);
 }
 
 
@@ -430,9 +433,9 @@ int barneshut_multipod(int argc, char ** argv) {
   int nbodies = NBODIES;
   int numpods = NUMPODS;
   int pod_id = PODID;
-  printf("nbodies=%d\n", nbodies);
-  printf("numpods=%d\n", numpods);
-  printf("pod_id=%d\n", pod_id);
+  bsg_pr_info("nbodies=%d\n", nbodies);
+  bsg_pr_info("numpods=%d\n", numpods);
+  bsg_pr_info("pod_id=%d\n", pod_id);
 
 
   // Generate Input bodies;
@@ -442,7 +445,7 @@ int barneshut_multipod(int argc, char ** argv) {
   // Print bodies;
   /*
   for (int i = 0; i < bodies.size(); i++) {
-    printf("p=(%f,%f,%f) v=(%f,%f,%f)\n",
+    bsg_pr_info("p=(%f,%f,%f) v=(%f,%f,%f)\n",
       bodies[i].pos0, bodies[i].pos1, bodies[i].pos2,
       bodies[i].vel0, bodies[i].vel1, bodies[i].vel2);
   }
@@ -462,11 +465,11 @@ int barneshut_multipod(int argc, char ** argv) {
   for (int d = 0; d < 3; d++) {
     pcenter[d] = (pmax[d] + pmin[d]) / 2;
   }
-  printf("center = (%f, %f, %f)\n", pcenter[0], pcenter[1], pcenter[2]);
+  bsg_pr_info("center = (%f, %f, %f)\n", pcenter[0], pcenter[1], pcenter[2]);
   
   // radius;
   float radius = std::max(std::max(pmax[0]-pmin[0], pmax[1]-pmin[1]),pmax[2]-pmin[2]) / 2.0f;
-  printf("radius = %f\n", radius);
+  bsg_pr_info("radius = %f\n", radius);
   float diameter = radius*2.0f;
   float diamsq = diameter*diameter;
 
@@ -482,7 +485,7 @@ int barneshut_multipod(int argc, char ** argv) {
     insert_into_tree(bodies, i, nodes, 0, radius, pcenter);
   }
 
-  printf("nodes.size() = %d\n", nodes.size());
+  bsg_pr_info("nodes.size() = %d\n", nodes.size());
 
   // Report tree;
   //report_tree(nodes);
@@ -490,7 +493,7 @@ int barneshut_multipod(int argc, char ** argv) {
   // Calculate center-of-mass for nodes;
   for (size_t i = 0; i < nodes.size(); i++) {
     center_of_mass(nodes, bodies, i);
-    //printf("node_id=%d, mass=(%f) pos=(%f,%f,%f)\n", i, nodes[i].co_mass, nodes[i].co_pos[0], nodes[i].co_pos[1], nodes[i].co_pos[2]);
+    //bsg_pr_info("node_id=%d, mass=(%f) pos=(%f,%f,%f)\n", i, nodes[i].co_mass, nodes[i].co_pos[0], nodes[i].co_pos[1], nodes[i].co_pos[2]);
   }
 
 
@@ -510,8 +513,9 @@ int barneshut_multipod(int argc, char ** argv) {
 
   hb_mc_device_foreach_pod_id(&device, pod)
   {
+if (pod % 2 == 1) continue;
     // Loading program;
-    printf("Loading program for pod %d\n", pod);
+    bsg_pr_info("Loading program for pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
@@ -562,23 +566,27 @@ int barneshut_multipod(int argc, char ** argv) {
     };
 
     // Enqueue kernel;
-    printf("Enqueing kernel: pod %d\n", pod);
+    bsg_pr_info("Enqueing kernel: pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_kernel_enqueue(&device, grid_dim, tg_dim, "kernel", CUDA_ARGC, cuda_argv));
   }
 
   // calculate force
-  calculate_force(nodes, bodies);
+  //calculate_force(nodes, bodies);
 
   // Launch pods;
-  printf("Launching all pods\n");
+  bsg_pr_info("Launching all pods\n");
+auto start = std::chrono::high_resolution_clock::now();
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
-
+      auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Time: " << duration.count() << " us" << std::endl; 
 
 
 
   // copy bodies from device;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
+if (1) continue;
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     HBBody* next_hbbodies = (HBBody *) malloc(bodies.size()*sizeof(HBBody));
     std::vector<hb_mc_dma_dtoh_t> dtoh_job;
@@ -593,7 +601,7 @@ int barneshut_multipod(int argc, char ** argv) {
 
     float serror;
     for (int b = body_start; b < body_end; b++) {
-      printf("b=%d, HB acc=(%f %f %f), x86 acc=(%f %f %f)\n",
+      bsg_pr_info("b=%d, HB acc=(%f %f %f), x86 acc=(%f %f %f)\n",
         b,
         next_hbbodies[b].acc[0], 
         next_hbbodies[b].acc[1], 
@@ -609,7 +617,7 @@ int barneshut_multipod(int argc, char ** argv) {
       serror += acc_diff1 * acc_diff1;
       serror += acc_diff2 * acc_diff2;
 
-      printf("b=%d, HB vel=(%f %f %f), x86 vel=(%f %f %f)\n",
+      bsg_pr_info("b=%d, HB vel=(%f %f %f), x86 vel=(%f %f %f)\n",
         b,
         next_hbbodies[b].vel[0], 
         next_hbbodies[b].vel[1], 
@@ -626,7 +634,7 @@ int barneshut_multipod(int argc, char ** argv) {
       serror += vel_diff2 * vel_diff2;
     }
     
-    printf("serror = %f\n", serror);
+    bsg_pr_info("serror = %f\n", serror);
     if (serror > 0.01f) {
       return HB_MC_FAIL;
     }

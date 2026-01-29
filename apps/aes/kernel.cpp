@@ -35,7 +35,7 @@ int kernel(struct AES_ctx *ctx, uint8_t* buf, size_t length, int niters, int pod
 {
   bsg_barrier_tile_group_init();
   bsg_barrier_tile_group_sync();
-  warmup(ctx, buf, length, niters);
+  //warmup(ctx, buf, length, niters);
   bsg_fence();
 
   // Kernel start;
@@ -43,6 +43,15 @@ int kernel(struct AES_ctx *ctx, uint8_t* buf, size_t length, int niters, int pod
   //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
   //bsg_cuda_print_stat_kernel_start();
 
+  //// calculate global_x,y;
+  //int cfg_pod;
+  //asm volatile ("csrr %[cfg_pod], 0x360" : [cfg_pod] "=r" (cfg_pod));
+  //int pod_x = cfg_pod & 0x7;
+  //int pod_y = (cfg_pod & 0x78) >> 3; // 1 = podrow 0, 3 = podrow1;
+  //int global_x = (pod_x<<4) + __bsg_x;
+  //int global_y = (pod_y<<3) + __bsg_y;
+  //
+  //bsg_printf("Pod coord: %d, %d\n", pod_x, pod_y);
 
   for (int i = 0; i < niters; i++) {
     AES_CBC_encrypt_buffer(
