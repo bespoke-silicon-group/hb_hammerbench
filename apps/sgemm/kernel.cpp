@@ -280,6 +280,13 @@ extern "C"
 int kernel(float *mat1, float *mat2, float *result, int pod_id)
 {
   bsg_barrier_tile_group_init();
+
+  // remap coordinates;
+  uint32_t __logical_dim_x = bsg_tiles_X * 2;
+  uint32_t __logical_dim_y = bsg_tiles_Y / 2;
+  uint32_t __logical_bsg_x = __bsg_x + (__bsg_y/__logical_dim_y)*bsg_tiles_X;
+  uint32_t __logical_bsg_y = __bsg_y % __logical_dim_y;
+
   bsg_barrier_tile_group_sync();
 
 
@@ -297,23 +304,29 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
     float *curr_result = &result[N*N*iter];
 
     bsg_unroll(1)
-    for (int by = __bsg_y; by < NUM_BLOCK; by += bsg_tiles_Y) {
+    for (int by = __logical_bsg_y; by < NUM_BLOCK; by += __logical_dim_y) {
       bsg_unroll(1)
-      for (int bx = __bsg_x; bx < NUM_BLOCK; bx += bsg_tiles_X) {
+      for (int bx = __logical_bsg_x; bx < NUM_BLOCK; bx += __logical_dim_x) {
 
         // reset out
         reset_out();
 
+        // starting block id;
+        int curr_id = __logical_bsg_x % NUM_BLOCK;
+
         // Iterate
         for (int z = 0; z < NUM_BLOCK; z++) {
           // load mat1, mat2 block
-          float *src1 = &curr_mat1[(N*BLOCK_DIM*by)+(BLOCK_DIM*z)];
-          float *src2 = &curr_mat2[(N*BLOCK_DIM*z)+(BLOCK_DIM*bx)];
+          float *src1 = &curr_mat1[(N*BLOCK_DIM*by)+(BLOCK_DIM*curr_id)];
+          float *src2 = &curr_mat2[(N*BLOCK_DIM*curr_id)+(BLOCK_DIM*bx)];
           load_block(block1, src1);
           load_block(block2, src2);
 
           // compute block output
           compute_block();
+  
+          // next block ID;
+          curr_id = (curr_id+1) % NUM_BLOCK;
         } 
     
         // store block
