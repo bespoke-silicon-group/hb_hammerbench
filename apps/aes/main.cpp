@@ -39,7 +39,8 @@ int aes_multipod(int argc, char **argv)
   // Host memory;
   //uint8_t buf[NUM_TILES*NUM_ITER*MSG_LEN];
   uint8_t* buf = (uint8_t*) malloc(NUM_TILES*NUM_ITER*MSG_LEN*sizeof(uint8_t));
-  struct AES_ctx ctx[NUM_TILES*NUM_ITER];
+  //struct AES_ctx ctx[NUM_TILES*NUM_ITER];
+  struct AES_ctx* ctx = (struct AES_ctx*) malloc(NUM_TILES*NUM_ITER*sizeof(struct AES_ctx));
 
   for (int i = 0; i < NUM_TILES*NUM_ITER; i++) {
     for (int j = 0; j < MSG_LEN; j++) {
@@ -47,7 +48,7 @@ int aes_multipod(int argc, char **argv)
     }
   }
   
-  memset(ctx, 0, sizeof(ctx));
+  memset(ctx, 0, NUM_TILES*NUM_ITER*sizeof(struct AES_ctx));
   uint8_t key[AES_KEYLEN] = {0, 1, 2, 3, 4, 5, 6, 7,
                              8, 9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
   for (int i = 0; i < NUM_TILES*NUM_ITER; i++) {
@@ -88,13 +89,13 @@ if (pod % 2 == 1) continue;
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
   
     // Allocate memory on device;
-    BSG_CUDA_CALL(hb_mc_device_malloc(&device, sizeof(ctx), &d_ctx[pod]));
+    BSG_CUDA_CALL(hb_mc_device_malloc(&device, NUM_TILES*NUM_ITER*sizeof(struct AES_ctx), &d_ctx[pod]));
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, NUM_TILES*NUM_ITER*MSG_LEN*sizeof(uint8_t), &d_buf[pod]));
 
     // DMA transfer;
     bsg_pr_info("Transferring data: pod %d\n", pod);
     std::vector<hb_mc_dma_htod_t> htod_job;
-    htod_job.push_back({d_ctx[pod], &ctx[0], sizeof(ctx)});
+    htod_job.push_back({d_ctx[pod], &ctx[0], NUM_TILES*NUM_ITER*sizeof(struct AES_ctx)});
     htod_job.push_back({d_buf[pod], &buf[0], NUM_TILES*NUM_ITER*MSG_LEN*sizeof(uint8_t)});
     BSG_CUDA_CALL(hb_mc_device_transfer_data_to_device(&device, htod_job.data(), htod_job.size()));
 
