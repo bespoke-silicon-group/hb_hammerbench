@@ -37,7 +37,7 @@ inline void load_block( float* dst,
                         float bsg_attr_remote * bsg_attr_noalias src)
 {
   bsg_unroll(1)
-  for (int y = 0; y < BLOCK_DIM; y+=2) {
+  for (int y = 0; y < BLOCK_DIM; y+=1) {
     register float tmp00 =  src[(N*y)+0];
     register float tmp01 =  src[(N*y)+1];
     register float tmp02 =  src[(N*y)+2];
@@ -54,7 +54,7 @@ inline void load_block( float* dst,
     register float tmp13 =  src[(N*y)+13];
     register float tmp14 =  src[(N*y)+14];
     register float tmp15 =  src[(N*y)+15];
-
+/*
     register float tmp16 =  src[(N*(y+1))+0];
     register float tmp17 =  src[(N*(y+1))+1];
     register float tmp18 =  src[(N*(y+1))+2];
@@ -71,6 +71,7 @@ inline void load_block( float* dst,
     register float tmp29 =  src[(N*(y+1))+13];
     register float tmp30 =  src[(N*(y+1))+14];
     register float tmp31 =  src[(N*(y+1))+15];
+*/
     asm volatile ("" ::: "memory");
     dst[(BLOCK_DIM*y)+0] = tmp00;
     dst[(BLOCK_DIM*y)+1] = tmp01;
@@ -88,7 +89,7 @@ inline void load_block( float* dst,
     dst[(BLOCK_DIM*y)+13] = tmp13;
     dst[(BLOCK_DIM*y)+14] = tmp14;
     dst[(BLOCK_DIM*y)+15] = tmp15;
-
+/*
     dst[(BLOCK_DIM*(y+1))+0] = tmp16;
     dst[(BLOCK_DIM*(y+1))+1] = tmp17;
     dst[(BLOCK_DIM*(y+1))+2] = tmp18;
@@ -105,6 +106,7 @@ inline void load_block( float* dst,
     dst[(BLOCK_DIM*(y+1))+13] = tmp29;
     dst[(BLOCK_DIM*(y+1))+14] = tmp30;
     dst[(BLOCK_DIM*(y+1))+15] = tmp31;
+*/
   }
 }
 
@@ -112,7 +114,7 @@ inline void load_block( float* dst,
 // Store output to DRAM
 inline void store_block(float* dst) {
   bsg_unroll(1)
-  for (int y = 0; y < BLOCK_DIM; y+=2) {
+  for (int y = 0; y < BLOCK_DIM; y+=1) {
     register float tp00 =  block_out[(BLOCK_DIM*y)+0];
     register float tp01 =  block_out[(BLOCK_DIM*y)+1];
     register float tp02 =  block_out[(BLOCK_DIM*y)+2];
@@ -129,7 +131,7 @@ inline void store_block(float* dst) {
     register float tp13 =  block_out[(BLOCK_DIM*y)+13];
     register float tp14 =  block_out[(BLOCK_DIM*y)+14];
     register float tp15 =  block_out[(BLOCK_DIM*y)+15];
-
+/*
     register float tp16 =  block_out[(BLOCK_DIM*(y+1))+0];
     register float tp17 =  block_out[(BLOCK_DIM*(y+1))+1];
     register float tp18 =  block_out[(BLOCK_DIM*(y+1))+2];
@@ -146,6 +148,7 @@ inline void store_block(float* dst) {
     register float tp29 =  block_out[(BLOCK_DIM*(y+1))+13];
     register float tp30 =  block_out[(BLOCK_DIM*(y+1))+14];
     register float tp31 =  block_out[(BLOCK_DIM*(y+1))+15];
+*/
     asm volatile ("" ::: "memory");
     dst[(N*y)+0] = tp00; 
     dst[(N*y)+1] = tp01; 
@@ -163,7 +166,7 @@ inline void store_block(float* dst) {
     dst[(N*y)+13] = tp13; 
     dst[(N*y)+14] = tp14; 
     dst[(N*y)+15] = tp15; 
-
+/*
     dst[(N*(y+1))+0] = tp16; 
     dst[(N*(y+1))+1] = tp17; 
     dst[(N*(y+1))+2] = tp18; 
@@ -180,6 +183,7 @@ inline void store_block(float* dst) {
     dst[(N*(y+1))+13] = tp29; 
     dst[(N*(y+1))+14] = tp30; 
     dst[(N*(y+1))+15] = tp31; 
+*/
   }
 }
 
