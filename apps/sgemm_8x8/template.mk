@@ -6,7 +6,7 @@ HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 
 tile-x?=$(TX)
 tile-y?=$(TY)
-override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/bigblade_pod_X1Y1_ruche_X16Y8_hbm_one_pseudo_channel
+#override BSG_MACHINE_PATH = $(REPLICANT_PATH)/machines/bigblade_pod_X1Y1_ruche_X16Y8_hbm_one_pseudo_channel
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 

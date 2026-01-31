@@ -38,8 +38,8 @@ int sgemm_multipod(int argc, char **argv)
   const char *bin_path = argv[1];
 
   // parameters;
-  printf("N=%d\n", N);
-  printf("NITER=%d\n", NITER);
+  bsg_pr_info("N=%d\n", N);
+  bsg_pr_info("NITER=%d\n", NITER);
 
   
 
@@ -70,7 +70,7 @@ int sgemm_multipod(int argc, char **argv)
   hb_mc_device_foreach_pod_id(&device, pod)
   {
       if (pod % 2 == 1) continue;
-    printf("Loading program for pod %d\n", pod);
+    bsg_pr_info("Loading program for pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
@@ -79,7 +79,7 @@ int sgemm_multipod(int argc, char **argv)
     #define CACHE_LINE_WORDS 8
     eva_t temp_device1, temp_device2;
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, CACHE_LINE_WORDS*sizeof(int), &temp_device1));
-    printf("temp Addr: %x\n", temp_device1);
+    bsg_pr_info("temp Addr: %x\n", temp_device1);
     int align_size = (32)-1-((temp_device1>>2)%(CACHE_LINE_WORDS*32)/CACHE_LINE_WORDS);
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, align_size*sizeof(int)*CACHE_LINE_WORDS, &temp_device2));
 
@@ -90,7 +90,7 @@ int sgemm_multipod(int argc, char **argv)
     BSG_CUDA_CALL(hb_mc_device_malloc(&device, NITER*N*N*sizeof(float), &d_result));
 
     // DMA transfer;
-    printf("Transferring data: pod %d\n", pod);
+    bsg_pr_info("Transferring data: pod %d\n", pod);
     std::vector<hb_mc_dma_htod_t> htod_job;
     htod_job.push_back({d_mat1, mat1, NITER*N*N*sizeof(float)});
     htod_job.push_back({d_mat2, mat2, NITER*N*N*sizeof(float)});
@@ -103,12 +103,12 @@ int sgemm_multipod(int argc, char **argv)
     uint32_t cuda_argv[CUDA_ARGC] = {d_mat1, d_mat2, d_result, pod};
 
     // Enqueue kernel
-    printf("Enqueue Kernel: pod %d\n", pod);
+    bsg_pr_info("Enqueue Kernel: pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_kernel_enqueue (&device, grid_dim, tg_dim, "kernel", CUDA_ARGC, cuda_argv));
   }
 
   // Launch pods;
-  printf("Launching all pods\n");
+  bsg_pr_info("Launching all pods\n");
   auto start = std::chrono::high_resolution_clock::now();
   BSG_CUDA_CALL(hb_mc_device_pods_kernels_execute(&device));
       auto end = std::chrono::high_resolution_clock::now();
@@ -122,7 +122,7 @@ int sgemm_multipod(int argc, char **argv)
 
   hb_mc_device_foreach_pod_id(&device, pod) {
       if (pod % 2 == 1) continue;
-    printf("Reading results: pods %d\n", pod);
+    bsg_pr_info("Reading results: pods %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
 
     // clear;
@@ -143,12 +143,12 @@ int sgemm_multipod(int argc, char **argv)
       float diff = expected - actual;
       sse += diff*diff;
       if (diff != 0.0f) {
-        printf("[%d] actual=%f, expected=%f\n", i, actual, expected);
+        bsg_pr_info("[%d] actual=%f, expected=%f\n", i, actual, expected);
       }
     }
 
     if (sse >= .01f) {
-      printf("Matrix Mismatch. SSE= %f\n", sse);
+      bsg_pr_info("Matrix Mismatch. SSE= %f\n", sse);
       fail = true;
     }
   }

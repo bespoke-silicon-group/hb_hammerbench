@@ -233,6 +233,12 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
         // store block
         float *dst = &curr_result[(N*BLOCK_DIM*by)+(BLOCK_DIM*bx)];
         store_block(dst);
+
+        // improve overall wormhole link fairness and overall performance
+        // must be done once after store_block
+        bsg_fence();
+        bsg_barrier_tile_group_sync();
+
       }
     }
   }
