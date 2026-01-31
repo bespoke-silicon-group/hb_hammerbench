@@ -286,8 +286,9 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
   bsg_barrier_tile_group_init();
 
   // remap coordinates;
-  uint32_t __logical_dim_x = bsg_tiles_X * 2;
-  uint32_t __logical_dim_y = bsg_tiles_Y / 2;
+  #define UNFOLD 1
+  uint32_t __logical_dim_x = bsg_tiles_X * UNFOLD;
+  uint32_t __logical_dim_y = bsg_tiles_Y / UNFOLD;
   uint32_t __logical_bsg_x = __bsg_x + (__bsg_y/__logical_dim_y)*bsg_tiles_X;
   uint32_t __logical_bsg_y = __bsg_y % __logical_dim_y;
 
