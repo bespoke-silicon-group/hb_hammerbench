@@ -282,8 +282,9 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
   bsg_barrier_tile_group_init();
 
   // remap coordinates;
-  uint32_t __logical_dim_x = bsg_tiles_X * 2;
-  uint32_t __logical_dim_y = bsg_tiles_Y / 2;
+  constexpr int unfold = (bsg_tiles_Y > 1) ? 2 : 1;
+  uint32_t __logical_dim_x = bsg_tiles_X * unfold;
+  uint32_t __logical_dim_y = bsg_tiles_Y / unfold;
   uint32_t __logical_bsg_x = __bsg_x + (__bsg_y/__logical_dim_y)*bsg_tiles_X;
   uint32_t __logical_bsg_y = __bsg_y % __logical_dim_y;
 
@@ -332,6 +333,12 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
         // store block
         float *dst = &curr_result[(N*BLOCK_DIM*by)+(BLOCK_DIM*bx)];
         store_block(dst);
+
+        // improve overall wormhole link fairness and overall performance
+        // must be done once after store_block
+        bsg_fence();
+        bsg_barrier_tile_group_sync();
+
       }
     }
   }
