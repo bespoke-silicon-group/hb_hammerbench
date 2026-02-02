@@ -143,14 +143,15 @@ void compute (
   for (int ii = 0; ii < nz; ii += LOCAL_SIZE) {
 
     copySelf(dram_self, a_self, ii, nz);
-    prefetch_dram(a_left, a_right, a_up, a_down, ii);
+    //prefetch_dram(a_left, a_right, a_up, a_down, ii);
     bsg_fence();
     bsg_barrier_tile_group_sync();
 
     // compute 4 at a time
     bsg_unroll(1)
     for (int i_orig = 0; i_orig < LOCAL_SIZE; i_orig += 4) {
-      int i = (i_orig + (__bsg_x * (4 * 8))) % LOCAL_SIZE;
+      constexpr int ratio = (bsg_tiles_X < 8)? 8 : 4;
+      int i = (i_orig + (__bsg_x * (ratio * 8))) % LOCAL_SIZE;
       int self_idx = i+1;
       register float left0, left1, left2, left3;
       register float right0, right1, right2, right3;
