@@ -157,10 +157,6 @@ void compute (
       register float up0, up1, up2, up3;
       register float down0, down1, down2, down3;
 
-      register float bot, self0, self1, self2, self3, top;
-      register float next0, next1, next2, next3;
-
-    for (int j = 0; j < 8; j++) {
       if (a_left == 0) {
         left0 = 0.0f;
         left1 = 0.0f;
@@ -209,17 +205,17 @@ void compute (
         down3 = a_down[i+3];
       }
 
-      bot = a_self[self_idx-1];
-      self0 = a_self[self_idx];
-      self1 = a_self[self_idx+1];
-      self2 = a_self[self_idx+2];
-      self3 = a_self[self_idx+3];
-      top = a_self[self_idx+4];
+      register float bot = a_self[self_idx-1];
+      register float self0 = a_self[self_idx];
+      register float self1 = a_self[self_idx+1];
+      register float self2 = a_self[self_idx+2];
+      register float self3 = a_self[self_idx+3];
+      register float top = a_self[self_idx+4];
 
-      next0 = left0 + right0 + up0 + down0 + bot   + self1;
-      next1 = left1 + right1 + up1 + down1 + self0 + self2;
-      next2 = left2 + right2 + up2 + down2 + self1 + self3;
-      next3 = left3 + right3 + up3 + down3 + self2 + top;
+      register float next0 = left0 + right0 + up0 + down0 + bot   + self1;
+      register float next1 = left1 + right1 + up1 + down1 + self0 + self2;
+      register float next2 = left2 + right2 + up2 + down2 + self1 + self3;
+      register float next3 = left3 + right3 + up3 + down3 + self2 + top;
       
       self0 = self0 * c0f;
       self1 = self1 * c0f;
@@ -242,7 +238,7 @@ void compute (
         : [rd] "=f" (next3) \
         : [rs1] "f" (next3), [rs2] "f" (c1f), [rs3] "f" (self3) \
       );
-    }
+
       dram_next[ii+i] = next0; 
       dram_next[ii+i+1] = next1; 
       dram_next[ii+i+2] = next2; 
