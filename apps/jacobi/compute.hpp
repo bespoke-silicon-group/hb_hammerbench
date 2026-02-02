@@ -148,7 +148,7 @@ void compute (
     bsg_barrier_tile_group_sync();
 
     // compute 4 at a time
-    //bsg_unroll(1)
+    bsg_unroll(1)
     for (int i_orig = 0; i_orig < LOCAL_SIZE; i_orig += 4) {
       int i = (i_orig + (__bsg_x * (4 * 8))) % LOCAL_SIZE;
       int self_idx = i+1;
