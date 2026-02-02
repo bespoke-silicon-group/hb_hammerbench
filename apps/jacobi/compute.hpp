@@ -22,8 +22,11 @@ void copySelf(
   // set middle
   bsg_unroll(1)
   for (int i = 0; i < (LOCAL_SIZE); i+=16) {
-    float *temp_dst = &dst[1+i];
-    float *temp_src = &src[start_idx+i];
+
+    int i_tmp = (i + (__bsg_x * (2 * 8))) % LOCAL_SIZE;
+
+    float *temp_dst = &dst[1+i_tmp];
+    float *temp_src = &src[start_idx+i_tmp];
 
     register float tmp00 =  temp_src[0];
     register float tmp01 =  temp_src[1];
@@ -84,7 +87,7 @@ void prefetch_dram(
   if (((uintptr_t) a_left) & 0x80000000) {
     float *ptr = &a_left[start_idx];
     bsg_unroll(1)
-    for (int i = 0; i < LOCAL_SIZE; i+=16) {
+    for (int i = 0; i < LOCAL_SIZE; i+=8) {
       asm volatile ("lw x0, %[p]" :: [p] "m" (ptr[i]));
     }
   }
@@ -93,7 +96,7 @@ void prefetch_dram(
   if (((uintptr_t) a_right) & 0x80000000) {
     float * ptr = &a_right[start_idx];
     bsg_unroll(1)
-    for (int i = 0; i < LOCAL_SIZE; i+=16) {
+    for (int i = 0; i < LOCAL_SIZE; i+=8) {
       asm volatile ("lw x0, %[p]" :: [p] "m" (ptr[i]));
     }
   }
@@ -102,7 +105,7 @@ void prefetch_dram(
   if (((uintptr_t) a_up) & 0x80000000) {
     float * ptr = &a_up[start_idx];
     bsg_unroll(1)
-    for (int i = 0; i < LOCAL_SIZE; i++) {
+    for (int i = 0; i < LOCAL_SIZE; i+=8) {
       asm volatile ("lw x0, %[p]" :: [p] "m" (ptr[i]));
     }
   }
@@ -111,7 +114,7 @@ void prefetch_dram(
   if (((uintptr_t) a_down) & 0x80000000) {
     float * ptr = &a_down[start_idx];
     bsg_unroll(1)
-    for (int i = 0; i < LOCAL_SIZE; i++) {
+    for (int i = 0; i < LOCAL_SIZE; i+=8) {
       asm volatile ("lw x0, %[p]" :: [p] "m" (ptr[i]));
     }
   }
@@ -146,7 +149,8 @@ void compute (
 
     // compute 4 at a time
     bsg_unroll(1)
-    for (int i = 0; i < LOCAL_SIZE; i += 4) {
+    for (int i_orig = 0; i_orig < LOCAL_SIZE; i_orig += 4) {
+      int i = (i_orig + (__bsg_x * (4 * 8))) % LOCAL_SIZE;
       int self_idx = i+1;
       register float left0, left1, left2, left3;
       register float right0, right1, right2, right3;
