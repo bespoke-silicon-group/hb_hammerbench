@@ -133,7 +133,8 @@ load_strided(FP32Complex *dst, const FP32Complex *src) {
 
 inline void
 load_sequential(FP32Complex *dst, const FP32Complex *src) {
-    for (int i = 0; i < NUM_POINTS; i += 4) {
+    for (int i_orig = 0; i_orig < NUM_POINTS; i_orig += 4) {
+        int i = (i_orig + __bsg_x * (2 * 8)) % NUM_POINTS;
         FP32Complex tmp0 = src[i  ];
         FP32Complex tmp1 = src[i+1];
         FP32Complex tmp2 = src[i+2];
@@ -362,7 +363,8 @@ void twiddle_scaling( FP32Complex *local_lst,
   float res2_re, res2_im, res2_re_temp, res2_im_temp;
   float res3_re, res3_im, res3_re_temp, res3_im_temp;
 
-  for (int c = 0; c < NUM_POINTS; c += 4) {
+  for (int c_orig = 0; c_orig < NUM_POINTS; c_orig += 4) {
+    int c = (c_orig + __bsg_x * (2 * 8)) % NUM_POINTS;
     w0_re = tw[c+0].real();
     w0_im = tw[c+0].imag();
     w1_re = tw[c+1].real();
