@@ -98,7 +98,7 @@ int fft_multipod (int argc, char **argv)
   hb_mc_pod_id_t pod;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
-      if (pod % 2 == 1) continue;
+      //if (pod % 2 == 1) continue;
     bsg_pr_info("Loading program for pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
@@ -159,7 +159,7 @@ long long ns = (end.tv_sec - start.tv_sec) * 1000000000LL + (end.tv_nsec - start
   int fail = 0;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
-      if (pod % 2 == 1) continue;
+      //if (pod % 2 == 1) continue;
     bsg_pr_info("Reading from pod %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
 
