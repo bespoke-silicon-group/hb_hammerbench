@@ -134,7 +134,7 @@ static inline void list_concat(HBList* list1, HBList* list2) {
   }
 }
 
-#define NUM_ITER 2
+#define NUM_ITER 4
 
 // Kernel main;
 extern "C" int kernel(
