@@ -522,7 +522,10 @@ if (pod % 2 == 1) continue;
     // body per pod;
     int curr_pod_id = pod_id + pod;
     int body_per_pod = (nbodies+NUMPODS-1)/NUMPODS;
-    int body_start = std::min(nbodies, curr_pod_id*body_per_pod);
+    //int body_start = std::min(nbodies, curr_pod_id*body_per_pod);
+    //int body_end = std::min(nbodies, body_start+body_per_pod);
+    // tvlsi: all pods get the first partition;
+    int body_start = std::min(nbodies, 0*body_per_pod);
     int body_end = std::min(nbodies, body_start+body_per_pod);
 
     // Allocate memory on device;
@@ -596,7 +599,10 @@ if (1) continue;
     // Validate; 
     int curr_pod_id = pod_id + pod;
     int body_per_pod = (nbodies+NUMPODS-1)/NUMPODS;
-    int body_start = std::min(nbodies, curr_pod_id*body_per_pod);
+    // tvlsi: all pods get the first partition;
+    //int body_start = std::min(nbodies, curr_pod_id*body_per_pod);
+    //int body_end = std::min(nbodies, body_start+body_per_pod);
+    int body_start = std::min(nbodies, 0*body_per_pod);
     int body_end = std::min(nbodies, body_start+body_per_pod);
 
     float serror;

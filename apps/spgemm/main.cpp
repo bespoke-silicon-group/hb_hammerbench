@@ -148,8 +148,11 @@ int spgemm_multipod(int argc, char ** argv)
     BSG_CUDA_CALL(hb_mc_device_program_init(&device, bin_path, ALLOC_NAME, 0));
 
     // pod id;
-    int curr_pod_id_x = (PODID+pod) % POD_DIM_X;
-    int curr_pod_id_y = (PODID+pod) / POD_DIM_X;
+    //int curr_pod_id_x = (PODID+pod) % POD_DIM_X;
+    //int curr_pod_id_y = (PODID+pod) / POD_DIM_X;
+    //  tvlsi: all pods get the first partition;
+    int curr_pod_id_x = 0;
+    int curr_pod_id_y = 0;
 
     int row_start = std::min(curr_pod_id_y*row_per_pod,V);
     int row_end  = std::min(row_start+row_per_pod,V);
@@ -272,8 +275,11 @@ int spgemm_multipod(int argc, char ** argv)
       if (pod % 2 == 1) continue;
     bsg_pr_info("Reading results: pods %d\n", pod);
     BSG_CUDA_CALL(hb_mc_device_set_default_pod(&device, pod));
-    int curr_pod_id_x = (PODID+pod) % POD_DIM_X;
-    int curr_pod_id_y = (PODID+pod) / POD_DIM_X;
+    //int curr_pod_id_x = (PODID+pod) % POD_DIM_X;
+    //int curr_pod_id_y = (PODID+pod) / POD_DIM_X;
+    // tvlsi: all pods get the first partition;
+    int curr_pod_id_x = 0;
+    int curr_pod_id_y = 0;
     int row_start = std::min(curr_pod_id_y*row_per_pod,V);
     int row_end  = std::min(row_start+row_per_pod,V);
     int num_row = row_end-row_start;
