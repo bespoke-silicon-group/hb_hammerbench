@@ -14,7 +14,7 @@ include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 
 # number of pods participating in barrier;
-NUM_POD_X=8
+NUM_POD_X=16
 NUM_POD_Y=$(BSG_MACHINE_PODS_X)
 # Tile group DIM
 TILE_GROUP_DIM_X ?= $(tile-x)
