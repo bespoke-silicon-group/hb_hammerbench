@@ -56,8 +56,12 @@ kernel(FP32Complex * in,
       // Step 1
       for (int iter = 0; iter < (NUM_POINTS/NUM_TILES); iter++) {
         FP32Complex* input_vec = input_sq + (iter*NUM_TILES) + __bsg_id;
+        FP32Complex* input_block = input_sq + (iter*NUM_TILES);
         // load strided
-        load_strided(fft_workset, input_vec);
+        //load_strided(fft_workset, input_vec);
+        load_strided_seq(fft_workset, input_block);
+        bsg_fence();
+        bsg_barrier_tile_group_sync();
         // fft256
         fft256_specialized(fft_workset);
         // twiddle scaling

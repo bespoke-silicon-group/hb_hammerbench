@@ -132,6 +132,38 @@ load_strided(FP32Complex *dst, const FP32Complex *src) {
 }
 
 inline void
+load_strided_seq(FP32Complex *local_blk, const FP32Complex *input_blk) {
+  int x = __bsg_id % 32;
+  int y = __bsg_id / 32;
+  int target_bsg_x = (4*x) % 16;
+  int target_bsg_y = (4*x) / 16;
+  int upper_addr = (1 << REMOTE_PREFIX_SHIFT) | (target_bsg_y << REMOTE_Y_CORD_SHIFT); 
+  FP32Complex *dst0 = (FP32Complex *) (upper_addr | ((target_bsg_x+0) << REMOTE_X_CORD_SHIFT) | ((int) &input_blk[y]));
+  FP32Complex *dst1 = (FP32Complex *) (upper_addr | ((target_bsg_x+1) << REMOTE_X_CORD_SHIFT) | ((int) &input_blk[y]));
+  FP32Complex *dst2 = (FP32Complex *) (upper_addr | ((target_bsg_x+2) << REMOTE_X_CORD_SHIFT) | ((int) &input_blk[y]));
+  FP32Complex *dst3 = (FP32Complex *) (upper_addr | ((target_bsg_x+3) << REMOTE_X_CORD_SHIFT) | ((int) &input_blk[y]));
+  for (int i = 0; i < NUM_POINTS; i+=4) {
+    int src_idx = (x*4) + (128*(i+y));
+    FP32Complex *src = input_blk[src_idx];
+    FP32Complex tmp0 = src[i  ];
+    FP32Complex tmp1 = src[i+1];
+    FP32Complex tmp2 = src[i+2];
+    FP32Complex tmp3 = src[i+3];
+    asm volatile("": : :"memory");
+    dst0[0] = tmp0;
+    dst1[0] = tmp1;
+    dst2[0] = tmp2;
+    dst3[0] = tmp3;
+    asm volatile("": : :"memory");
+    dst0 += 4;
+    dst1 += 4;
+    dst2 += 4;
+    dst3 += 4;
+  }
+}
+
+
+inline void
 load_sequential(FP32Complex *dst, const FP32Complex *src) {
     for (int i_orig = 0; i_orig < NUM_POINTS; i_orig += 4) {
         int i = (i_orig + __bsg_x * (2 * 8)) % NUM_POINTS;
