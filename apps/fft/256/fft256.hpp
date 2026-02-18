@@ -132,7 +132,7 @@ load_strided(FP32Complex *dst, const FP32Complex *src) {
 }
 
 inline void
-load_strided_seq(FP32Complex *local_blk, const FP32Complex *input_blk) {
+load_strided_seq(FP32Complex *local_blk, FP32Complex *input_blk) {
   int x = __bsg_id % 32;
   int y = __bsg_id / 32;
   int target_bsg_x = (4*x) % 16;
@@ -144,7 +144,7 @@ load_strided_seq(FP32Complex *local_blk, const FP32Complex *input_blk) {
   FP32Complex *dst3 = (FP32Complex *) (upper_addr | ((target_bsg_x+3) << REMOTE_X_CORD_SHIFT) | ((int) &input_blk[y]));
   for (int i = 0; i < NUM_POINTS; i+=4) {
     int src_idx = (x*4) + (128*(i+y));
-    FP32Complex *src = input_blk[src_idx];
+    FP32Complex *src = &input_blk[src_idx];
     FP32Complex tmp0 = src[i  ];
     FP32Complex tmp1 = src[i+1];
     FP32Complex tmp2 = src[i+2];
