@@ -74,7 +74,7 @@ int aes_multipod(int argc, char **argv)
   hb_mc_device_t device;
   BSG_CUDA_CALL(hb_mc_device_init(&device, "aes_multipod", HB_MC_DEVICE_ID));
 
-  #define NUM_PODS 8
+  #define NUM_PODS 16
   eva_t d_ctx[NUM_PODS];
   eva_t d_buf[NUM_PODS];
 
