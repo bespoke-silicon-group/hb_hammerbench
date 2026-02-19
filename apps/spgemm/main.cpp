@@ -320,7 +320,7 @@ int spgemm_multipod(int argc, char ** argv)
 
 
         // try launching as many tile groups as possible on all pods
-        for (int podi = 0; podi < podc; podi++)
+        for (int podi = podc-1; podi >= 0; podi--)
         {
                 hb_mc_pod_t *pod = &(&device)->pods[podv[podi]];
                 hb_mc_tile_group_t *tg;
