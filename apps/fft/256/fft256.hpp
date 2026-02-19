@@ -138,10 +138,10 @@ load_strided_seq(FP32Complex *local_blk, FP32Complex *input_blk) {
   int target_bsg_x = (4*x) % 16;
   int target_bsg_y = (4*x) / 16;
   int upper_addr = (1 << REMOTE_PREFIX_SHIFT) | (target_bsg_y << REMOTE_Y_CORD_SHIFT); 
-  FP32Complex *dst0 = (FP32Complex *) (upper_addr | ((target_bsg_x+0) << REMOTE_X_CORD_SHIFT) | ((int) &input_blk[y]));
-  FP32Complex *dst1 = (FP32Complex *) (upper_addr | ((target_bsg_x+1) << REMOTE_X_CORD_SHIFT) | ((int) &input_blk[y]));
-  FP32Complex *dst2 = (FP32Complex *) (upper_addr | ((target_bsg_x+2) << REMOTE_X_CORD_SHIFT) | ((int) &input_blk[y]));
-  FP32Complex *dst3 = (FP32Complex *) (upper_addr | ((target_bsg_x+3) << REMOTE_X_CORD_SHIFT) | ((int) &input_blk[y]));
+  FP32Complex *dst0 = (FP32Complex *) (upper_addr | ((target_bsg_x+0) << REMOTE_X_CORD_SHIFT) | ((int) &local_blk[y]));
+  FP32Complex *dst1 = (FP32Complex *) (upper_addr | ((target_bsg_x+1) << REMOTE_X_CORD_SHIFT) | ((int) &local_blk[y]));
+  FP32Complex *dst2 = (FP32Complex *) (upper_addr | ((target_bsg_x+2) << REMOTE_X_CORD_SHIFT) | ((int) &local_blk[y]));
+  FP32Complex *dst3 = (FP32Complex *) (upper_addr | ((target_bsg_x+3) << REMOTE_X_CORD_SHIFT) | ((int) &local_blk[y]));
   for (int i = 0; i < NUM_POINTS; i+=4) {
     int src_idx = (x*4) + (128*(i+y));
     FP32Complex *src = &input_blk[src_idx];
