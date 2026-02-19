@@ -150,15 +150,10 @@ load_strided_seq(FP32Complex *local_blk, FP32Complex *input_blk) {
     FP32Complex tmp2 = src[i+2];
     FP32Complex tmp3 = src[i+3];
     asm volatile("": : :"memory");
-    dst0[0] = tmp0;
-    dst1[0] = tmp1;
-    dst2[0] = tmp2;
-    dst3[0] = tmp3;
-    asm volatile("": : :"memory");
-    dst0 += 4;
-    dst1 += 4;
-    dst2 += 4;
-    dst3 += 4;
+    dst0[i] = tmp0;
+    dst1[i] = tmp1;
+    dst2[i] = tmp2;
+    dst3[i] = tmp3;
   }
 }
 
