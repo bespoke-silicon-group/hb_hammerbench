@@ -47,6 +47,12 @@ kernel(FP32Complex * in,
     bsg_fence();
     bsg_barrier_tile_group_sync();
 
+    #if NUM_POD_Y > 2
+    int cfg_pod;
+    asm volatile ("csrr %[cfg_pod], 0x360" : [cfg_pod] "=r" (cfg_pod));
+    int curr_pod_y = ((cfg_pod & 0x78) >> 3) / 2;
+    #endif
+
     // Kernel start;
     //bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
     //bsg_cuda_print_stat_kernel_start();
@@ -62,8 +68,14 @@ kernel(FP32Complex * in,
         fft256_specialized(fft_workset);
         // twiddle scaling
         twiddle_scaling(fft_workset, tw+(((iter*NUM_TILES)+__bsg_id)*NUM_POINTS));
+        #if NUM_POD_Y > 2
+        if (curr_pod_y >= 2) bsg_barrier_tile_group_sync();
+        #endif
         // store strided
         store_strided(input_vec, fft_workset);
+        #if NUM_POD_Y > 2
+        if (curr_pod_y >= 2) bsg_barrier_tile_group_sync();
+        #endif
       }
       asm volatile("": : :"memory");
       bsg_barrier_tile_group_sync();
@@ -77,10 +89,16 @@ kernel(FP32Complex * in,
         FP32Complex* output_vec = output_sq + (iter * NUM_TILES) + __bsg_id;
         // load sequential
         load_sequential(fft_workset, input_vec);
+        #if NUM_POD_Y > 2
+        if (curr_pod_y >= 2) bsg_barrier_tile_group_sync();
+        #endif
         // fft256
         fft256_specialized(fft_workset);
         // store strided
         store_strided(output_vec, fft_workset);
+        #if NUM_POD_Y > 2
+        if (curr_pod_y >= 2) bsg_barrier_tile_group_sync();
+        #endif
       }
       bsg_barrier_tile_group_sync();
     }
