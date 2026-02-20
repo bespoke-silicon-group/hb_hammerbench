@@ -161,6 +161,7 @@ store_strided(FP32Complex *dst, const FP32Complex *src) {
         dst[strided_i + NUM_POINTS  ] = tmp1;
         dst[strided_i + NUM_POINTS*2] = tmp2;
         dst[strided_i + NUM_POINTS*3] = tmp3;
+        bsg_barrier_tile_group_sync();
     }
 }
 
