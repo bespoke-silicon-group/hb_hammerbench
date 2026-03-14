@@ -13,3 +13,6 @@ ucli.key
 dramsim3.txt
 *.pdf
 *.swp
+
+# generated experiment directories
+apps/*/N_*
