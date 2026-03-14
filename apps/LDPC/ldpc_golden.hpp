@@ -18,9 +18,7 @@ static double quantize4(double x) {
 }
 
 // Layered min-sum decoder
-// B: base graph (bg_rows x bg_cols, row-major), -1 = no edge, else = shift
-// r: channel LLR in two's complement int4 (length bg_cols * z)
-// Returns iteration count at convergence, or max_iter if didn't converge.
+
 static int golden_decode(int* B, int* r, int bg_rows, int bg_cols, int z,
                          int max_iter, int* hard_out) {
   int cols = bg_cols * z;

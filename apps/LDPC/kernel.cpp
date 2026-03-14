@@ -14,9 +14,7 @@ static int clamp4(int x) {
 static int iabs(int x) { return (x < 0) ? -x : x; }
 
 // Exact signed truncation-toward-zero division by 20 using only mul
-// (lower 32 bits). The vanilla core lacks mulh, so we use:
-//   (x * 205 + bias) >> 12,  bias = 4099 for negative x, 0 otherwise.
-// Exact for |x| <= 1009; our damping inputs satisfy |x| <= 150.
+
 static inline int div20(int x) {
   int bias = (x >> 31) & 4099;
   return (x * 205 + bias) >> 12;
@@ -45,17 +43,7 @@ __attribute__((noinline)) static void warmup(int* B, int* r, int* R_arr,
 }
 #endif
 
-// Hybrid z + edge parallel layered min-sum LDPC decoder.
-//
-// Optimizations:
-//   1. DMEM-resident L with remote pointer access.
-//   2. R_arr transposed layout for sequential edge reads.
-//   3. Per-layer barriers dropped (fence only).
-//   4. All runtime power-of-2 divisions/modulos replaced with shift/mask.
-//      z, z_per_tile, tiles_per_z are always powers of 2.
-//   5. Damping division by 20 replaced with mul-based sequence (no mulh).
-//   6. Modular sp increment via bitmask (branchless).
-//
+
 extern "C" __attribute__((noinline)) int kernel_LDPC(int* B, int* r, int* L,
                                                      int* R_arr, int* R_new_buf,
                                                      int* hard_out, int bg_rows,
