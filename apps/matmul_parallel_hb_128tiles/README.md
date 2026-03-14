@@ -1,22 +1,25 @@
-# matmul_parallel_hb
+# matmul_parallel_hb_128tiles
 
-This application implements a tiled parallel matrix multiply on HammerBlade.
+Parallel HammerBlade matrix multiply targeting full tile utilization.
 
-* `main.cpp` – host driver that allocates matrices, copies data, launches the kernel, and validates results.
-* `kernel.cpp` – tile-based kernel where each tile (core) computes one `BLOCK_DIM`×`BLOCK_DIM` submatrix of the result.
-* `Makefile`, `tests.mk` – same pattern as other hb_hammerbench apps.
-* `parse_hb_stats.py` – helper to convert HB runtime stat output into CSV for analysis.
+This app computes $C=A\times B$ in `kernel.cpp` using a task/chunk mapping that
+helps keep all tiles active (e.g., 128 tiles on a 16x8 pod) for selected `N`.
 
-`BLOCK_DIM` is currently fixed at 16; you can change it to tune for the local memory size.
+## Files
 
-## Building & running
-As with the serial app, you need a configured HammerBlade CAD environment; see `../matmul_serial_hb/README.md` for instructions.
+- `main.cpp`: host-side setup, input generation (`PATTERN`), kernel launch, and correctness check.
+- `kernel.cpp`: parallel kernel with chunked row/column task assignment.
+- `tests.mk`: test matrix for `N`, `NITER`, `PATTERN`, `warm-cache`.
+- `parse_hb_stats.py`: convert HammerBlade stats into CSV.
 
-## Optimization notes
-1. **Tile size** – `BLOCK_DIM` should be chosen so that two blocks (A and B) plus C fit in local scratch memory.
-2. **Load balance** – distribute blocks evenly over `bsg_tiles_X` × `bsg_tiles_Y`; current loop strides by tile counts.
-3. **DMA** – the current version does simple element loads; a performance version should use DMA transfers and double-buffer.
-4. **Loop unrolling** – inner multiply loops can be unrolled or use `fmaf` to utilize hardware.
-5. **Prefetching/overlap** – schedule next A/B block load while computing current partial product.
+## Build and run
 
-This app will serve as the starting point for iterative optimization (see project README).
+1. `make generate`
+2. `cd N_16__NITER_1__tile-x_16__tile-y_8__PATTERN_0__warm-cache_no`
+3. `make profile.log`
+
+## Notes
+
+- The kernel currently includes a 1x4 register-blocked inner compute path.
+- Correctness is checked in `main.cpp` against a host reference (SSE threshold).
+
