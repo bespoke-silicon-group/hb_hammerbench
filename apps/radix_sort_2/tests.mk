@@ -1,0 +1,22 @@
+
+TESTS += $(call test-name,2048,0,1,4)
+TESTS += $(call test-name,2048,0,1,8)
+TESTS += $(call test-name,2048,1,1,4)
+
+TESTS += $(call test-name,2048,1,0,4)
+TESTS += $(call test-name,8192,1,0,4)
+TESTS += $(call test-name,32768,1,0,4)
+TESTS += $(call test-name,131072,1,0,4)
+TESTS += $(call test-name,2048,0,0,4)
+TESTS += $(call test-name,8192,0,0,4)
+TESTS += $(call test-name,32768,0,0,4)
+TESTS += $(call test-name,131072,0,0,4)
+
+TESTS += $(call test-name,2048,1,0,8)
+TESTS += $(call test-name,8192,1,0,8)
+TESTS += $(call test-name,32768,1,0,8)
+TESTS += $(call test-name,131072,1,0,8)
+TESTS += $(call test-name,2048,0,0,8)
+TESTS += $(call test-name,8192,0,0,8)
+TESTS += $(call test-name,32768,0,0,8)
+TESTS += $(call test-name,131072,0,0,8)
