@@ -1,0 +1,577 @@
+# Timofey Popov
+# Parallalizing LDPC soft decision 5G standard decoding project
+# 
+# this files serves as the following
+# [x] build an encoder with BG1 and BG2
+# [x] add noise to cword
+# [x] build soft-input soft-output iterative message passing decoder decoder with BG1
+# [x] monte carlo sim what int size we should use with what level of noise
+
+
+
+# for int_bits in [4, 5, 6, 7, 8, 9]:
+#        for SNR in desired_range:
+#            for trial in 1..N:
+#                generate random payload → encode LDPC → add noise → convert to integer LLR → decode → compute errors
+
+# LDPC series by NPTEL on youtube - https://www.youtube.com/playlist?list=PLyqSpQzTE6M81HJ26ZaNv0V3ROBrcv-Kc
+# https://arxiv.org/html/2502.11053v1#S2.SS4
+
+import numpy as np
+import matplotlib as plt
+import pandas as pd
+import os
+
+DAMPING = 0.7 # int 9
+
+def main():
+    #B = pd.read_excel('bsg1_ilS0.xlsx', header=None)
+
+    B = np.loadtxt("NR_1_0_128.txt")
+    B = B.astype(int)
+    #H_BG = B.to_numpy(dtype=int)
+    H_BG = B
+    intlist = [4]
+    # sizeofInt = 4
+    max_iter = 20
+    np.set_printoptions(threshold=np.inf)
+    
+    z = 32 # expandion factor must satisfy Kb × Zc ≥ K
+    num_iter = 80
+    snr_list = [4]
+    snr = snr_list[0]
+    error_rates = np.zeros((len(intlist)))
+    iterations_avg = np.zeros((len(intlist)))
+    total_bitz = np.zeros((len(intlist)))
+    errors = np.zeros((len(intlist)))
+    H = expand_BG_matrix(H_BG, z)
+    
+    # H_test = check_cword_test(H_BG, z, H)
+
+    sizeofInt = 4
+    #msg = np.random.randint(0, 2, size=(H_BG.shape[1]-H_BG.shape[0])*z) # payload
+    #print(msg.shape)
+    msg = np.zeros(((H_BG.shape[1]-H_BG.shape[0])*z)) # payload
+    #print(msg)
+    # send to encoding
+    
+    cword = nrldpc_encode_BG1(H_BG, z, msg) 
+
+    if check_cword(H_BG, z, cword) == 0:
+        print(f"encode not valid at iteration")
+    
+    #print(check_cword(H_BG, z, cword)) # encoded correctly check
+    #print(np.shape(cword))
+    # modulate to bpsk digital
+    tx_symbols = 1 - 2 * cword
+    
+    # add gaussian noise
+    snr_db = snr
+    snr_linear = 10**(snr_db/10)
+    sigma = np.sqrt(1 / (2*snr_linear))
+    noise = sigma * np.random.randn(len(tx_symbols))
+    rx_s = tx_symbols + noise
+    #print("noisy BPSK", rx_s[:5])
+    noisy_LLR = 0.7 * (2 * rx_s) / (sigma ** 2)
+    #noisy_LLR = np.clip(2*rx_s/(sigma**2), -15, 15)
+    #print(np.shape(noisy_signal))
+    # quantize
+    #print(tx_symbols[:5])
+    #print("rx_s:", rx_s[:10])
+    #print("noisy LLR", noisy_LLR[:10])
+    #print("noisy LLRs: ", noisy_LLR[:5])
+    LLRs_q = quantize_LLR(noisy_LLR, sizeofInt, sigma)
+    #rint("quantized noisy LLRs", noisy_LLR_q[:5])
+    #print(noisy_q[:25])
+    
+    
+    #print(noisy_q)
+    # calculate llr
+    # print(H)
+    # print(LLRs_q)
+    H_flat = H.flatten()
+    # returns H matrix, flattened H matrix, and LLRs_q which are 1D
+    with open("H", 'w') as f:
+        for row in H:
+            f.write(" ".join(map(str, row)) + "\n")
+        
+    with open("H_flat", 'w') as f:
+        f.write(" ".join(map(str, H_flat)))
+        
+    with open("LLRs_q", 'w') as f:
+        f.write(" ".join(map(str, LLRs_q)))  
+    
+    return H, H_flat, LLRs_q 
+
+    #
+    # compare BER from original message c
+    # compare and print graph
+
+def bitstream_error_stats(bits1, bits2, verbose=True):
+    """
+    Compute bit mismatch statistics between two bit streams.
+
+    Returns:
+        error_rate (float) : Bit error percentage (0 → 100)
+        num_errors (int)   : Number of bit mismatches
+        total_bits (int)   : Total compared bits
+    """
+
+    bits1 = np.array(bits1).astype(int)
+    bits2 = np.array(bits2).astype(int)
+
+    # Length check
+    if len(bits1) != len(bits2):
+        min_len = min(len(bits1), len(bits2))
+
+        #if verbose:
+            #print("WARNING: Bitstreams have different lengths.")
+            #print(f"Truncating to {min_len} bits for comparison.")
+
+        bits1 = bits1[:min_len]
+        bits2 = bits2[:min_len]
+
+    # Compute errors
+    diff = bits1 != bits2
+    num_errors = np.sum(diff)
+    total_bits = len(bits1)
+
+    error_rate = (num_errors / total_bits) * 100 if total_bits > 0 else 0
+
+    if verbose:
+        #print("Bit Error Statistics")
+        #print("-------------------")
+        #print(f"Total bits   : {total_bits}")
+        #print(f"Errors       : {num_errors}")
+        #print(f"Error rate   : {error_rate:.4f}%")
+
+        # Optional debugging: show mismatch positions
+        mismatch_positions = np.where(diff)[0]
+        #if len(mismatch_positions) > 0:
+            #print("Mismatch indices (first 40):")
+            #print(mismatch_positions[:40])
+
+    return error_rate, num_errors, total_bits
+
+def nrldpc_decode_BG111(cword, B, z, max_iter=20):
+
+    m, n = B.shape
+    L = cword.copy()
+    meow = max_iter
+    # Edge indexing exactly like MATLAB sequential Ri counter
+    edge_list = []
+    for r in range(m):
+        for c in range(n):
+            if B[r,c] != -1:
+                edge_list.append((r,c))
+
+    Slen = len(edge_list)
+    #print(edge_list)
+    R = np.zeros((Slen, z))
+
+    Ri_global = 0
+
+    for it in range(max_iter):
+        Ri_global = 0
+        for lyr in range(m):
+            treg = []
+            cols = []
+            # subtract old R 
+            Ri_local = 0
+            ti = 0
+            for col in np.where(B[lyr,:] != -1)[0]:
+                shift = B[lyr,col]
+                ti = ti + 1
+                Ri_local += 1
+                L[col*z:(col+1)*z] -= R[Ri_local]
+                L_block = L[col*z:(col+1)*z]
+                treg.append(mul_sh(L_block, shift))
+                cols.append(col)
+                
+            treg = np.array(treg)
+
+            # Min-Sum 
+            absbuf = np.abs(treg)
+            min1 = np.min(absbuf, axis=0)
+            min1_pos = np.argmin(absbuf, axis=0)
+
+            if treg.shape[0] > 1:
+                part = np.partition(absbuf,1,axis=0)
+                min2 = part[1]
+            else:
+                min2 = min1
+
+            signs = np.sign(treg)
+            signs[signs == 0] = 1
+            parity = np.prod(signs, axis=0)
+            ti = 0
+            Ri_local -= ti
+            ti = 0
+            for idx in range(len(cols)):
+                out_sign = parity * signs[idx]
+                use_mag = np.where(min1_pos == idx, min2, min1)
+                treg[idx] = out_sign * use_mag
+            # column op + realign
+            for idx, col in enumerate(cols):
+                shift = B[lyr, col]
+                R[Ri_local] = mul_sh(treg[idx], z - shift) # ciolumn alignemnet
+                L[col*z:(col+1)*z] += R[Ri_local]
+                Ri_local += 1
+            # After finishing layer
+            Ri_global = Ri_local
+
+        hard = (L < 0).astype(int)
+
+        if check_cword(B,z,hard) == 1:
+            meow = it
+            break
+
+    return hard, L, meow
+
+#if check_cword(cword, H_BG, z) == 0:
+# def quantize_fl(num, sizeofInt):
+def nrldpc_decode_BG1(cword, B, z, sizeofInt, max_iter=100):
+    """
+    True 5G NR BG1 layered min-sum decoder.
+
+    llr_channel : input LLR vector length = n*z
+    B           : base graph matrix
+    z           : lifting factor
+    max_iter    : iterations
+    offset      : optional offset min-sum constant
+    """
+
+    m, n = B.shape
+    
+    # Working LLR storage
+    L = cword.copy()
+    #L = quantize_fl(L, sizeofInt)
+    # print(type(L))
+    #offset = 0.15 * np.mean(np.abs(L))
+    #print(offset)
+    #print(offset.shape)
+    offset = 2
+    max_val = 2**(sizeofInt-1) - 1
+    min_val = -2**(sizeofInt-1)
+    
+    edge_map = np.full(B.shape, -1, dtype=int)
+    edge_counter = 0
+
+    for r in range(m):
+        for c in range(n):
+            if B[r, c] != -1:
+                edge_map[r, c] = edge_counter
+                edge_counter += 1
+
+    R = np.zeros((edge_counter, z), dtype=int)
+
+    converged_iter = max_iter
+    for _ in range(max_iter):
+        for layer in range(m):
+            cols = [c for c in range(n) if B[layer,c] != -1]
+            if len(cols) == 0:
+                continue
+            local_msgs = []
+            shifts = []
+            edge_indices = []
+
+            # Remove old R messages
+            for col_idx, col in enumerate(cols):
+                shift = B[layer,col]
+                edge_idx = edge_map[layer,col]
+                R_old_shifted = np.roll(R[edge_idx], -shift)
+                # 
+                # L[col*z:(col+1)*z] -= R_old_shifted
+                # L[col*z:(col+1)*z] = np.clip(L[col*z:(col+1)*z], min_val, max_val)
+                # L
+                L_block = L[col*z:(col+1)*z] - R_old_shifted
+                L_block = np.clip(L_block, min_val, max_val)
+                L[col*z:(col+1)*z] = L_block
+                
+                local_msgs.append(np.roll(L[col*z:(col+1)*z], shift))
+                
+                shifts.append(shift)
+                edge_indices.append(edge_idx)
+            local_msgs = np.array(local_msgs)
+            
+            # Check node update
+            absbuf = np.abs(local_msgs)
+            #absbuf = 
+            
+            min1 = np.min(absbuf, axis=0)
+            min1 = np.clip(min1, min_val, max_val)
+            min1_pos = np.argmin(absbuf, axis=0)
+            if len(cols) > 1:
+                part = np.partition(absbuf, 1, axis=0)
+                min2 = part[1]
+                min2 =np.clip(min2, min_val, max_val)
+            else:
+                min2 = min1
+                min2 = np.clip(min2, min_val, max_val)
+            signs = np.sign(local_msgs)
+            signs[signs == 0] = 1
+            parity = np.prod(signs, axis=0)
+            
+            # Compute R_new first
+            R_new_list = []
+            for e_idx in range(len(cols)):
+                out_sign = parity * signs[e_idx]
+                use_mag = np.where(min1_pos == e_idx,
+                    #np.maximum(min2 - offset, 0),
+                    #np.maximum(min1 - offset, 0)
+                    np.maximum(min2, 0),
+                    np.maximum(min1, 0)
+                )
+                R_new_list.append(out_sign * use_mag)
+
+            for e_idx,col in enumerate(cols):
+                edge_idx = edge_indices[e_idx]
+                R_new = R_new_list[e_idx]
+                # R_damp = ((1 - DAMPING) * R[edge_idx] + DAMPING * R_new)
+               #  R_damp = np.clip(R_damp, min_val, max_val)
+                # R[edge_idx] = R_damp
+                R[edge_idx] = R_new
+                temp2 = L[col*z:(col+1)*z] + np.roll(R_new, -(z-shifts[e_idx]))
+                # temp =  np.clip(temp2, min_val, max_val)
+                L[col*z:(col+1)*z] = temp2
+                
+        hard = (L <= 0).astype(int)
+        # hard = quantize_fl(hard, sizeofInt)
+
+        # Syndrome check
+        if (check_cword_f(B, z, hard) == 0):
+            if (_ > 3 and sizeofInt < 9) or (sizeofInt >= 9):
+                converged_iter = _
+                #print("Converged at iteration", _)
+                break
+
+    return hard, L, converged_iter               
+        
+def quantize_LLR(L, sizeofInt, sigma):
+    match sizeofInt:
+        case 4:
+            rmax = 2
+        case 5:
+            rmax = 3
+        case 6:
+            rmax = 3
+        case 7:
+            rmax = 5
+        case 8:
+            rmax = 10
+        case 9:
+            rmax = 20
+        case default: rmax= 3
+    rmax = 3.5 * sigma
+    # input is LLR
+    max_val = 2**(sizeofInt-1) - 1
+    #rmax = 
+    # sat = 4 / sigma ** 2
+    # print(sat)
+    # min_val = -2**(sizeofInt-1)
+    # scale = max_val / sat
+    # Lr = np.floor(L*scale)
+    # Lc = np.clip(L, -sat, sat)
+    
+    # Lq = np.round(Lc * scale)
+    # Lq = np.clip(Lr, min_val, max_val)
+    
+    Lq = np.floor(L / rmax * max_val)
+    Lq = np.clip(Lq, -(max_val+1), max_val)
+    
+    match sizeofInt:
+        case 4:
+            Lq = Lq.astype(np.int8)
+        case _ if 5 <= sizeofInt <= 8:
+            Lq = Lq.astype(np.int8)
+        case _ if 9 <= sizeofInt <= 8:
+            Lq = Lq.astype(np.int16)
+    return  Lq
+ 
+def quantize_fl(num, sizeofInt):
+    max_val = 2**(sizeofInt - 1) - 1
+    min_val = -2**(sizeofInt - 1)
+
+    # round first (important for float inputs)
+    num_r = np.floor(num)
+
+    # saturate
+    num_sat = np.clip(num_r, min_val, max_val)
+    
+    match sizeofInt:
+        case 4:
+            num_sat = num_sat.astype(np.int8)
+        case _ if 5 <= sizeofInt <= 8:
+            num_sat = num_sat.astype(np.int16)
+        case _ if 9 <= sizeofInt <= 16:
+            num_sat = num_sat.astype(np.int16)
+    return num_sat
+ 
+def smallest_2_n (x):
+    
+    for num in x:
+        if num < smallest:
+            second_smallest = smallest
+            smallest = num
+        elif num < second_smallest and num != smallest:
+            second_smallest = num
+    
+    return second_smallest
+
+# circle shifts given vector by k
+def mul_sh(x, k):
+    # x is input, k -1 or shift y is output
+    y = np.zeros(len(x))
+    if (k != -1):    
+        y = np.roll(x, -k)
+        
+    return y
+
+def check_cword_test(B, z, H_test):
+    m, n = B.shape
+    H = np.zeros((m*z, n*z), dtype=int)
+    for i in range(m):
+        for j in range(n):
+
+            shift = B[i,j]
+
+            if shift == -1:
+                continue
+
+            P = np.eye(z, dtype=int)
+            P = np.roll(P, shift, axis=1)
+
+            H[i*z:(i+1)*z,
+              j*z:(j+1)*z] = P
+    #print(H.shape)
+
+
+    # print("Syndrome weight:", np.sum(syndrome))
+    if (np.array_equal(H_test, H)):
+        print("equal")
+    else:
+        print("shit")
+# buulds the whole matrix to check
+def check_cword(B, z, cword):
+    m, n = B.shape
+    H = np.zeros((m*z, n*z), dtype=int)
+    for i in range(m):
+        for j in range(n):
+
+            shift = B[i,j]
+
+            if shift == -1:
+                continue
+
+            P = np.eye(z, dtype=int)
+            P = np.roll(P, shift, axis=1)
+
+            H[i*z:(i+1)*z,
+              j*z:(j+1)*z] = P
+    #print(H.shape)
+
+    syndrome = (H @ cword.reshape(-1,1)) % 2
+
+    # print("Syndrome weight:", np.sum(syndrome))
+    if (np.any(syndrome)):
+        return 0
+    else:
+        return 1
+    
+# check if code word is valid faster
+def check_cword_f(B, z, c):
+    # B = base matrix
+    # z = edxpansion factor
+    # codeword, length = expanded #columns(B)
+    [m, n] = np.shape(B)
+    H = np.zeros((m*z, n*z), dtype = int)
+    for i in range(m):
+        for j in range(n):
+            shift = B[i, j]
+            if shift != -1:
+                I = np.eye(z, dtype=int)
+                H_block = mul_sh(I, shift)
+                H[i*z:(i+1)*z, j*z:(j+1)*z] = H_block
+    syn = np.mod(H @ c.T, 2) # Hc^T
+    # print(np.sum(syn))
+    if (np.any(syn)):
+        return 0
+    else:
+        return 1
+
+def expand_BG_matrix(B, z):
+    m, n = B.shape
+    H = np.zeros((m*z, n*z), dtype=int)
+    for i in range(m):
+        for j in range(n):
+            shift = B[i,j]
+            if shift == -1:
+                continue
+            I = np.eye(z, dtype=int)
+            H_block = np.roll(I, shift, axis=1)
+            H[i*z:(i+1)*z,
+              j*z:(j+1)*z] = H_block
+    return H
+
+def nrldpc_encode_BG1(B, z, msg):
+
+    # B: base matrix
+    # z: expansion factor
+    # msg: message vector, length = (n-m)*z
+    m, n = B.shape
+    k = (n - m) * z
+
+    if len(msg) != k:
+        raise ValueError("(n-m)*z")
+
+    cword = np.zeros(n * z, dtype=int)    
+    cword[:k] = msg % 2
+    # first stage
+    temp = np.zeros(z, dtype=int)
+    for i in range(4):
+        row_temp = np.zeros(z, dtype=int)
+        for j in range(n - m):
+            shift = B[i, j]
+            if shift == -1:
+                continue
+
+            block = msg[j*z:(j+1)*z]
+            temp = (temp + mul_sh(block, shift)) % 2
+    if B[1, n-m] == -1:
+        p1_sh = B[2, n-m]
+    else:
+        p1_sh = B[1, n-m]
+    cword[(n-m)*z:(n-m+1)*z] = mul_sh(temp, z - p1_sh)
+        
+    # second stage
+    for i in range(3):
+        temp = np.zeros(z, dtype=int)
+        for j in range(n - m + i+1):
+            shift = B[i, j]
+
+            if shift == -1:
+                continue
+
+            block = cword[j*z:(j+1)*z]
+            temp = (temp + mul_sh(block, shift)) % 2
+
+        cword[(n - m + i) * z : (n - m + i + 1) * z] = temp
+    # third
+    for i in range(4, m):
+
+        temp = np.zeros(z, dtype=int)
+
+        for j in range(n - m + 4):
+            shift = B[i, j]
+
+            if shift == -1:
+                continue
+
+            block = cword[j*z:(j+1)*z]
+            temp = (temp + mul_sh(block, shift)) % 2
+
+    cword[(n - m + i - 1) * z : (n - m + i) * z] = temp
+    return cword
+
+if __name__ == "__main__":
+    main()
