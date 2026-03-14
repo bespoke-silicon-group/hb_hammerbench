@@ -140,8 +140,8 @@ int jacobi_multipod (int argc, char **argv)
 
     // validate;
     for (int i = 0; i < N; i++) {
-      int actual = actual_Anext[i];
-      int expected = Anext[i];
+      float actual = actual_Anext[i];
+      float expected = Anext[i];
       int x = (i % (nx*nz)) / nz;
       int y = i / (nx*nz);
       int z = i % nz;
