@@ -1,0 +1,11 @@
+N_*__TGX_*__TGY_*/
+*.log
+*.csv
+*.rvo
+*.rvo.log
+*.o
+*.so
+*.riscv
+*.a
+ucli.key
+dramsim3.*

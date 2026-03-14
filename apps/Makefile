@@ -21,6 +21,7 @@ APPS += barnes_hut
 APPS += blackscholes
 APPS += fft
 APPS += sgemm_group_cooperative
+APPS += GEMM_dual_DMEM
 APPS += jacobi
 # APPS += pagerank
 APPS += smith_waterman
