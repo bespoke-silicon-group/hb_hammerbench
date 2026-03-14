@@ -1,0 +1,18 @@
+CC = gcc
+CFLAGS = -O3 -march=native -std=c11 -Wall -Wextra
+CFLAGS_OMP = $(CFLAGS) -fopenmp
+
+.PHONY: all run
+all: host_baseline host_baseline_opt
+
+host_baseline: host_baseline.c
+	$(CC) $(CFLAGS) -o $@ host_baseline.c -lm
+
+host_baseline_opt: host_baseline_optimized.c
+	$(CC) $(CFLAGS_OMP) -o $@ host_baseline_optimized.c -lm
+
+run: host_baseline
+	./host_baseline $(N) $(NITER) $(PATTERN)
+
+run_opt: host_baseline_opt
+	./host_baseline_opt $(N) $(NITER) $(PATTERN) $(VARIANT)
