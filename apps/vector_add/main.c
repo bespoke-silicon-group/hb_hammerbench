@@ -31,7 +31,7 @@ int kernel_vector_add(int argc, char **argv) {
   test_name = args.name;
 
   bsg_pr_test_info("Running kernel_vector_add.\n");
-  srand(time);
+  srand((unsigned) time(NULL));
  
   // Initialize Device.
   hb_mc_device_t device;
@@ -120,7 +120,7 @@ int kernel_vector_add(int argc, char **argv) {
       }
     };
 
-    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, &dtoh_job, 1));
+    BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_job, 1));
 
     // Validate
     for (int i = 0; i < SIZE; i++) {
