@@ -41,6 +41,29 @@ int main(void) {
     if (!s.failures || (k < 3 && s.nonfinite != 1)) return 6;
     actual[17] = saved;
   }
+  /* Validate the reference at the device's full length too. Direct DFT
+   * samples cover both halves, DC and off-grid bins without an O(n^2) sweep. */
+  const int full_n = 16384;
+  float complex *full_input = malloc(full_n*sizeof(*full_input));
+  fft_reference_value *full_ref = malloc(full_n*sizeof(*full_ref));
+  if (!full_input || !full_ref) return 7;
+  const int bins[] = {0, 1, 37, 1024, 7220, 8191, 8192, 16383};
+  for (int f = 0; f < 4; ++f) {
+    fft_fixture(full_input, full_n, fixtures[f]);
+    if (fft_reference(full_input, full_ref, full_n)) return 8;
+    for (size_t b = 0; b < sizeof(bins)/sizeof(bins[0]); ++b) {
+      int k = bins[b];
+      double real = 0, imag = 0;
+      for (int j = 0; j < full_n; ++j) {
+        double angle = -2*acos(-1.0)*k*j/full_n;
+        real += crealf(full_input[j])*cos(angle) - cimagf(full_input[j])*sin(angle);
+        imag += crealf(full_input[j])*sin(angle) + cimagf(full_input[j])*cos(angle);
+      }
+      if (hypot(real-full_ref[k].real, imag-full_ref[k].imag) > 1e-7) return 9;
+    }
+    printf("FFT full-length direct-DFT samples fixture=%s PASSED\n", fixtures[f]);
+  }
+  free(full_input); free(full_ref);
   puts("FFT verification tests PASSED");
   return 0;
 }
