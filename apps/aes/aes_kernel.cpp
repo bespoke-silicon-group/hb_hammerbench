@@ -215,8 +215,11 @@ void AES_CBC_encrypt_buffer(struct AES_ctx *ctx, uint8_t * buf, size_t length)
 
   // Load roundkey;
   uint32_t *dramRoundKey = (uint32_t *) &ctx->RoundKey[0];
+  const int round_key_words = AES_keyExpSize/sizeof(uint32_t);
+  int key_word = 0;
   bsg_unroll(1)
-  for (int i = 0; i < AES_keyExpSize/sizeof(uint32_t); i+=8) {
+  for (; key_word + 8 <= round_key_words; key_word += 8) {
+    const int i = key_word;
     uint32_t r0 = dramRoundKey[i+0];
     uint32_t r1 = dramRoundKey[i+1];
     uint32_t r2 = dramRoundKey[i+2];
@@ -234,6 +237,11 @@ void AES_CBC_encrypt_buffer(struct AES_ctx *ctx, uint8_t * buf, size_t length)
     localRoundKey[i+5] = r5;
     localRoundKey[i+6] = r6;
     localRoundKey[i+7] = r7;
+  }
+
+  // AES-128 has 44 words: copy the final four without crossing the key.
+  for (; key_word < round_key_words; key_word++) {
+    localRoundKey[key_word] = dramRoundKey[key_word];
   }
 
   // load Iv;

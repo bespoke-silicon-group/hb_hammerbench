@@ -30,6 +30,7 @@ DEFINES += -DNUM_POD_X=$(NUM_POD_X) # number of pods simulating now;
 DEFINES += -DNX=$(nx)
 DEFINES += -DNY=$(ny)
 DEFINES += -DNZ=$(nz)
+DEFINES += -DLOCAL_SIZE=512
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
 CFLAGS   += -std=c99 $(FLAGS)

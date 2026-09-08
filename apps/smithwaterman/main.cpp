@@ -11,42 +11,78 @@
 #include <cstdint>
 #include <vector>
 #include <map>
+#include <cerrno>
+#include <fstream>
+#include <string>
+#include "sw_parameters.hpp"
 
 #define ALLOC_NAME "default_allocator"
 
 
-void read_seq(const char* filename, uint8_t* seq, int num_seq) {
-
-  FILE* file = fopen(filename, "r");
+bool read_seq(const char* filename, uint8_t* seq, int num_seq) {
+  std::ifstream file(filename);
+  if (!file) {
+    fprintf(stderr, "%s: unable to open sequence file\n", filename);
+    return false;
+  }
   for (int i = 0; i < num_seq; i++) {
-    char temp_seq[64];
-    fscanf(file, "%s", temp_seq); // skip line number;
-    fscanf(file, "%s", temp_seq);
-    for (int j = 0; j < 32; j++) {
-      seq[(32*i)+j] = temp_seq[j]; 
+    // Fixtures use a >decimal-ID line followed by one complete sequence line.
+    // Read whole lines so a long label can never become sequence data.
+    std::string label, sequence;
+    bool complete = static_cast<bool>(std::getline(file, label)) &&
+                    static_cast<bool>(std::getline(file, sequence));
+    if (!label.empty() && label.back() == '\r') label.pop_back();
+    if (!sequence.empty() && sequence.back() == '\r') sequence.pop_back();
+    if (!complete || label.size() < 2 || label[0] != '>' ||
+        label.find_first_not_of("0123456789", 1) != std::string::npos ||
+        sequence.size() != SEQ_LEN ||
+        sequence.find_first_of(" \t\r\n") != std::string::npos) {
+      fprintf(stderr, "%s: pair %d requires a >decimal-ID line and %d characters\n",
+              filename, i, SEQ_LEN);
+      return false;
     }
-  } 
-  fclose(file);
+    memcpy(&seq[SEQ_LEN*i], sequence.data(), SEQ_LEN);
+  }
+  return true;
 }
 
-
-void read_output(const char* filename, int* output, int num_seq)
-{
-  FILE* file = fopen(filename, "r");
+bool read_output(const char* filename, int* output, int num_seq) {
+  std::ifstream file(filename);
+  if (!file) {
+    fprintf(stderr, "%s: unable to open score file\n", filename);
+    return false;
+  }
   for (int i = 0; i < num_seq; i++) {
-    int score;
-    fscanf(file, "%d", &score);
-    output[i] = score;
-  } 
-  fclose(file);
+    // Consume the complete token and check conversion before narrowing to int.
+    std::string token;
+    if (!(file >> token)) {
+      fprintf(stderr, "%s: missing score for pair %d\n", filename, i);
+      return false;
+    }
+    char* end;
+    errno = 0;
+    long score = strtol(token.c_str(), &end, 10);
+    if (errno == ERANGE || end == token.c_str() ||
+        end != token.c_str() + token.size() || score < 0 || score > SEQ_LEN) {
+      fprintf(stderr, "%s: pair %d requires a score in [0, %d]\n",
+              filename, i, SEQ_LEN);
+      return false;
+    }
+    output[i] = static_cast<int>(score);
+  }
+  return true;
 }
-
 
 
 // Host main;
 int sw_multipod(int argc, char ** argv) {
   int r = 0;
   
+  if (argc != 5) {
+    fprintf(stderr, "Usage: %s kernel query reference expected_scores\n", argv[0]);
+    return HB_MC_FAIL;
+  }
+
   // command line;
   const char *bin_path = argv[1];
   const char *query_path = argv[2];
@@ -55,7 +91,7 @@ int sw_multipod(int argc, char ** argv) {
 
   // parameters;
   int num_seq = NUM_SEQ; // per pod;
-  int seq_len = 32;
+  int seq_len = SEQ_LEN;
   printf("num_seq=%d\n", num_seq);
   printf("seq_len=%d\n", seq_len);
   
@@ -63,9 +99,14 @@ int sw_multipod(int argc, char ** argv) {
   uint8_t* query = (uint8_t*) malloc(num_seq*seq_len*sizeof(uint8_t));
   uint8_t* ref = (uint8_t*) malloc(num_seq*seq_len*sizeof(uint8_t));
   int* output = (int*) malloc(num_seq*sizeof(int));
-  read_seq(query_path, query, num_seq);
-  read_seq(ref_path, ref, num_seq);
-  read_output(output_path, output, num_seq);
+  if (!read_seq(query_path, query, num_seq) ||
+      !read_seq(ref_path, ref, num_seq) ||
+      !read_output(output_path, output, num_seq)) {
+    free(query);
+    free(ref);
+    free(output);
+    return HB_MC_FAIL;
+  }
 
  
   // initialize device; 
