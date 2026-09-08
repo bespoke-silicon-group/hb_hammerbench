@@ -11,42 +11,61 @@
 #include <cstdint>
 #include <vector>
 #include <map>
+#include "sw_parameters.hpp"
 
 #define ALLOC_NAME "default_allocator"
 
 
-void read_seq(const char* filename, uint8_t* seq, int num_seq) {
-
+bool read_seq(const char* filename, uint8_t* seq, int num_seq) {
   FILE* file = fopen(filename, "r");
+  if (!file) {
+    perror(filename);
+    return false;
+  }
   for (int i = 0; i < num_seq; i++) {
-    char temp_seq[64];
-    fscanf(file, "%s", temp_seq); // skip line number;
-    fscanf(file, "%s", temp_seq);
-    for (int j = 0; j < 32; j++) {
-      seq[(32*i)+j] = temp_seq[j]; 
+    char label[64], temp_seq[64];
+    if (fscanf(file, "%63s %63s", label, temp_seq) != 2 ||
+        strlen(temp_seq) != SEQ_LEN) {
+      fprintf(stderr, "%s: pair %d requires exactly %d characters\n",
+              filename, i, SEQ_LEN);
+      fclose(file);
+      return false;
     }
-  } 
+    memcpy(&seq[SEQ_LEN*i], temp_seq, SEQ_LEN);
+  }
   fclose(file);
+  return true;
 }
 
-
-void read_output(const char* filename, int* output, int num_seq)
-{
+bool read_output(const char* filename, int* output, int num_seq) {
   FILE* file = fopen(filename, "r");
+  if (!file) {
+    perror(filename);
+    return false;
+  }
   for (int i = 0; i < num_seq; i++) {
-    int score;
-    fscanf(file, "%d", &score);
-    output[i] = score;
-  } 
+    if (fscanf(file, "%d", &output[i]) != 1 ||
+        output[i] < 0 || output[i] > SEQ_LEN) {
+      fprintf(stderr, "%s: pair %d requires a score in [0, %d]\n",
+              filename, i, SEQ_LEN);
+      fclose(file);
+      return false;
+    }
+  }
   fclose(file);
+  return true;
 }
-
 
 
 // Host main;
 int sw_multipod(int argc, char ** argv) {
   int r = 0;
   
+  if (argc != 5) {
+    fprintf(stderr, "Usage: %s kernel query reference expected_scores\n", argv[0]);
+    return HB_MC_FAIL;
+  }
+
   // command line;
   const char *bin_path = argv[1];
   const char *query_path = argv[2];
@@ -55,7 +74,7 @@ int sw_multipod(int argc, char ** argv) {
 
   // parameters;
   int num_seq = NUM_SEQ; // per pod;
-  int seq_len = 32;
+  int seq_len = SEQ_LEN;
   printf("num_seq=%d\n", num_seq);
   printf("seq_len=%d\n", seq_len);
   
@@ -63,9 +82,14 @@ int sw_multipod(int argc, char ** argv) {
   uint8_t* query = (uint8_t*) malloc(num_seq*seq_len*sizeof(uint8_t));
   uint8_t* ref = (uint8_t*) malloc(num_seq*seq_len*sizeof(uint8_t));
   int* output = (int*) malloc(num_seq*sizeof(int));
-  read_seq(query_path, query, num_seq);
-  read_seq(ref_path, ref, num_seq);
-  read_output(output_path, output, num_seq);
+  if (!read_seq(query_path, query, num_seq) ||
+      !read_seq(ref_path, ref, num_seq) ||
+      !read_output(output_path, output, num_seq)) {
+    free(query);
+    free(ref);
+    free(output);
+    return HB_MC_FAIL;
+  }
 
  
   // initialize device; 

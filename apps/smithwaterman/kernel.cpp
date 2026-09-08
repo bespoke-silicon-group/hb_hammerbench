@@ -3,10 +3,7 @@
 #include "bsg_barrier_multipod.h"
 #include <cstdint>
 
-#define NUM_TILES (bsg_tiles_X*bsg_tiles_Y)
-#define SEQ_LEN 32
-#define NUM_SEQ_PER_TILE (NUM_SEQ/NUM_TILES)
-#define NUM_WORD_PER_TILE (SEQ_LEN/4*NUM_SEQ/NUM_TILES)
+#include "sw_parameters.hpp"
 
 
 // Multipod barrier;
@@ -17,10 +14,10 @@ int alert = 0;
 // Local storage;
 uint8_t l_query[NUM_SEQ_PER_TILE*SEQ_LEN];
 uint8_t l_ref[NUM_SEQ_PER_TILE*SEQ_LEN];
-int E_spm[SEQ_LEN];
-int F_spm[SEQ_LEN];
-int H_spm[SEQ_LEN];
-int H_prev_spm[SEQ_LEN];
+int E_spm[DP_LEN];
+int F_spm[DP_LEN];
+int H_spm[DP_LEN];
+int H_prev_spm[DP_LEN];
 
 
 inline int max(int a, int b) {
@@ -45,19 +42,8 @@ inline int max(int a, int b, int c, int d) {
 #define GAP_EXTEND      1
 inline void align(uint8_t* seqa, uint8_t* seqb, int* output) {
   int score_temp = 0;
-/*
-  for (int j = 1; j < SEQ_LEN; j++) {
-    E_spm[j] = max(E_spm[j-1]-GAP_EXTEND, H_spm[j-1]-GAP_OPEN);
-    F_spm[j] = 0;
-    H_prev_spm[j] = H_spm[j];
-    H_spm[j] = max(0, E_spm[j], F_spm[j]);
-    if (H_spm[j] > score_temp) {
-      score_temp = H_spm[j];
-    }
-  }
-*/
-  for (int i = 1; i < SEQ_LEN; i++) {
-    for (int j = 1; j < SEQ_LEN; j++) {
+  for (int i = 1; i <= SEQ_LEN; i++) {
+    for (int j = 1; j < DP_LEN; j++) {
       E_spm[j] = max(E_spm[j-1] - GAP_EXTEND,
                      H_spm[j-1] - GAP_OPEN);
       F_spm[j] = max(F_spm[j] - GAP_EXTEND,
@@ -66,7 +52,7 @@ inline void align(uint8_t* seqa, uint8_t* seqb, int* output) {
       H_spm[j] = max(0,
                      E_spm[j],
                      F_spm[j],
-                     H_prev_spm[j-1] + ((seqa[i] == seqb[j]) ? MATCH_SCORE : MISMATCH_SCORE));
+                     H_prev_spm[j-1] + ((seqa[i-1] == seqb[j-1]) ? MATCH_SCORE : MISMATCH_SCORE));
       if (H_spm[j] > score_temp) {
         score_temp = H_spm[j];
       }
@@ -107,8 +93,8 @@ extern "C" int kernel(uint8_t* query, uint8_t* ref, int* output, int pod_id)
 
   bsg_unroll(1)
   for (int i = 0; i < NUM_SEQ_PER_TILE; i++) {
-    // clear;
-    for (int j = 0; j < SEQ_LEN; j++) {
+    // Clear the zero boundary and all 32 character positions.
+    for (int j = 0; j < DP_LEN; j++) {
       E_spm[j] = 0;
       F_spm[j] = 0;
       H_spm[j] = 0;
