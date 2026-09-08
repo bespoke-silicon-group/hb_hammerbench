@@ -8,6 +8,13 @@
 // currently for one pod row;
 static inline void bsg_barrier_multipod(int pod_id, int num_pod_x, volatile int* done, int* alert)
 {
+  // One pod only needs a tile-group rendezvous. Do not infer its physical
+  // origin from the compute dimensions (singleton profiles reserve coordinate bits).
+  if (num_pod_x == 1) {
+    bsg_fence();
+    bsg_barrier_tile_group_sync();
+    return;
+  }
   for (int px = 0; px < num_pod_x; px++) {
     done[px] = 0;
   }
