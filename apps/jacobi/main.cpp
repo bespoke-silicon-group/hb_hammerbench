@@ -105,7 +105,7 @@ int jacobi_multipod (int argc, char **argv)
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
     hb_mc_dimension_t grid_dim = { .x = 1, .y = 1};
     #define CUDA_ARGC 8
-    uint32_t cuda_argv[CUDA_ARGC] = {c0, c1, d_A0, d_Anext, nx, ny, nz, pod};
+    uint32_t cuda_argv[CUDA_ARGC] = {(uint32_t)c0, (uint32_t)c1, d_A0, d_Anext, (uint32_t)nx, (uint32_t)ny, (uint32_t)nz, (uint32_t)pod};
 
     // Enqueue kernel.
     printf("Enqueue Kernel: pod %d\n", pod);

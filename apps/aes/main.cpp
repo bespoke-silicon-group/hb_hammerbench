@@ -95,7 +95,7 @@ int aes_multipod(int argc, char **argv)
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
     hb_mc_dimension_t grid_dim = { .x = 1, .y = 1};
     #define CUDA_ARGC 5
-    uint32_t cuda_argv[CUDA_ARGC] = {d_ctx, d_buf, MSG_LEN, NUM_ITER, pod};
+    uint32_t cuda_argv[CUDA_ARGC] = {d_ctx, d_buf, MSG_LEN, NUM_ITER, (uint32_t)pod};
 
     // Enqueue kernel;
     printf("Enqueue Kernel: pod %d\n", pod);

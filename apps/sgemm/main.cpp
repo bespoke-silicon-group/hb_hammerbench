@@ -86,7 +86,9 @@ int sgemm_multipod(int argc, char **argv)
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y };
     hb_mc_dimension_t grid_dim = { .x = 1, .y = 1};
     #define CUDA_ARGC 4
-    uint32_t cuda_argv[CUDA_ARGC] = {d_mat1, d_mat2, d_result, pod};
+    uint32_t cuda_argv[CUDA_ARGC] = {
+      d_mat1, d_mat2, d_result, static_cast<uint32_t>(pod)
+    };
 
     // Enqueue kernel
     printf("Enqueue Kernel: pod %d\n", pod);
