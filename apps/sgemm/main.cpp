@@ -9,6 +9,7 @@
 #include <bsg_manycore_cuda.h>
 #include <bsg_manycore_regression.h>
 #include <bsg_manycore_eva.h>
+#include "verification.hpp"
 
 #define ALLOC_NAME "default_allocator"
 
@@ -32,7 +33,15 @@ int sgemm_multipod(int argc, char **argv)
   int r = 0;
   
   // Command line arg;
+  if (argc < 2 || argc > 3 ||
+      (argc == 3 && strcmp(argv[2], "expert") && strcmp(argv[2], "signed"))) {
+    fprintf(stderr, "usage: %s kernel.riscv [expert|signed]\n", argv[0]);
+    return HB_MC_FAIL;
+  }
   const char *bin_path = argv[1];
+  const bool expert_fixture = argc == 2 || !strcmp(argv[2], "expert");
+  printf("SGEMM fixture=%s seed=1; strong policy=fp64-gamma-n-v1\n",
+         expert_fixture ? "expert" : "signed");
 
   // parameters;
   printf("N=%d\n", N);
@@ -46,14 +55,17 @@ int sgemm_multipod(int argc, char **argv)
   float *mat1 = (float*) malloc(NITER*N*N*sizeof(float));
   float *mat2 = (float*) malloc(NITER*N*N*sizeof(float));
   float *mat_result = (float*) malloc(NITER*N*N*sizeof(float));
+  uint32_t fixture_state = 1;
   for (int i = 0; i < NITER*N*N; i++) {
-    mat1[i] = (float) (i % 7);
-    mat2[i] = (float) (i % 3);
+    mat1[i] = expert_fixture ? (float)(i % 7) : hb_fixture_float(&fixture_state);
+    mat2[i] = expert_fixture ? (float)(i % 3) : hb_fixture_float(&fixture_state);
   }
   
   for (int i = 0; i < NITER; i++) {
     host_mm(&mat_result[N*N*i], &mat1[N*N*i], &mat2[N*N*i]);
   } 
+  std::vector<double> reference(NITER*N*N), sum_abs(NITER*N*N);
+  sgemm_reference(mat1, mat2, reference.data(), sum_abs.data(), N, NITER);
 
 
   // Initialize devices;
@@ -118,7 +130,9 @@ int sgemm_multipod(int argc, char **argv)
     dtoh_job.push_back({d_result, actual_result, NITER*N*N*sizeof(float)});
     BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_job.data(), dtoh_job.size()));
 
-    // validate
+    // Historical expert policy: float SSE in flattened order, threshold .01.
+    // Report it only for its original fixture; it is not a finite-value check.
+    if (expert_fixture) {
     float sse = 0.0f;
     for (int i = 0; i < NITER*N*N; i++) {
       float actual = actual_result[i];
@@ -134,6 +148,12 @@ int sgemm_multipod(int argc, char **argv)
       printf("Matrix Mismatch. SSE= %f\n", sse);
       fail = true;
     }
+    printf("SGEMM historical-expert: sse=%.9g accepted=%d\n", sse, !(sse >= .01f));
+    }
+    hb_error_stats errors = sgemm_verify(actual_result, reference.data(),
+                                        sum_abs.data(), NITER*N*N, N);
+    hb_print_errors("SGEMM strong-fp64", &errors);
+    if (errors.failures) fail = true;
   }
 
   free(mat1);
