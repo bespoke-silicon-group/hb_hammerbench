@@ -13,6 +13,9 @@
 #include <stdio.h>
 #include <bsg_manycore_regression.h>
 #define ALLOC_NAME "default_allocator"
+#ifdef HB_FFT_STRONG_VERIFY
+#include "../common/verification.h"
+#endif
 
 
 #define PRECISION (15)
@@ -63,6 +66,16 @@ int fft_multipod (int argc, char **argv)
   int r = 0;
 
   // Command args;
+#ifdef HB_FFT_STRONG_VERIFY
+  if (argc < 2 || argc > 3 ||
+      (argc == 3 && strcmp(argv[2], "expert") && strcmp(argv[2], "impulse") &&
+       strcmp(argv[2], "constant") && strcmp(argv[2], "random"))) {
+    fprintf(stderr, "usage: %s kernel.riscv [expert|impulse|constant|random]\n", argv[0]);
+    return HB_MC_FAIL;
+  }
+  const char *fixture = argc == 3 ? argv[2] : "expert";
+  printf("FFT fixture=%s seed=1; strong policy=fp64-complex-v1\n", fixture);
+#endif
   const char *bin_path = argv[1];
 
   // parameters;
@@ -78,6 +91,14 @@ int fft_multipod (int argc, char **argv)
   for (int i = 0; i < N; i++) {
     A_host[i] = cosf(i*M_PI/8.0);
   }
+#ifdef HB_FFT_STRONG_VERIFY
+  if (strcmp(fixture, "expert")) fft_fixture(A_host, N, fixture);
+  fft_reference_value *reference = malloc(N*sizeof(*reference));
+  if (!reference || fft_reference(A_host, reference, N)) {
+    free(reference);
+    return HB_MC_FAIL;
+  }
+#endif
 
   for (int r = 0; r < NUM_POINTS; r++) {
     for (int c = 0; c < NUM_POINTS; c++) {
@@ -160,7 +181,7 @@ int fft_multipod (int argc, char **argv)
     for (int i = 0; i < NUM_ITER; i++) {
       // Clear B;
       for (int j = 0; j < N; j++) {
-        B_host[i] = 0.0f;
+        B_host[j] = 0.0f;
       }
 
       // DMA transfer: device -> host;
@@ -173,13 +194,28 @@ int fft_multipod (int argc, char **argv)
       };
       BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_B_job, 1));
 
-      if (verify_fft(B_host, NUM_POINTS*NUM_POINTS)) {
+#ifdef HB_FFT_STRONG_VERIFY
+      if (!strcmp(fixture, "expert")) {
+#endif
+      int historical_failure = verify_fft(B_host, NUM_POINTS*NUM_POINTS);
+      printf("FFT historical-expert: absolute-complex-distance<15 accepted=%d\n",
+             !historical_failure);
+      if (historical_failure) {
         fail = 1;
       }
+#ifdef HB_FFT_STRONG_VERIFY
+      }
+      hb_error_stats errors = fft_verify_strong(B_host, reference, N);
+      hb_print_errors("FFT strong-fp64", &errors);
+      if (errors.failures) fail = 1;
+#endif
     }
   }
 
   // Finish device.
+#ifdef HB_FFT_STRONG_VERIFY
+  free(reference);
+#endif
   BSG_CUDA_CALL(hb_mc_device_finish(&device));
   if (fail) {
     return HB_MC_FAIL;

@@ -31,6 +31,7 @@ DEFINES += -Dbsg_tiles_X=$(TILE_GROUP_DIM_X) -Dbsg_tiles_Y=$(TILE_GROUP_DIM_Y)
 DEFINES += -DNUM_POD_X=$(NUM_POD_X) # number of pods simulating now;
 DEFINES += -DNUM_ITER=$(num-iter)
 DEFINES += -DNUM_POINTS=$(NUM_POINTS)
+DEFINES += -DHB_FFT_STRONG_VERIFY
 
 FLAGS     = -g -Wall -Wno-unused-function -Wno-unused-variable
 CFLAGS   += -std=c99 $(FLAGS)
@@ -39,6 +40,7 @@ CXXFLAGS += -std=c++11 $(FLAGS)
 
 # compilation rules;
 include $(EXAMPLES_PATH)/compilation.mk
+main.o: $(APP_PATH)/../common/verification.h $(HB_HAMMERBENCH_PATH)/apps/common/host_numeric.h
 
 # Linker rules;
 LDFLAGS +=
