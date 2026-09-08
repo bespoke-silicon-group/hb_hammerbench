@@ -385,7 +385,7 @@ void twiddle_scaling( FP32Complex *local_lst,
       : [rd] "=f" (res1_re_temp) \
       : [rs1] "f" (w1_im), [rs2] "f" (l1_im));
     asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
-      : [rd] "=f" (res0_im_temp) \
+      : [rd] "=f" (res1_im_temp) \
       : [rs1] "f" (w1_im), [rs2] "f" (l1_re));
     asm volatile ("fmul.s %[rd], %[rs1], %[rs2]" \
       : [rd] "=f" (res2_re_temp) \
