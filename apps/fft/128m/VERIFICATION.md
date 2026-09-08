@@ -1,7 +1,10 @@
-FFT128m enables the host-only `HB_FFT_STRONG_VERIFY` policy. Kernel, twiddle
-generation, launch geometry, markers and warmup stay unchanged. Other FFT
-variants do not enable this policy, since their geometry/synchronization
-constraints require separate execution evidence.
+FFT128m enables the host-only `HB_FFT_STRONG_VERIFY` policy. The stronger
+fixtures exposed a device defect in the shared `../128/fft128.hpp`:
+`twiddle_scaling` wrote lane 1's imaginary product into lane 0's temporary.
+The separate correction in commit `1782d2c` writes `res1_im_temp`, preserving
+the butterfly algorithm, host twiddle generation, launch geometry, markers
+and warmup. Other FFT variants do not enable the stronger host policy, since
+their geometry/synchronization constraints require separate execution evidence.
 
 With no extra argument (or `expert`), the original cos(i*pi/8) input and
 distance < 15 historical checker remain, labelled `historical-expert`.
