@@ -63,6 +63,7 @@ endif
 
 
 RISCV_TARGET_OBJECTS = kernel.rvo
+kernel.rvo: $(APP_PATH)/fft128.hpp $(APP_PATH)/reverse128.hpp
 BSG_MANYCORE_KERNELS = main.riscv
 
 include $(EXAMPLES_PATH)/cuda/riscv.mk
