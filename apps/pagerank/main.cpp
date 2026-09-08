@@ -11,6 +11,7 @@
 #include <set>
 #include <fstream>
 #include <math.h>
+#include "../common/host_sse.hpp"
 
 #define ALLOC_NAME "default_allocator"
 
@@ -237,6 +238,7 @@ int pagerank_multipod(int argc, char ** argv)
   float *actual_contrib_new = (float *) malloc(V*sizeof(float));
   float *actual_new_rank = (float *) malloc(V*sizeof(float));
 
+  bool fail = false;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
     printf("Reading results: pods %d\n", pod);
@@ -254,44 +256,28 @@ int pagerank_multipod(int argc, char ** argv)
     dtoh_job.push_back({d_new_rank, actual_new_rank, V*sizeof(float)});
     BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_job.data(), dtoh_job.size()));
 
-    // validate
-    float sse0 = 0.0f;
-    float sse1 = 0.0f;
+    // Preserve the two FP32 SSE criteria; reject all non-finite operands/sums.
+    hb_host_sse contrib_error;
+    hb_host_sse rank_error;
     for (int v = V_start; v < V_end; v++) {
-      // check contrib_new;
       printf("[%d] contrib_new: hb=%f, cpu=%f\n", v, actual_contrib_new[v], contrib_new[v]);
-      int isinf0 = isinf(actual_contrib_new[v]);
-      int isinf1 = isinf(contrib_new[v]);
-      if (isinf0 || isinf1) {
-        if (isinf0 != isinf1) {
-          return HB_MC_FAIL;
-        }
-      } else {
-        sse0 += ((actual_contrib_new[v]-contrib_new[v])*(actual_contrib_new[v]-contrib_new[v]));
-      }
-
-      // check new_rank;
-      printf("[%d] new_rank:    hb=%f, cpu=%f\n", v, actual_new_rank[v],    new_rank[v]);
-      isinf0 = isinf(actual_new_rank[v]);
-      isinf1 = isinf(new_rank[v]);
-      if (isinf0 || isinf1) {
-        if (isinf0 != isinf1) {
-          return HB_MC_FAIL;
-        }
-      } else {
-        sse1 += ((actual_new_rank[v]-new_rank[v])*(actual_new_rank[v]-new_rank[v]));
-      }
+      contrib_error.add(actual_contrib_new[v], contrib_new[v], "contrib_new", pod, v);
+      printf("[%d] new_rank:    hb=%f, cpu=%f\n", v, actual_new_rank[v], new_rank[v]);
+      rank_error.add(actual_new_rank[v], new_rank[v], "new_rank", pod, v);
     }
 
-    printf("sse0=%f\n",sse0);
-    printf("sse1=%f\n",sse1);
-    if (sse0 > 0.001f) return HB_MC_FAIL; 
-    if (sse1 > 0.001f) return HB_MC_FAIL; 
+    printf("sse0=%f\n", contrib_error.sum);
+    printf("sse1=%f\n", rank_error.sum);
+    if (!contrib_error.accepts(0.001f) || !rank_error.accepts(0.001f)) {
+      printf("PageRank verification failed: pod=%d contrib_invalid=%u rank_invalid=%u limit=0.001\n",
+             pod, contrib_error.invalid, rank_error.invalid);
+      fail = true;
+    }
   }
 
   // Finish
   BSG_CUDA_CALL(hb_mc_device_finish(&device));
-  return HB_MC_SUCCESS; 
+  return fail ? HB_MC_FAIL : HB_MC_SUCCESS;
 }
 
 
