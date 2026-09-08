@@ -12,6 +12,7 @@
 #include <vector>
 #include "bs.hpp"
 #include "option_data.hpp"
+#include "../common/host_sse.hpp"
 
 #define ALLOC_NAME "default_allocator"
 
@@ -127,25 +128,24 @@ int bs_multipod(int argc, char ** argv) {
     BSG_CUDA_CALL(hb_mc_device_transfer_data_to_host(&device, dtoh_job.data(), dtoh_job.size()));
 
     // Validate;
-    float err = 0.0f;
+    hb_host_sse error;
     for (int i = 0; i < num_option; i++) {
       // Call;
       float actual_call = actual_options[i].call;
       float expected_call = options[i].call;
       printf("call %d: actual=%f, expected=%f\n", i, actual_call, expected_call);
-      float diff = actual_call - expected_call;
-      err += (diff*diff);
+      error.add(actual_call, expected_call, "call", pod, i);
       // Put;
       float actual_put = actual_options[i].put;
       float expected_put = options[i].put;
       printf("put %d: actual=%f, expected=%f\n", i, actual_put, expected_put);
-      diff = actual_put - expected_put;
-      err += (diff*diff);
+      error.add(actual_put, expected_put, "put", pod, i);
     }
 
-    printf("err=%f\n", err);
+    printf("err=%f\n", error.sum);
 
-    if (err > 0.01f) {
+    if (!error.accepts(0.01f)) {
+      printf("Black-Scholes verification failed: pod=%d invalid=%u limit=0.01\n", pod, error.invalid);
       fail = true;
     }
   } 

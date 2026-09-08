@@ -243,7 +243,11 @@ extern "C" int kernel(
             // both lists empty;
             break;
           } else {
-            // pop curr;
+            // First contributions retain B in curr_row until insertion. Scale
+            // the remaining suffix here; duplicate merges below still use FMA.
+            for (HBListNode* node = curr_row.head; node != LIST_NULL_PTR; node = node->next) {
+              node->nnz *= A_nnz0;
+            }
             list_concat(&temp_row, &curr_row);
             break;
           }
@@ -266,6 +270,7 @@ extern "C" int kernel(
             } else if (accum_front > curr_front) {
               // pop curr;
               HBListNode *curr_node = list_pop_front(&curr_row);
+              curr_node->nnz *= A_nnz0;
               list_append_back(&temp_row, curr_node);
             } else {
               // pop accum;

@@ -6,10 +6,7 @@
 #include "HBNode.hpp"
 #include "HBBody.hpp"
 
-// Constants;
-#define itolsq  (1.0f/(0.5f*0.5f))
-#define epssq   (0.05f*0.05f)
-#define dthf    (0.25f)
+#include "force_constants.hpp"
 
 inline void updateForce(float* force, float* delta, float distsq, float mass) {
   float idr =  1.0f / sqrtf(distsq + epssq);
@@ -132,7 +129,7 @@ extern "C" int kernel(HBNode* hbnodes, HBBody* hbbodies,
             uint32_t is_leaf = children[i] & 1;
             if (is_leaf) {
               // child is leaf;
-              HBBody* body_ptr = (HBBody*) children[i];
+              HBBody* body_ptr = (HBBody*) hb_child_eva(children[i]);
               if (body_ptr != pcurr_body) {
                 // child is not self;
                 float child_pos[3];
