@@ -89,7 +89,7 @@ int bs_multipod(int argc, char ** argv) {
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
     hb_mc_dimension_t grid_dim = { .x = 1, .y = 1};
     #define CUDA_ARGC 3
-    uint32_t cuda_argv[CUDA_ARGC] = {d_options, num_option, pod};
+    uint32_t cuda_argv[CUDA_ARGC] = {d_options, (uint32_t)num_option, (uint32_t)pod};
 
     // Enqueue kernel;
     printf("Enqueue Kernel: pod %d\n", pod);

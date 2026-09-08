@@ -555,7 +555,7 @@ int barneshut_multipod(int argc, char ** argv) {
       d_hbnodes,
       d_hbbodies,
       d_curr_body,
-      body_end,
+      (uint32_t)body_end,
       d_nodestack,
       d_remote_body,
       (uint32_t) pod

@@ -99,7 +99,7 @@ int sw_multipod(int argc, char ** argv) {
     hb_mc_dimension_t tg_dim = { .x = bsg_tiles_X, .y = bsg_tiles_Y};
     hb_mc_dimension_t grid_dim = { .x = 1, .y = 1};
     #define CUDA_ARGC 4
-    uint32_t cuda_argv[CUDA_ARGC] = {d_query, d_ref, d_output, pod};
+    uint32_t cuda_argv[CUDA_ARGC] = {d_query, d_ref, d_output, (uint32_t)pod};
 
 
     // Enqueue kernel;

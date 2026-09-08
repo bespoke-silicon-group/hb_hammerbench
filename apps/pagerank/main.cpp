@@ -211,8 +211,8 @@ int pagerank_multipod(int argc, char ** argv)
       d_contrib,
       d_contrib_new,
       d_start_id,
-      V_end,
-      pod
+      (uint32_t)V_end,
+      (uint32_t)pod
     };
 
     // Enqueue kernel;

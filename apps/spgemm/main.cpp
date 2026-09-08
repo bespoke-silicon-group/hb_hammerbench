@@ -242,8 +242,8 @@ int spgemm_multipod(int argc, char ** argv)
       d_C_col_count[pod],
       d_C_list_head[pod],
       d_dram_nodes[pod],
-      num_row,
-      pod
+      (uint32_t)num_row,
+      (uint32_t)pod
     };
 
     // Enqueue kernel;

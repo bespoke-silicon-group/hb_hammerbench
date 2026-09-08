@@ -174,8 +174,8 @@ int bfs_multipod(int argc, char ** argv)
     uint32_t cuda_argv[CUDA_ARGC] = {
       // inputs
       pod_id+(uint32_t)pod,
-      V,
-      direction[niter],
+      (uint32_t)V,
+      (uint32_t)direction[niter],
       d_offsets,
       d_nonzeros,
       d_curr_distance,
