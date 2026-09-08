@@ -147,6 +147,13 @@ void compute (
     bsg_fence();
     bsg_barrier_multipod(pod_id, NUM_POD_X, done, alert);
 
+    // DRAM neighbors retain the whole Z column. Remote DMEM neighbors
+    // publish only the current chunk, starting at element zero.
+    float *left_chunk = ((uintptr_t) a_left & 0x80000000) ? a_left + ii : a_left;
+    float *right_chunk = ((uintptr_t) a_right & 0x80000000) ? a_right + ii : a_right;
+    float *up_chunk = ((uintptr_t) a_up & 0x80000000) ? a_up + ii : a_up;
+    float *down_chunk = ((uintptr_t) a_down & 0x80000000) ? a_down + ii : a_down;
+
     // compute 4 at a time
     bsg_unroll(1)
     for (int i = 0; i < LOCAL_SIZE; i += 4) {
@@ -162,10 +169,10 @@ void compute (
         left2 = 0.0f;
         left3 = 0.0f;
       } else {
-        left0 = a_left[i];
-        left1 = a_left[i+1];
-        left2 = a_left[i+2];
-        left3 = a_left[i+3];
+        left0 = left_chunk[i];
+        left1 = left_chunk[i+1];
+        left2 = left_chunk[i+2];
+        left3 = left_chunk[i+3];
       }
 
       if (a_right == 0) {
@@ -174,10 +181,10 @@ void compute (
         right2 = 0.0f;
         right3 = 0.0f;
       } else {
-        right0 = a_right[i];
-        right1 = a_right[i+1];
-        right2 = a_right[i+2];
-        right3 = a_right[i+3];
+        right0 = right_chunk[i];
+        right1 = right_chunk[i+1];
+        right2 = right_chunk[i+2];
+        right3 = right_chunk[i+3];
       }
 
       if (a_up == 0) {
@@ -186,10 +193,10 @@ void compute (
         up2 = 0.0f;
         up3 = 0.0f;
       } else {
-        up0 = a_up[i];
-        up1 = a_up[i+1];
-        up2 = a_up[i+2];
-        up3 = a_up[i+3];
+        up0 = up_chunk[i];
+        up1 = up_chunk[i+1];
+        up2 = up_chunk[i+2];
+        up3 = up_chunk[i+3];
       }
 
       if (a_down == 0) {
@@ -198,10 +205,10 @@ void compute (
         down2 = 0.0f;
         down3 = 0.0f;
       } else {
-        down0 = a_down[i];
-        down1 = a_down[i+1];
-        down2 = a_down[i+2];
-        down3 = a_down[i+3];
+        down0 = down_chunk[i];
+        down1 = down_chunk[i+1];
+        down2 = down_chunk[i+2];
+        down3 = down_chunk[i+3];
       }
 
       register float bot = a_self[self_idx-1];

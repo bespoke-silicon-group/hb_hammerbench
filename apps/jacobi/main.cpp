@@ -13,6 +13,11 @@
 #include <bsg_manycore_regression.h>
 
 #define ALLOC_NAME "default_allocator"
+
+static_assert(NX > 0 && NY > 0 && NZ > 0, "Jacobi dimensions must be positive");
+static_assert(NX % bsg_tiles_X == 0 && NY % bsg_tiles_Y == 0,
+              "Jacobi requires complete XY tile-group blocks");
+static_assert(NZ % LOCAL_SIZE == 0, "Jacobi requires complete Z chunks");
 #define Index3D(nx,ny,nz,x,y,z) (((((y)*nx)+(x))*nz)+(z))
 
 
