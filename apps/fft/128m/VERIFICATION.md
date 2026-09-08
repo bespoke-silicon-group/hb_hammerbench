@@ -26,8 +26,11 @@ error must be <= `5e-4 + 2e-5*abs(reference)`. This explicit fixture policy
 allows FP32 butterfly/twiddle rounding while being much stricter than 15;
 it is not a bound for arbitrary amplitudes or lengths. Diagnostics include
 maximum complex absolute/relative error (relative denominator floor 1e-12)
-and error divided by the per-bin limit. IEEE bit classification includes a
-volatile integer boundary so fast-math cannot fold it away.
+and error divided by the per-bin limit. IEEE bit classification uses `memcpy`
+followed by a volatile integer observation before the exponent test. This
+preserved NaN/Inf rejection under Apple Clang 21 at `-O3 -ffast-math`, where
+the plain copy-and-mask check was erased. Recheck classification when changing
+compiler or flags; this result does not establish compiler universality.
 
 ```
 clang -std=c99 -O3 -ffast-math apps/fft/common/test_verification.c -lm -o /tmp/fft-check

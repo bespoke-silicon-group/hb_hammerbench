@@ -17,8 +17,11 @@ inputs. Inputs must be finite and shapes supported by the existing kernel.
 Diagnostics report non-finite count, maximum absolute error, relative error
 with denominator floor 1e-12, and maximum error divided by its acceptance limit.
 
-The host checker classifies IEEE-754 bits using `memcpy`, so finite-math
-compiler assumptions cannot erase NaN/Inf rejection. Test it independently:
+The host checker copies IEEE-754 bits with `memcpy`, then passes them through
+a volatile integer observation before testing the exponent. Apple Clang 21
+at `-O3 -ffast-math` erased the plain copy-and-mask check; the volatile integer
+boundary preserved NaN/Inf rejection in the tested configuration. Verify the
+compiled checker when changing compiler or flags:
 
 ```
 clang++ -std=c++11 -O3 -ffast-math apps/sgemm/test_verification.cpp -o /tmp/sgemm-check
