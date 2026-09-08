@@ -11,48 +11,65 @@
 #include <cstdint>
 #include <vector>
 #include <map>
+#include <cerrno>
+#include <fstream>
+#include <string>
 #include "sw_parameters.hpp"
 
 #define ALLOC_NAME "default_allocator"
 
 
 bool read_seq(const char* filename, uint8_t* seq, int num_seq) {
-  FILE* file = fopen(filename, "r");
+  std::ifstream file(filename);
   if (!file) {
-    perror(filename);
+    fprintf(stderr, "%s: unable to open sequence file\n", filename);
     return false;
   }
   for (int i = 0; i < num_seq; i++) {
-    char label[64], temp_seq[64];
-    if (fscanf(file, "%63s %63s", label, temp_seq) != 2 ||
-        strlen(temp_seq) != SEQ_LEN) {
-      fprintf(stderr, "%s: pair %d requires exactly %d characters\n",
+    // Fixtures use a >decimal-ID line followed by one complete sequence line.
+    // Read whole lines so a long label can never become sequence data.
+    std::string label, sequence;
+    bool complete = static_cast<bool>(std::getline(file, label)) &&
+                    static_cast<bool>(std::getline(file, sequence));
+    if (!label.empty() && label.back() == '\r') label.pop_back();
+    if (!sequence.empty() && sequence.back() == '\r') sequence.pop_back();
+    if (!complete || label.size() < 2 || label[0] != '>' ||
+        label.find_first_not_of("0123456789", 1) != std::string::npos ||
+        sequence.size() != SEQ_LEN ||
+        sequence.find_first_of(" \t\r\n") != std::string::npos) {
+      fprintf(stderr, "%s: pair %d requires a >decimal-ID line and %d characters\n",
               filename, i, SEQ_LEN);
-      fclose(file);
       return false;
     }
-    memcpy(&seq[SEQ_LEN*i], temp_seq, SEQ_LEN);
+    memcpy(&seq[SEQ_LEN*i], sequence.data(), SEQ_LEN);
   }
-  fclose(file);
   return true;
 }
 
 bool read_output(const char* filename, int* output, int num_seq) {
-  FILE* file = fopen(filename, "r");
+  std::ifstream file(filename);
   if (!file) {
-    perror(filename);
+    fprintf(stderr, "%s: unable to open score file\n", filename);
     return false;
   }
   for (int i = 0; i < num_seq; i++) {
-    if (fscanf(file, "%d", &output[i]) != 1 ||
-        output[i] < 0 || output[i] > SEQ_LEN) {
-      fprintf(stderr, "%s: pair %d requires a score in [0, %d]\n",
-              filename, i, SEQ_LEN);
-      fclose(file);
+    // Consume the complete token and check conversion before narrowing to int.
+    std::string token;
+    if (!(file >> token)) {
+      fprintf(stderr, "%s: missing score for pair %d\n", filename, i);
       return false;
     }
+    char* end;
+    errno = 0;
+    long score = strtol(token.c_str(), &end, 10);
+    if (errno == ERANGE || end == token.c_str() ||
+        end != token.c_str() + token.size() || score < 0 || score > SEQ_LEN) {
+      fprintf(stderr, "%s: pair %d requires a score in [0, %d]\n",
+              filename, i, SEQ_LEN);
+      return false;
+    }
+    output[i] = static_cast<int>(score);
   }
-  fclose(file);
   return true;
 }
 

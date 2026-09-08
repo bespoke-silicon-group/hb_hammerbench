@@ -8,6 +8,7 @@ and malformed/missing fixture records. --output retains compiler/run artifacts.
 --regenerate-output explicitly replaces output32 with independent oracle scores.
 """
 import argparse
+import json
 import os
 from pathlib import Path
 import random
@@ -116,30 +117,77 @@ readers = source[source.index('bool read_seq'):source.index('// Host main;')]
 harness = r'''#include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
+#include <cerrno>
+#include <fstream>
+#include <string>
+#include <vector>
 #include "sw_parameters.hpp"
 ''' + readers + r'''
 int main(int argc, char** argv) {
-  uint8_t seq[32]; int score;
-  return (argv[1][0] == 's' ? read_seq(argv[2], seq, 1) :
-                              read_output(argv[2], &score, 1)) ? 0 : 1;
+  int count = argc > 3 ? atoi(argv[3]) : 1;
+  if (argv[1][0] == 's') {
+    std::vector<uint8_t> seq(32*count);
+    if (!read_seq(argv[2], seq.data(), count)) return 1;
+    for (int i = 0; i < count; i++) {
+      fwrite(&seq[32*i], 1, 32, stdout);
+      putchar('\n');
+    }
+  } else {
+    std::vector<int> scores(count);
+    if (!read_output(argv[2], scores.data(), count)) return 1;
+    for (int score : scores) printf("%d\n", score);
+  }
 }
 '''
 binary = compile_test('readers', harness)
+reader_results = []
 for name, mode, content, accepted in [
         ('valid-sequence', 's', '>0\n' + 'A'*32 + '\n', True),
+        ('valid-crlf', 's', '>123\r\n' + 'C'*32 + '\r\n', True),
         ('short-sequence', 's', '>0\nA\n', False),
         ('long-sequence', 's', '>0\n' + 'A'*80 + '\n', False),
         ('missing-sequence', 's', '>0\n', False),
+        ('long-label-as-sequence', 's', '>' + 'x'*94 + '\n' + 'A'*32 + '\n', False),
+        ('label-without-sequence', 's', '>' + 'x'*94 + '\n', False),
+        ('long-decimal-label', 's', '>' + '9'*94 + '\n' + 'A'*32 + '\n', True),
+        ('missing-label-marker', 's', '0\n' + 'A'*32 + '\n', False),
+        ('joined-label-sequence', 's', '>0 ' + 'A'*32 + '\n', False),
         ('valid-score', 'o', '32\n', True),
+        ('zero-score', 'o', '0\n', True),
         ('invalid-score', 'o', '33\n', False),
+        ('score-wrap-to-zero', 'o', '4294967296\n', False),
+        ('score-wrap-to-max', 'o', '4294967328\n', False),
+        ('score-with-junk', 'o', '32xyz\n', False),
+        ('score-long-overflow', 'o', '9'*80 + '\n', False),
+        ('score-negative-wrap', 'o', '-4294967296\n', False),
         ('empty-score', 'o', '', False),
         ('missing-file', 's', None, False)]:
     path = out / name
     if content is not None:
         path.write_text(content)
+    command = [str(binary), mode, str(path)]
     with (out / (name + '.log')).open('w') as log:
-        result = subprocess.run([str(binary), mode, str(path)],
-                                stdout=log, stderr=subprocess.STDOUT)
+        result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
+    reader_results.append(dict(name=name, command=command, input=content,
+                               status=result.returncode, accepted=accepted))
     assert (result.returncode == 0) == accepted, name
+    if accepted:
+        expected_data = content.splitlines()[1] if mode == 's' else str(int(content))
+        assert (out / (name + '.log')).read_text() == expected_data + '\n', name
+
+# Check that parsing preserves every shipped sequence and each expected score.
+for name, mode, values in [('dna-query32.fasta', 's', query),
+                           ('dna-reference32.fasta', 's', ref),
+                           ('output32', 'o', fixture)]:
+    command = [str(binary), mode, str(app / name), str(len(values))]
+    log_path = out / (name + '-parsed.log')
+    with log_path.open('w') as log:
+        result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
+    reader_results.append(dict(name=name, command=command, status=result.returncode,
+                               accepted=True, records=len(values)))
+    assert result.returncode == 0, name
+    assert log_path.read_text().splitlines() == list(map(str, values)), name
+(out / 'reader-results.json').write_text(json.dumps(reader_results, indent=2) + '\n')
 print('PASS: 776 pairs match independent DP; 512 fixture scores verified; '
-      'size and input checks pass; ASan/UBSan clean')
+      'size and input checks pass; all shipped records preserved; ASan/UBSan clean')
