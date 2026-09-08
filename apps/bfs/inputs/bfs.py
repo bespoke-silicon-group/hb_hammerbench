@@ -72,9 +72,12 @@ while curr_frontier:
         nz_end = rev_offsets[v+1]
         for nz in range(nz_start, nz_end):
           src = rev_nonzeros[nz]
-          if distance[src] != -1:
+          # Only the current frontier can discover the next level. Vertices
+          # assigned distance d earlier in this scan must not propagate again.
+          if distance[src] == d-1:
             distance[v] = d
             next_frontier.append(v)
+            break
   else:
     for src in curr_frontier:
       nz_start = fwd_offsets[src]
