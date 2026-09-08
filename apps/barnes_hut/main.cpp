@@ -12,13 +12,11 @@
 #include "Node.hpp"
 #include "HBBody.hpp"
 #include "HBNode.hpp"
+#include "force_constants.hpp"
+#include "validation.hpp"
 
 #define ALLOC_NAME "default_allocator"
 
-// Constants;
-#define itolsq  (1.0f/(0.5f*0.0f))
-#define epssq   (0.05f*0.05f)
-#define dthf    (0.25f)
 
 // Generate Bodies;
 void generate_bodies(std::vector<Body>& bodies, int nbodies) {
@@ -576,6 +574,7 @@ int barneshut_multipod(int argc, char ** argv) {
 
 
 
+  bool fail = false;
   // copy bodies from device;
   hb_mc_device_foreach_pod_id(&device, pod)
   {
@@ -591,7 +590,7 @@ int barneshut_multipod(int argc, char ** argv) {
     int body_start = std::min(nbodies, curr_pod_id*body_per_pod);
     int body_end = std::min(nbodies, body_start+body_per_pod);
 
-    float serror;
+    float serror = 0.0f;
     for (int b = body_start; b < body_end; b++) {
       printf("b=%d, HB acc=(%f %f %f), x86 acc=(%f %f %f)\n",
         b,
@@ -627,18 +626,15 @@ int barneshut_multipod(int argc, char ** argv) {
     }
     
     printf("serror = %f\n", serror);
-    if (serror > 0.01f) {
-      return HB_MC_FAIL;
+    if (!barnes_hut_error_is_valid(serror)) {
+      fail = true;
     }
+    free(next_hbbodies);
   }
-  
-  
-  
 
-
-
-
-  return HB_MC_SUCCESS;
+  // Finish on validation failure too, so simulator finalizers flush their output.
+  BSG_CUDA_CALL(hb_mc_device_finish(&device));
+  return fail ? HB_MC_FAIL : HB_MC_SUCCESS;
 }
 
 declare_program_main("barneshut_multipod", barneshut_multipod);
