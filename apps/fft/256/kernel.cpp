@@ -44,12 +44,16 @@ kernel(FP32Complex * in,
     #ifdef WARM_CACHE
     warmup(in, tw, N);
     #endif
+    bsg_compiler_memory_barrier();
     bsg_fence();
     bsg_barrier_tile_group_sync();
+    bsg_compiler_memory_barrier();
 
     // Kernel start;
     bsg_barrier_multipod(pod_id, NUM_POD_X, done, &alert);
+    bsg_compiler_memory_barrier();
     bsg_cuda_print_stat_kernel_start();
+    bsg_compiler_memory_barrier();
 
     for (int i = 0; i < num_iter; i++) {
       FP32Complex *input_sq  = &in[i*N];
@@ -65,8 +69,11 @@ kernel(FP32Complex * in,
         // store strided
         store_strided(input_vec, fft_workset);
       }
-      asm volatile("": : :"memory");
+      // Publish every tile's columns before any tile reads complete rows.
+      bsg_compiler_memory_barrier();
+      bsg_fence();
       bsg_barrier_tile_group_sync();
+      bsg_compiler_memory_barrier();
 
 
 
@@ -82,14 +89,22 @@ kernel(FP32Complex * in,
         // store strided
         store_strided(output_vec, fft_workset);
       }
+      // Finish this batch's output stores before joining; the last join
+      // ensures every tile's output is complete before the end marker.
+      bsg_compiler_memory_barrier();
+      bsg_fence();
       bsg_barrier_tile_group_sync();
+      bsg_compiler_memory_barrier();
     }
 
 
-    // Kernel end
+    // Kernel end; the last batch has completed its output fence and join.
+    bsg_compiler_memory_barrier();
     bsg_cuda_print_stat_kernel_end();
+    bsg_compiler_memory_barrier();
     bsg_fence();
     bsg_barrier_tile_group_sync();
+    bsg_compiler_memory_barrier();
 
 
 

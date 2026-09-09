@@ -147,9 +147,14 @@ extern "C" int kernel(
   }
 
 
-  // Kernel end;
+  // Drain each tile's output stores before the timed join: a hardware
+  // barrier alone does not guarantee their completion at the end marker.
+  bsg_compiler_memory_barrier();
+  bsg_fence();
   bsg_barrier_tile_group_sync();
+  bsg_compiler_memory_barrier();
   bsg_cuda_print_stat_kernel_end();
+  bsg_compiler_memory_barrier();
   bsg_fence();
   bsg_barrier_tile_group_sync();
   return 0;
