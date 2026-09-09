@@ -12,6 +12,7 @@
 #include <fstream>
 #include <math.h>
 #include "../common/host_sse.hpp"
+#include "verification.hpp"
 
 #define ALLOC_NAME "default_allocator"
 
@@ -259,16 +260,31 @@ int pagerank_multipod(int argc, char ** argv)
     // Preserve the two FP32 SSE criteria; reject all non-finite operands/sums.
     hb_host_sse contrib_error;
     hb_host_sse rank_error;
+    unsigned zero_indegree_checked = 0;
+    unsigned zero_indegree_errors = 0;
     for (int v = V_start; v < V_end; v++) {
       printf("[%d] contrib_new: hb=%f, cpu=%f\n", v, actual_contrib_new[v], contrib_new[v]);
       contrib_error.add(actual_contrib_new[v], contrib_new[v], "contrib_new", pod, v);
       printf("[%d] new_rank:    hb=%f, cpu=%f\n", v, actual_new_rank[v], new_rank[v]);
       rank_error.add(actual_new_rank[v], new_rank[v], "new_rank", pod, v);
+      if (rev_offsets[v] == rev_offsets[v+1]) {
+        ++zero_indegree_checked;
+        if (!hb_pagerank_zero_indegree_matches(actual_new_rank[v], actual_contrib_new[v],
+                                              beta_score, out_degree_inv[v])) {
+          if (zero_indegree_errors == 0)
+            printf("PageRank zero-indegree mismatch: pod=%d vertex=%d rank=%a expected=%a contrib=%a expected=%a\n",
+                   pod, v, actual_new_rank[v], beta_score,
+                   actual_contrib_new[v], beta_score * out_degree_inv[v]);
+          ++zero_indegree_errors;
+        }
+      }
     }
 
     printf("sse0=%f\n", contrib_error.sum);
     printf("sse1=%f\n", rank_error.sum);
-    if (!contrib_error.accepts(0.001f) || !rank_error.accepts(0.001f)) {
+    printf("PageRank zero-indegree check: checked=%u errors=%u\n",
+           zero_indegree_checked, zero_indegree_errors);
+    if (!contrib_error.accepts(0.001f) || !rank_error.accepts(0.001f) || zero_indegree_errors) {
       printf("PageRank verification failed: pod=%d contrib_invalid=%u rank_invalid=%u limit=0.001\n",
              pod, contrib_error.invalid, rank_error.invalid);
       fail = true;

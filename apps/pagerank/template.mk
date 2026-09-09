@@ -43,6 +43,8 @@ CXXFLAGS += -std=c++11 $(FLAGS)
 # compilation rules;
 include $(EXAMPLES_PATH)/compilation.mk
 
+main.o: $(APP_PATH)/verification.hpp $(HB_HAMMERBENCH_PATH)/apps/common/host_sse.hpp
+
 # Linker rules;
 LDFLAGS +=
 include $(EXAMPLES_PATH)/link.mk
