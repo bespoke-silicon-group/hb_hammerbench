@@ -19,9 +19,11 @@
       : [rd] "=f" (rd_p) \
       : [rs1] "f" ((rs1_p)), [rs2] "f" ((rs2_p)))
 
-// Const in DMEM;
-float damp = 0.85f;
-float beta_score = (1.0f - damp) / (float) EDGE;
+// Use a constant expression: device startup does not run C++ initializers.
+// Retain writable globals so GCC keeps these values in local DMEM.
+constexpr float initial_damp = 0.85f;
+float damp = initial_damp;
+float beta_score = (1.0f - initial_damp) / (float) EDGE;
 
 // multipod barrier;
 volatile int done[NUM_POD_X] = {0};
