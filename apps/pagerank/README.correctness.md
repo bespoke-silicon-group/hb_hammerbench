@@ -54,6 +54,13 @@ c++ -std=c++11 -O2 test_verification.cpp -o /tmp/pagerank-verification
 The regression rejects missing rank/contribution offsets, a one-ULP rank error,
 NaN and infinities. On wiki-Vote partition 36 at 128 tiles, the old fenced kernel
 fails all 97 zero-indegree checks; constant initialization passes all 97.
-Measured target cycles change 14,497→14,850 with the same strengthened host.
+Two 32-byte source padding arrays replace the removed initializer's instruction
+and DRAM-data footprint in the GCC 9.2 build. This preserves graph allocation
+addresses and instruction-cache loading time; without padding, those changes
+shifted memory contention and DRAM refresh relative to kernel execution.
+With padding, measured target cycles remain **14,497→14,497** with the same
+strengthened host, inputs and default 16×8 profile. Per-tile timed counters,
+cache-window counters and DRAM-window command counts also match. Startup
+cumulative counters differ. Recheck image sizes if the compiler or flags change.
 The formula remains `(1-damp)/EDGE`, and no general C++ constructor support
 is added to the runtime.

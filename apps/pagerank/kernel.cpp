@@ -25,6 +25,13 @@ constexpr float initial_damp = 0.85f;
 float damp = initial_damp;
 float beta_score = (1.0f - initial_damp) / (float) EDGE;
 
+// Preserve the GCC 9.2 baseline's image sizes, keeping allocation addresses
+// and instruction-cache loading time stable across this correctness fix.
+__attribute__((used, section(".text.pagerank_padding"), aligned(4)))
+static const unsigned char instruction_padding[32] = {};
+__attribute__((used, aligned(4)))
+static const unsigned char dram_padding[32] = {};
+
 // multipod barrier;
 volatile int done[NUM_POD_X] = {0};
 int alert = 0;
