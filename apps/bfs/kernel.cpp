@@ -24,7 +24,7 @@ inline void insert_into_dense(int id, int *dense_frontier)
     int word_idx = id/32;
     int bit_idx = id%32;
     int w = (1<<bit_idx);
-    bsg_amoor(&dense_frontier[word_idx], w);
+    bsg_amoor_no_return(&dense_frontier[word_idx], w);
 }
 
 // multi-pod barrier; pod-row only;
