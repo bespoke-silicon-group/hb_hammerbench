@@ -19,3 +19,38 @@ RISCV_CXX = $(RISCV_CLANGXX)
 # Retain a linker map without changing the benchmark's numerical flags or
 # optimization level. This LLVM 10 fork predates Clang's -fstack-usage support.
 RISCV_LDFLAGS += -Wl,-Map,kernel.map
+
+# LLVM 10 remains the default assembly-producing path in Replicant's riscv.mk.
+# Recent LLVM can instead optimize once, emit an ELF object with its integrated
+# assembler, and hand that object to the established GNU runtime/linker. The
+# installed binutils 2.32 does not understand modern versioned RISC-V extension
+# spellings, so remove only the redundant ISA-attribute metadata before linking.
+ifeq ($(RISCV_LLVM_OBJECT_OUTPUT),1)
+RISCV_LLVM_OPT_LEVEL ?= -O3
+RISCV_LLVM_OPT_FLAGS ?=
+RISCV_LLVM_CLANG_IR_FLAGS ?= -Xclang -disable-llvm-passes
+RISCV_LLVM_OBJCOPY ?= $(RISCV_LLVM_PATH)/bin/llvm-objcopy
+override RISCV_LLVM_LLC_FLAGS += -target-abi=ilp32f -O3
+
+define RISCV_CLANGXX
+$(_RISCV_CLANGXX) $(RISCV_CXXFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) \
+  $(RISCV_LLVM_CLANG_IR_FLAGS) -c $< -o $@.ll -S -emit-llvm 2>&1 | tee $*.rvo.ll.log && \
+$(RISCV_LLVM_OPT) $(RISCV_LLVM_OPT_LEVEL) $(RISCV_LLVM_OPT_FLAGS) \
+  -S $@.ll -o $@.opt.ll 2>&1 | tee $*.rvo.opt.log && \
+$(RISCV_LLVM_LLC) $(RISCV_LLVM_LLC_FLAGS) -filetype=obj \
+  $@.opt.ll -o $@ 2>&1 | tee $*.rvo.obj.log && \
+$(RISCV_LLVM_OBJCOPY) --strip-debug --remove-section=.riscv.attributes \
+  $@ 2>&1 | tee $*.rvo.log
+endef
+
+define RISCV_CLANG
+$(_RISCV_CLANG) $(RISCV_CFLAGS) $(RISCV_DEFINES) $(RISCV_INCLUDES) \
+  $(RISCV_LLVM_CLANG_IR_FLAGS) -c $< -o $@.ll -S -emit-llvm 2>&1 | tee $*.rvo.ll.log && \
+$(RISCV_LLVM_OPT) $(RISCV_LLVM_OPT_LEVEL) $(RISCV_LLVM_OPT_FLAGS) \
+  -S $@.ll -o $@.opt.ll 2>&1 | tee $*.rvo.opt.log && \
+$(RISCV_LLVM_LLC) $(RISCV_LLVM_LLC_FLAGS) -filetype=obj \
+  $@.opt.ll -o $@ 2>&1 | tee $*.rvo.obj.log && \
+$(RISCV_LLVM_OBJCOPY) --strip-debug --remove-section=.riscv.attributes \
+  $@ 2>&1 | tee $*.rvo.log
+endef
+endif
