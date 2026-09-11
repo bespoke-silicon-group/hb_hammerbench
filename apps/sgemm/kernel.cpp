@@ -309,8 +309,8 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
           // load mat1, mat2 block
           float *src1 = &curr_mat1[(N*BLOCK_DIM*by)+(BLOCK_DIM*z)];
           float *src2 = &curr_mat2[(N*BLOCK_DIM*z)+(BLOCK_DIM*bx)];
-          load_block(block1, src1);
-          load_block(block2, src2);
+          load_block(block1, (float bsg_attr_remote *)src1);
+          load_block(block2, (float bsg_attr_remote *)src2);
 
           // compute block output
           compute_block();
