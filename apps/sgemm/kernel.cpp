@@ -110,7 +110,7 @@ inline void load_block( float* dst,
 
 
 // Store output to DRAM
-inline void store_block(float* dst) {
+inline void store_block(float bsg_attr_remote *dst) {
   bsg_unroll(1)
   for (int y = 0; y < BLOCK_DIM; y+=2) {
     register float tp00 =  block_out[(BLOCK_DIM*y)+0];
@@ -277,7 +277,10 @@ static inline void compute_block() {
 
 // Kernel main;
 extern "C"
-int kernel(float *mat1, float *mat2, float *result, int pod_id)
+int kernel(float bsg_attr_remote *mat1,
+           float bsg_attr_remote *mat2,
+           float bsg_attr_remote *result,
+           int pod_id)
 {
   bsg_barrier_tile_group_init();
   bsg_barrier_tile_group_sync();
@@ -292,9 +295,9 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
   bsg_unroll(1)
   for (int iter = 0; iter < NITER; iter++) {
     // current matrix;
-    float *curr_mat1 = &mat1[N*N*iter];
-    float *curr_mat2 = &mat2[N*N*iter];
-    float *curr_result = &result[N*N*iter];
+    float bsg_attr_remote *curr_mat1 = &mat1[N*N*iter];
+    float bsg_attr_remote *curr_mat2 = &mat2[N*N*iter];
+    float bsg_attr_remote *curr_result = &result[N*N*iter];
 
     bsg_unroll(1)
     for (int by = __bsg_y; by < NUM_BLOCK; by += bsg_tiles_Y) {
@@ -307,17 +310,17 @@ int kernel(float *mat1, float *mat2, float *result, int pod_id)
         // Iterate
         for (int z = 0; z < NUM_BLOCK; z++) {
           // load mat1, mat2 block
-          float *src1 = &curr_mat1[(N*BLOCK_DIM*by)+(BLOCK_DIM*z)];
-          float *src2 = &curr_mat2[(N*BLOCK_DIM*z)+(BLOCK_DIM*bx)];
-          load_block(block1, (float bsg_attr_remote *)src1);
-          load_block(block2, (float bsg_attr_remote *)src2);
+          float bsg_attr_remote *src1 = &curr_mat1[(N*BLOCK_DIM*by)+(BLOCK_DIM*z)];
+          float bsg_attr_remote *src2 = &curr_mat2[(N*BLOCK_DIM*z)+(BLOCK_DIM*bx)];
+          load_block(block1, src1);
+          load_block(block2, src2);
 
           // compute block output
           compute_block();
         } 
     
         // store block
-        float *dst = &curr_result[(N*BLOCK_DIM*by)+(BLOCK_DIM*bx)];
+        float bsg_attr_remote *dst = &curr_result[(N*BLOCK_DIM*by)+(BLOCK_DIM*bx)];
         store_block(dst);
       }
     }
