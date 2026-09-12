@@ -21,22 +21,46 @@ For initial setup do the following:
 
 ### Compiling a device kernel with HammerBlade LLVM
 
-The default device toolchain remains GCC. To compile an application's RISC-V
-sources with the HammerBlade [`llvm-project`](https://github.com/bespoke-silicon-group/llvm-project)
-fork instead, build its `hb-dev` branch and pass the installed prefix to the
-opt-in make fragment from a generated launch directory:
+The default device toolchain remains GCC. For current LLVM work, use the
+HammerBlade [`hammerblade-llvm22` branch](https://github.com/bespoke-silicon-group/llvm-project/tree/hammerblade-llvm22)
+(LLVM 22.1.8; validated implementation `3232e8812d67`, with the test-only update
+at `d2ebb0fda484`). The SDK must include
+[`bsg_manycore:hammerblade-llvm22-support`](https://github.com/bespoke-silicon-group/bsg_manycore/tree/hammerblade-llvm22-support)
+at `2725e68c7ee8` or a compatible descendant; this supplies the no-return
+atomic helper used by BFS and the compiler-support definitions.
+
+From a fresh generated launch directory, select the opt-in fragment and a
+build/install prefix containing `bin/clang`, `bin/clang++`, `bin/opt`,
+`bin/llc`, `bin/llvm-objcopy`, and Clang's builtin resource headers:
 
 ```sh
 gmake -f Makefile -f /path/to/hb_hammerbench/mk/llvm-hammerblade.mk \
-  RISCV_LLVM_PATH=/path/to/llvm-install \
+  SHELL=/bin/bash '.SHELLFLAGS=-e -o pipefail -c' \
+  RISCV_LLVM_PATH=/path/to/llvm22-build \
+  RISCV_LLVM_OBJECT_OUTPUT=1 \
+  RISCV_LLVM_OPT_FLAGS=-enable-dfa-jump-thread \
   main.so main.riscv
 ```
 
-The existing Replicant LLVM flow uses Clang to emit RV32 LLVM IR, lowers it
-with `llc -mcpu=hb-rv32`, and assembles the result with Clang. The established
-GCC/newlib toolchain still builds the device runtime and performs the final
-ELF link; host compilation is unchanged. Omitting the fragment preserves the
-normal all-GCC path.
+This path emits RV32 IR without running Clang's optimization passes, runs one
+explicit `opt` pipeline, and uses `llc -mcpu=hb-rv32 -target-abi=ilp32f` to
+produce an ELF object. LLVM `llvm-objcopy` removes debug information (including
+relocations unsupported by the installed GNU binutils 2.32) and
+`.riscv.attributes` (whose modern spelling the old linker cannot parse).
+The GNU/newlib toolchain still builds the device runtime and performs the
+final ELF link; host compilation is unchanged. The fragment preserves the
+application's source optimization/numerical flags; comparisons must record
+and match the effective settings. Omitting the fragment preserves GCC.
+
+Use separate writable application/runtime build products when comparing
+compilers. Make does not automatically rebuild an existing object when only
+the compiler or flags change. Keep simulator reuse separate from device
+compiler selection; this fragment does not select a hardware configuration.
+
+The older LLVM 10 implementation is preserved on
+[`archive/hammerblade-llvm10-macos`](https://github.com/bespoke-silicon-group/llvm-project/tree/archive/hammerblade-llvm10-macos)
+at `ca69171a7ec8`. Its historical Clang/llc/assembly path remains available by
+omitting `RISCV_LLVM_OBJECT_OUTPUT=1`; it is not the current LLVM 22 path.
 
 
 ### Downloading sparse graph datasets

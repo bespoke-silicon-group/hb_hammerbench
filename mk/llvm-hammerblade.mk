@@ -4,7 +4,9 @@
 # RISCV_CLANG/RISCV_CLANGXX multi-stage compiler functions:
 #
 #   gmake -f Makefile -f /path/to/mk/llvm-hammerblade.mk \
-#     RISCV_LLVM_PATH=/path/to/llvm-install main.so main.riscv
+#     SHELL=/bin/bash '.SHELLFLAGS=-e -o pipefail -c' \
+#     RISCV_LLVM_PATH=/path/to/llvm22-build RISCV_LLVM_OBJECT_OUTPUT=1 \
+#     RISCV_LLVM_OPT_FLAGS=-enable-dfa-jump-thread main.so main.riscv
 #
 # Host code and final device linking continue to use the normal Replicant
 # toolchain. Only C/C++ sources compiled into RISC-V .rvo objects use LLVM.
@@ -24,7 +26,8 @@ RISCV_LDFLAGS += -Wl,-Map,kernel.map
 # Recent LLVM can instead optimize once, emit an ELF object with its integrated
 # assembler, and hand that object to the established GNU runtime/linker. The
 # installed binutils 2.32 does not understand modern versioned RISC-V extension
-# spellings, so remove only the redundant ISA-attribute metadata before linking.
+# spellings or LLVM 22 debug relocations, so use LLVM objcopy to remove debug
+# information and redundant ISA-attribute metadata before linking.
 ifeq ($(RISCV_LLVM_OBJECT_OUTPUT),1)
 RISCV_LLVM_OPT_LEVEL ?= -O3
 RISCV_LLVM_OPT_FLAGS ?=
