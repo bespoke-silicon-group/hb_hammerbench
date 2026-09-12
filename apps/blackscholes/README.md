@@ -1,6 +1,5 @@
-```
-How to setup Black-Scholes
+# Black–Scholes input
 
-- Decompress the input file... 'xz -d -k in_10M.txt.xz'.
-
-```
+Install `xz`. The generated `exec.log` and `profile.log` targets unpack the
+checked-in `in_10M.txt.xz` automatically, retaining the compressed archive.
+To prepare the input manually, run `xz -d -k in_10M.txt.xz` in this directory.
