@@ -11,7 +11,10 @@ This repository is meant to be cloned into [bsg_replicant](https://github.com/be
 
 For initial setup do the following:
 1. Clone [bsg_bladerunner](https://github.com/bespoke-silicon-group/bsg_bladerunner) and follow the setup instructions.
-2. From bsg_bladerunner, `cd bsg_replicant/examples; git clone git@github.com:bespoke-silicon-group/hb_hammerbench`
+2. Initialize Bladerunner's recursive submodules, which include this repository.
+
+For a fresh macOS setup and the complete 34-case physical 16×8 GCC/LLVM
+comparison, see [the compiler-comparison guide](docs/compiler-comparison.md).
 
 
 ### Running a benchmark
@@ -22,11 +25,11 @@ For initial setup do the following:
 ### Compiling a device kernel with HammerBlade LLVM
 
 The default device toolchain remains GCC. For current LLVM work, use the
-HammerBlade [`hammerblade-llvm22` branch](https://github.com/bespoke-silicon-group/llvm-project/tree/hammerblade-llvm22)
-(LLVM 22.1.8; validated implementation `3232e8812d67`, with the test-only update
-at `d2ebb0fda484`). The SDK must include
-[`bsg_manycore:hammerblade-llvm22-support`](https://github.com/bespoke-silicon-group/bsg_manycore/tree/hammerblade-llvm22-support)
-at `2725e68c7ee8` or a compatible descendant; this supplies the no-return
+HammerBlade default [`hammerblade-llvm22-integration` branch](https://github.com/bespoke-silicon-group/llvm-project/tree/hammerblade-llvm22-integration)
+(LLVM 22.1.8; merged revision `0ee3b2946133808704dee5ca0b5ea12601454068`).
+The SDK must include the LLVM support merged into
+[`bsg_manycore` at `abb299058b63`](https://github.com/bespoke-silicon-group/bsg_manycore/commit/abb299058b63b9d907f997a74e64d2988d52119e)
+or a compatible descendant; this supplies the no-return
 atomic helper used by BFS and the compiler-support definitions.
 
 From a fresh generated launch directory, select the opt-in fragment and a
