@@ -26,7 +26,16 @@ comparison, see [the compiler-comparison guide](docs/compiler-comparison.md).
 
 The default device toolchain remains GCC. For current LLVM work, use the
 HammerBlade default [`hammerblade-llvm22-integration` branch](https://github.com/bespoke-silicon-group/llvm-project/tree/hammerblade-llvm22-integration)
-(LLVM 22.1.8; merged revision `0ee3b2946133808704dee5ca0b5ea12601454068`).
+(LLVM 22.1.8). The accepted scalar-policy baseline is merged revision
+[`7286564fede1bf7b8243bb51bfa039731aa62da6`](https://github.com/bespoke-silicon-group/llvm-project/commit/7286564fede1bf7b8243bb51bfa039731aa62da6)
+from [LLVM #10](https://github.com/bespoke-silicon-group/llvm-project/pull/10).
+Use an explicit revision when building the compiler; the companion Bladerunner
+`llvm22.mk` supplies the installation pin. The later runtime-unrolling candidate
+in LLVM #11 is not part of this baseline.
+
+The 2026-09-12 fresh-source comparison used the earlier
+`0ee3b2946133808704dee5ca0b5ea12601454068`; its recorded cycle counts and
+compiler identity remain historical evidence, not measurements of the new pin.
 The SDK must include the LLVM support merged into
 [`bsg_manycore` at `abb299058b63`](https://github.com/bespoke-silicon-group/bsg_manycore/commit/abb299058b63b9d907f997a74e64d2988d52119e)
 or a compatible descendant; this supplies the no-return
