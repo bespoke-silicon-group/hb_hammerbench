@@ -19,7 +19,7 @@ RISCV_CC = $(RISCV_CLANG)
 RISCV_CXX = $(RISCV_CLANGXX)
 
 # Retain a linker map without changing the benchmark's numerical flags or
-# optimization level. This LLVM 10 fork predates Clang's -fstack-usage support.
+# optimization level; do not impose version-specific diagnostic flags here.
 RISCV_LDFLAGS += -Wl,-Map,kernel.map
 
 # LLVM 10 remains the default assembly-producing path in Replicant's riscv.mk.

@@ -2,6 +2,8 @@ HB_HAMMERBENCH_PATH:=$(shell git rev-parse --show-toplevel)
 include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 
 .PHONY: setup
+.PHONY: generate
+.DEFAULT_GOAL := generate
 .PHONY: profile
 .PHONY: exec
 .PHONY: pc-histogram
@@ -17,16 +19,17 @@ include $(HB_HAMMERBENCH_PATH)/mk/environment.mk
 ##############################
 APPS := aes
 APPS += barnes_hut
-# APPS += bfs
+APPS += bfs
 APPS += blackscholes
-APPS += fft
-APPS += sgemm_group_cooperative
+APPS += fft/128
+APPS += fft/256
+APPS += sgemm
 APPS += jacobi
-# APPS += pagerank
-APPS += smith_waterman
+APPS += pagerank
+APPS += smithwaterman
 APPS += spgemm
 APPS += memcpy
-APPS += gups_rmw
+APPS += vector_add
 
 ###########################
 # directories of each app #
@@ -40,6 +43,10 @@ APPS_dirs  := $(foreach app,$(APPS),$(call app-dir,$(app)))
 APPS_rule_setup      := $(foreach app,$(APPS),$(app).setup)
 setup: $(APPS_rule_setup)
 APPS_all_rules += $(APPS_rule_setup)
+
+APPS_rule_generate := $(foreach app,$(APPS),$(app).generate)
+generate: $(APPS_rule_generate)
+APPS_all_rules += $(APPS_rule_generate)
 
 #########################################################
 # for each macro rule				        #
@@ -81,8 +88,8 @@ APPS_all_rules += $(APPS_rule_clean)
 
 $(APPS_all_rules):
 	$(eval app=$(firstword $(subst ., ,$@)))
-	$(eval macro=$(lastword  $(subst ., ,$@)))
+	$(eval requested_macro=$(lastword $(subst ., ,$@)))
+	$(eval macro=$(if $(filter setup,$(requested_macro)),generate,$(requested_macro)))
 	$(eval app_dir=$(call app-dir,$(app)))
 	@echo Running $(macro) for $(app)
 	@$(MAKE) -C $(app_dir) $(macro)
-

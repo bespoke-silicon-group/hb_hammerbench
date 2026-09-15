@@ -70,4 +70,12 @@ RUN_RULES += pc-histogram.log
 RUN_RULES += debug.log
 RUN_RULES += profile.log
 RUN_RULES += exec.log
+$(RUN_RULES): $(APP_PATH)/in_10M.txt
+
+# The input is distributed compressed. Keep the archive and publish a complete
+# input atomically, including when the run is started from a generated case.
+$(APP_PATH)/in_10M.txt: $(APP_PATH)/in_10M.txt.xz
+	xz --decompress --stdout $< > $@.tmp
+	mv $@.tmp $@
+
 .DEFAULT_GOAL := help
